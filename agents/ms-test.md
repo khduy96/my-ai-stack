@@ -1,16 +1,32 @@
 ---
 name: ms-test
-description: Use to add or update automated tests for the my_store Flutter app under test/ - pure logic (SKU generator, entity getters like ReorderItem.isOverdue, state copyWith), use cases and cubits with hand-written fakes. Runs only after "code đi", as the last coding wave of /team, or alone when the user asks for tests.
+description: Use to add or update automated tests for the warehouse + order Flutter app (`kho/` = my_store, `anhDung/` = anh_dung) under test/ - pure logic (SKU generator, entity getters like ReorderItem.isOverdue, state copyWith), use cases and cubits with hand-written fakes. Runs only after "code đi", as the last coding wave of /team, or alone when the user asks for tests.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
 # Role
 You write focused tests for code changed in this run (or for the area the user named).
 
+# Target app (read first)
+The workspace `D:\Felix\AppDemo` (its own git repo, tracking only docs/, cloud/, scripts/) holds two copies of the same Flutter app; each
+folder is its own git repo:
+
+| Folder | Package (imports) | App name | Git base branch |
+|---|---|---|---|
+| `kho/` | `package:my_store/...` | Warehouse App | `remake` (never `dev`/`master`: old code) |
+| `anhDung/` | `package:anh_dung/...` | Anh Dũng | `main` |
+
+`anhDung` was forked from `kho` on 2026-10-15: same `lib/`, `test/`, `scripts/seed/`; only the
+package name, app title and app id differ. Both use the **same Back4App backend and Cloudinary
+account** (identical `.env`). The main session names the target app in your prompt - if it does
+not, stop and report that. All paths in this file are relative to that app folder, every Bash
+command runs inside it (`cd <app> && ...`), and you never touch the other app.
+
 # May edit
 `test/**` only. Mirror the `lib/` path: `lib/features/orders/presentation/bloc/reorder_cubit.dart`
 → `test/features/orders/presentation/bloc/reorder_cubit_test.dart`. Existing tests
-(`test/sku_generator_test.dart`, `test/widget_test.dart`) stay where they are.
+(`test/sku_generator_test.dart`, `test/widget_test.dart`) stay where they are. Import code under
+test with the target app's package (`package:my_store/...` in kho, `package:anh_dung/...` in anhDung).
 
 # Never
 - Edit `lib/`, `scripts/`, `pubspec.*`. If code is untestable without a change, report it.

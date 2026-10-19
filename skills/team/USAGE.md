@@ -7,11 +7,25 @@ build_runner / `flutter analyze` / `flutter test` và báo cáo bằng tiếng V
 > Claude Code không cho subagent gọi subagent khác → mọi việc điều phối nằm ở skill `/team`,
 > các agent chỉ làm phần việc của mình và trả kết quả về.
 
+## Chọn app
+
+Workspace `D:\Felix\AppDemo` có 2 app (mỗi app là 1 git repo riêng, dùng chung backend Back4App):
+
+| Thư mục | Package | Tên app | Nhánh gốc |
+|---|---|---|---|
+| `kho/` | `my_store` | Warehouse App | `remake` (không dùng `dev`/`master` - code cũ) |
+| `anhDung/` | `anh_dung` | Anh Dũng | `main` |
+
+Ghi tên app trong yêu cầu (`kho`, `anhDung`/`Anh Dũng`) hoặc mở một file của app đó trong IDE.
+Không rõ thì `/team` sẽ hỏi: `kho` / `anhDung` / `Cả hai`. Chọn `Cả hai` thì làm xong app đầu
+rồi hỏi bạn trước khi port sang app còn lại.
+
 ## Sơ đồ cây
 
 ```mermaid
 flowchart TD
-    T["/team &lt;việc&gt;<br/>(phiên chính)"] --> C{Phân loại}
+    T["/team &lt;việc&gt;<br/>(phiên chính)"] --> A{Chọn app<br/>kho / anhDung}
+    A --> C{Phân loại}
 
     C -->|explain| EX[ms-explainer]
     C -->|review| RV[ms-reviewer]
@@ -35,7 +49,7 @@ flowchart TD
 Bản ASCII:
 
 ```
-/team <việc>
+/team <việc>   (chọn app: kho / anhDung / cả hai)
 ├── explain ──► ms-explainer ──────────────────────────────► trả lời
 ├── review  ──► ms-reviewer ───────────────────────────────► báo cáo phát hiện
 ├── bug     ──► ms-debugger ─┐
@@ -69,25 +83,34 @@ nếu sửa các feature khác nhau (vd một cho `features/warehouse`, một ch
 | `lib/features/**`, `lib/core/{router,theme,utils}/**`, `lib/main.dart` | `ms-presentation` |
 | `scripts/seed/**` | `ms-seed` |
 | `test/**` | `ms-test` |
+| `cloud/**` ở thư mục workspace (Cloud Code Back4App, dùng chung 2 app) | `ms-cloud` - chạy song song với `ms-domain` ở wave 1 |
 | `injector.config.dart`, `*.freezed.dart`, barrel `presentation.dart` | Không ai - sinh bằng build_runner |
-| `android/ ios/ … `, `.env*`, `pubspec.*` | Ngoài phạm vi - hỏi bạn |
+| `android/`, `ios/`, `pubspec.yaml`, `.env.example` | `mobile-developer` - ngoài các wave, chỉ chạy khi bạn đồng ý |
+| `.env`, `pubspec.lock` | Không ai sửa tay |
 
+Đường dẫn trong bảng tính từ thư mục app (`kho/` hoặc `anhDung/`).
 Agent chỉ đọc: `ms-planner`, `ms-debugger`, `ms-reviewer`, `ms-explainer`.
+
+`mobile-developer` cũng dùng riêng được, ví dụ: "dùng mobile-developer thêm quyền INTERNET cho
+bản release của anhDung".
 
 ## Ví dụ
 
 ```text
 # feature
-/team thêm lọc đơn hàng theo khoảng ngày trên tab Đơn hàng
+/team anhDung: thêm lọc đơn hàng theo khoảng ngày trên tab Đơn hàng
 
 # bug
-/team thêm hàng xong quay lại tab Kho vẫn hiện số lượng cũ
+/team kho: thêm hàng xong quay lại tab Kho vẫn hiện số lượng cũ
 
 # review
-/team review thay đổi trên dev-kho so với dev
+/team review kho: nhánh giai-doan-0 so với remake
 
 # explain
-/team giải thích luồng đổi trạng thái đơn và trừ/hoàn tồn kho
+/team giải thích luồng đổi trạng thái đơn và trừ/hoàn tồn kho của anhDung
+
+# cả hai app
+/team cả hai: thêm cột ghi chú cho đơn hàng
 ```
 
 ## Lưu ý
@@ -95,4 +118,6 @@ Agent chỉ đọc: `ms-planner`, `ms-debugger`, `ms-reviewer`, `ms-explainer`.
   thì `/team` sẽ chỉnh kế hoạch và hỏi lại.
 - `/team` không commit, không push, không chạy seed lên Back4App - các bước đó được liệt kê trong
   mục "Việc bạn cần làm thủ công" ở báo cáo cuối.
+- 2 app dùng **chung** Back4App: thêm cột/class hoặc seed từ app này thì app kia cũng thấy dữ liệu đó.
+  Sửa `scripts/seed/` ở một app thì nên đồng bộ sang app kia trước khi seed.
 - Lỗi analyzer chặn build ở bước tích hợp được sửa bằng giá trị mặc định an toàn + `// TODO(team)`.

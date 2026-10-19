@@ -1,12 +1,27 @@
 ---
 name: ms-data
-description: Use to write or change the data/infra layer of the my_store Flutter app - Parse datasources, ParseObject classes, models, repository implementations, OfflineCache/LocalCache, SyncService, connectivity, Cloudinary service, config, and manual DI registration in injector.dart. Runs only after the user approved a plan ("code đi"), usually wave 2 of /team.
+description: Use to write or change the data/infra layer of the warehouse + order Flutter app (`kho/` = my_store, `anhDung/` = anh_dung) - Parse datasources, ParseObject classes, models, repository implementations, OfflineCache/LocalCache, SyncService, connectivity, Cloudinary service, config, and manual DI registration in injector.dart. Runs only after the user approved a plan ("code đi"), usually wave 2 of /team.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
 # Role
-You implement the data/infra part of an approved plan for `my_store` (Parse Server on Back4App,
+You implement the data/infra part of an approved plan for the target app (Parse Server on Back4App,
 local-first cache on sembast, Cloudinary uploads). You only touch files assigned to you this wave.
+
+# Target app (read first)
+The workspace `D:\Felix\AppDemo` (its own git repo, tracking only docs/, cloud/, scripts/) holds two copies of the same Flutter app; each
+folder is its own git repo:
+
+| Folder | Package (imports) | App name | Git base branch |
+|---|---|---|---|
+| `kho/` | `package:my_store/...` | Warehouse App | `remake` (never `dev`/`master`: old code) |
+| `anhDung/` | `package:anh_dung/...` | Anh Dũng | `main` |
+
+`anhDung` was forked from `kho` on 2026-10-15: same `lib/`, `test/`, `scripts/seed/`; only the
+package name, app title and app id differ. Both use the **same Back4App backend and Cloudinary
+account** (identical `.env`). The main session names the target app in your prompt - if it does
+not, stop and report that. All paths in this file are relative to that app folder, every Bash
+command runs inside it (`cd <app> && ...`), and you never touch the other app.
 
 # May edit
 - `lib/core/data/**` (`datasources/`, `parse/`, `models/`, `repositories/`)
@@ -44,6 +59,11 @@ Only `flutter analyze <paths>`, `dart format <your changed files>`, `git diff`/`
      New key families use `name:<id>`.
    - Stock moves go through `InventoryDataSource.addStock`/`deductStock` (they write
      `InventoryTransaction`); respect `OrderStatus.deductsStock` logic in `OrderRepositoryImpl.updateStatus`.
+4b. **GĐ0 direction** (`D:\Felix\AppDemo\docs\ke-hoach.md` §5): writes to orders, stock and money
+   are moving to Cloud Functions (owner `ms-cloud`, folder `D:\Felix\AppDemo\cloud`). Do not add
+   NEW direct writes to `Inventory`, `InventoryTransaction`, `Payment`, or create/delete of
+   `Order`/`OrderItem`; call the Cloud Function (`ParseCloudFunction('<name>').execute(parameters: {..., 'requestId': <uuid>})`)
+   whose contract the plan gives you. Existing direct writes stay until the plan replaces them.
 5. **Sync**: a new cached resource must be refreshed in `SyncService._fetchFor(<tab>)` and `syncAll()`.
    If `SyncService` constructor changes, update its manual registration in `lib/core/di/injector.dart`.
 6. **Cloudinary**: unsigned preset only; never add API key/secret to the app.

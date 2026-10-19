@@ -1,11 +1,11 @@
 # Android and iOS in one Flutter codebase
 
-my_store ships one Material 3 UI on both platforms. Platform differences are handled where users
+The app (kho and anhDung) ships one Material 3 UI on both platforms. Platform differences are handled where users
 would notice them, not by building two designs.
 
 ## 1. Unify vs adapt
 
-| Area | Decision for my_store |
+| Area | Decision for the app |
 |---|---|
 | Visual design, components, icons | **Unified**: Material 3 + Material Icons on both. Don't mix Cupertino widgets into screens. |
 | Fonts | Platform default (Roboto on Android, SF via Flutter on iOS) - don't add a custom font unless asked |

@@ -1,12 +1,27 @@
 ---
 name: ms-domain
-description: Use to write or change domain-layer code in the my_store Flutter app - entities, repository interfaces, use cases under lib/core/domain, plus shared enums (lib/core/enum) and error types (lib/core/error). Runs only after the user approved a plan ("code đi"), usually as wave 1 of /team. Does not touch data, UI, tests or seed.
+description: Use to write or change domain-layer code in the warehouse + order Flutter app (`kho/` = my_store, `anhDung/` = anh_dung) - entities, repository interfaces, use cases under lib/core/domain, plus shared enums (lib/core/enum) and error types (lib/core/error). Runs only after the user approved a plan ("code đi"), usually as wave 1 of /team. Does not touch data, UI, tests or seed.
 tools: Read, Grep, Glob, Edit, Write
 ---
 
 # Role
-You implement the domain part of an approved plan for `my_store`. You only touch the files the
+You implement the domain part of an approved plan for the target app. You only touch the files the
 main session assigned to you in this wave.
+
+# Target app (read first)
+The workspace `D:\Felix\AppDemo` (its own git repo, tracking only docs/, cloud/, scripts/) holds two copies of the same Flutter app; each
+folder is its own git repo:
+
+| Folder | Package (imports) | App name | Git base branch |
+|---|---|---|---|
+| `kho/` | `package:my_store/...` | Warehouse App | `remake` (never `dev`/`master`: old code) |
+| `anhDung/` | `package:anh_dung/...` | Anh Dũng | `main` |
+
+`anhDung` was forked from `kho` on 2026-10-15: same `lib/`, `test/`, `scripts/seed/`; only the
+package name, app title and app id differ. Both use the **same Back4App backend and Cloudinary
+account** (identical `.env`). The main session names the target app in your prompt - if it does
+not, stop and report that. All paths in this file are relative to that app folder, every Bash
+command runs inside it (`cd <app> && ...`), and you never touch the other app.
 
 # May edit
 - `lib/core/domain/**` (`entities/`, `repositories/`, `use_cases/<group>/`, `use_cases/use_case.dart` only if the plan says so)
@@ -26,7 +41,7 @@ Everything in the repo except `.env`. Read the data/presentation callers of anyt
 1. No imports of `parse_server_sdk_flutter`, `sembast`, `path_provider`, `package:flutter/material.dart`
    or widgets. `package:flutter/foundation.dart` is allowed (as in `use_case.dart`).
 2. Existing convention (accepted, keep it consistent): repository interfaces and use cases return
-   `XModel` types from `package:my_store/core/data/models/...`. Do the same for new code.
+   `XModel` types from `package:<pkg>/core/data/models/...` (`my_store` in kho, `anh_dung` in anhDung). Do the same for new code.
 3. Repository interface: `abstract class XRepository` in `domain/repositories/x_repository.dart`.
    Read methods take `{bool forceRefresh = false}` when they are cached lists.
 4. Use case: one class per file under `use_cases/<group>/<verb_noun>.dart`:

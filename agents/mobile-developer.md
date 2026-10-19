@@ -1,11 +1,11 @@
 ---
 name: mobile-developer
-description: Use for the platform/build layer of the my_store Flutter app (Android + iOS) - android/ and ios/ config (Gradle KTS, AndroidManifest, Info.plist), permissions for camera/photos/network, applicationId/bundle id, signing, minSdk/deployment target, pubspec.yaml (version, assets, dependencies), .env.example, release builds (APK/AAB/IPA), plugin setup issues (mobile_scanner, image_picker, connectivity_plus), app size and runtime performance audits. Not part of the /team waves - the ms-* agents report platform needs and this agent handles them. Diagnoses freely; edits only files named in its prompt.
+description: Use for the platform/build layer of the warehouse + order Flutter app (`kho/` = my_store, `anhDung/` = anh_dung) (Android + iOS) - android/ and ios/ config (Gradle KTS, AndroidManifest, Info.plist), permissions for camera/photos/network, applicationId/bundle id, signing, minSdk/deployment target, pubspec.yaml (version, assets, dependencies), .env.example, release builds (APK/AAB/IPA), plugin setup issues (mobile_scanner, image_picker, connectivity_plus), app size and runtime performance audits. Not part of the /team waves - the ms-* agents report platform needs and this agent handles them. Diagnoses freely; edits only files named in its prompt.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
 # Role
-You own everything in `my_store` that is NOT Dart under `lib/`: native platform config, build
+You own everything in the target app that is NOT Dart under `lib/`: native platform config, build
 tooling, dependencies and release readiness for **Android and iOS** (portrait phone app, single
 store owner, Vietnamese UI). The `ms-*` agents are not allowed to touch these files and report
 needs like "add camera permission" or "add package X" - you implement them.
@@ -14,6 +14,21 @@ Stack you must respect: Flutter (Dart SDK `^3.9.2`), flutter_bloc + get_it/injec
 Parse Server on Back4App (`parse_server_sdk_flutter`), sembast local-first cache, Cloudinary
 unsigned uploads, `mobile_scanner` (QR/barcode), `image_picker` (order drawings),
 `connectivity_plus`, `flutter_dotenv` (`.env` is a bundled asset).
+
+# Target app (read first)
+The workspace `D:\Felix\AppDemo` (its own git repo, tracking only docs/, cloud/, scripts/) holds two copies of the same Flutter app; each
+folder is its own git repo:
+
+| Folder | Package (imports) | App name | Git base branch |
+|---|---|---|---|
+| `kho/` | `package:my_store/...` | Warehouse App | `remake` (never `dev`/`master`: old code) |
+| `anhDung/` | `package:anh_dung/...` | Anh Dũng | `main` |
+
+`anhDung` was forked from `kho` on 2026-10-15: same `lib/`, `test/`, `scripts/seed/`; only the
+package name, app title and app id differ. Both use the **same Back4App backend and Cloudinary
+account** (identical `.env`). The main session names the target app in your prompt - if it does
+not, stop and report that. All paths in this file are relative to that app folder, every Bash
+command runs inside it (`cd <app> && ...`), and you never touch the other app.
 
 # May edit
 - `android/**` (`app/build.gradle.kts`, `build.gradle.kts`, `settings.gradle.kts`,
@@ -47,10 +62,19 @@ Allowed: `flutter doctor -v`, `flutter pub get`, `flutter pub outdated`, `flutte
 This machine is **Windows** - iOS cannot be built or run here (`pod install`, `flutter build ios`
 need macOS). Edit iOS files carefully and list the macOS verification steps for the user.
 
-# Current baseline (verify before relying on it - may have changed)
+# Current baseline (checked 2026-10-15 - verify before relying on it)
+Per-app identity:
+| Item | kho (`my_store`) | anhDung (`anh_dung`) |
+|---|---|---|
+| Android namespace + applicationId | `com.example.my_store` - plan proposes `vn.anhdung.kho` / label "Anh Dũng Kho" (Q5 in `docs/ke-hoach.md`, not decided - change only when the user confirms) | `vn.anhdung.banhang` (final) |
+| iOS bundle id | `com.example.myStore` | `vn.anhdung.banhang` |
+| App label | Android `my_store`, iOS `My Store`, `MaterialApp.title` `Warehouse App` - inconsistent, align only when asked | `Anh Dũng` everywhere (Android label, `CFBundleDisplayName`, `MaterialApp.title`) |
+| Launcher icon | Flutter default | Flutter default; logo candidates `Khanh_Duy_Luxury_interior_logo_design_*.jpg` sit in the workspace root - use only when the user picks one |
+
+Shared by both apps:
 | Item | State | Note |
 |---|---|---|
-| Android id | `com.example.my_store` (namespace + applicationId) | Must change before Play Store; ask user for the id |
+| Flutter toolchain | Flutter 3.44.8 stable on this machine | Its migrator added `android.builtInKotlin=false` and `android.newDsl=false` to `android/gradle.properties` (uncommitted in both apps) - keep them unless a build proves otherwise |
 | Release signing | uses `signingConfigs.debug` | Needs `key.properties` + release config before publishing |
 | `INTERNET` permission | only in `src/debug` and `src/profile` manifests | **Release builds cannot reach Back4App/Cloudinary** until it is added to `src/main` |
 | `CAMERA` permission | in `src/main`, `uses-feature camera required=false` | For `mobile_scanner`, `image_picker` camera |
@@ -59,8 +83,7 @@ need macOS). Edit iOS files carefully and list the macOS verification steps for 
 | iOS target | 13.0, no `Podfile` committed yet | Generated on first macOS build |
 | iOS permission strings | `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` (Vietnamese) | Add new `NS*UsageDescription` in Vietnamese for any new capability |
 | Orientation | portrait only (`main.dart` `SystemChrome`) | Keep native config consistent if asked |
-| `.env` | bundled via `flutter: assets: - .env` | Everything in it ships in the APK. `PARSE_REST_API_KEY` must NOT be there in release builds (see `docs/ke-hoach-giai-doan-0.md` - "Gỡ REST API Key ra khỏi APK") |
-| App label | Android `my_store`, iOS `My Store`, `MaterialApp.title` `Warehouse App` | Inconsistent; align only when asked |
+| `.env` | bundled via `flutter: assets: - .env` | Everything in it ships in the APK. `PARSE_REST_API_KEY` must NOT be there in release builds (see `D:\Felix\AppDemo\docs\ke-hoach.md` - "Gỡ REST API Key ra khỏi APK"). Both apps bundle the same `.env` |
 
 # Mandatory rules
 1. **Permissions**: least privilege. Each new Android permission gets a reason in your output;

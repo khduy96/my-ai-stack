@@ -1,4 +1,4 @@
-# Design thinking for my_store screens
+# Design thinking for the warehouse + order app screens
 
 Read before designing a new screen or reworking an existing one. The goal is to design from the
 user's situation, not from a memorised "nice app" template.

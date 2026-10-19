@@ -1,3 +1,8 @@
+> **Ghi chú (cập nhật 2026-10-15):** đây là prompt gốc đã dùng để tạo cây agent, giữ lại làm lịch sử.
+> Bối cảnh bên dưới đã cũ: workspace giờ là `D:\Felix\AppDemo` (không phải git repo) với 2 app
+> `kho/` (package `my_store`, nhánh gốc `dev`) và `anhDung/` (package `anh_dung`, nhánh `main`), dùng chung
+> Back4App. Trạng thái hiện hành nằm trong `.claude/agents/*.md` và `.claude/skills/team/SKILL.md`.
+
 # Xây cây subagent cho my_store (app quản lý kho + đơn hàng)
 
 ## Mục tiêu

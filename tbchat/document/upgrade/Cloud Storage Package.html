@@ -1,0 +1,1498 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cloud Storage Package</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: spec reader. Sticky section rail + one reading column; storage meters, timelines and ID chips mirror the original FS numbering. */
+:root{
+  --bg:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#131A2B; --ink-2:#4B5570; --ink-3:#737D96; --line:#DAE0EA;
+  --accent:#2A57D8; --accent-ink:#FFFFFF; --accent-soft:#E2E9FC;
+  --ok:#17824F; --ok-soft:#DDF3E7; --warn:#B0600A; --warn-soft:#FCEBD5; --warn-mid:#F1C48C;
+  --bad:#C83232; --bad-soft:#FBE1E1; --on-bad:#FFFFFF; --info:#56657F; --info-soft:#E5EAF2; --brown:#93572A; --brown-soft:#F5E6DA;
+  --hatch:rgba(200,50,50,.22);
+  --shadow:0 1px 2px rgba(19,26,43,.06),0 8px 24px rgba(19,26,43,.07);
+  --f-display:"Archivo","Be Vietnam Pro",system-ui,sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1119; --surface:#151B27; --surface-2:#1D2535; --ink:#E6EBF4; --ink-2:#A6B0C4; --ink-3:#7A859C; --line:#2A3448;
+  --accent:#8AA6FF; --accent-ink:#0D1119; --accent-soft:#1D2949;
+  --ok:#55C990; --ok-soft:#12301F; --warn:#F0A24A; --warn-soft:#34250F; --warn-mid:#6B4818;
+  --bad:#F07878; --bad-soft:#3A1818; --on-bad:#2A0B0B; --info:#A2B0C8; --info-soft:#1F2736; --brown:#D9A274; --brown-soft:#33241A;
+  --hatch:rgba(240,120,120,.25);
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1119; --surface:#151B27; --surface-2:#1D2535; --ink:#E6EBF4; --ink-2:#A6B0C4; --ink-3:#7A859C; --line:#2A3448;
+  --accent:#8AA6FF; --accent-ink:#0D1119; --accent-soft:#1D2949;
+  --ok:#55C990; --ok-soft:#12301F; --warn:#F0A24A; --warn-soft:#34250F; --warn-mid:#6B4818;
+  --bad:#F07878; --bad-soft:#3A1818; --on-bad:#2A0B0B; --info:#A2B0C8; --info-soft:#1F2736; --brown:#D9A274; --brown-soft:#33241A;
+  --hatch:rgba(240,120,120,.25);
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+p{margin:0 0 12px;text-wrap:pretty}
+a{color:var(--accent)}
+b,strong{font-weight:600}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.small{font-size:13.5px}
+.muted{color:var(--ink-2)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+@media(min-width:1080px){.shell{display:grid;grid-template-columns:196px minmax(0,1fr);column-gap:56px}}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);margin-inline:-20px;padding:8px 20px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail-title{display:none}
+.rail ol{display:flex;gap:4px;list-style:none;margin:0;padding:0;white-space:nowrap}
+.rail a{display:block;padding:6px 10px;border-radius:8px;color:var(--ink-2);text-decoration:none;font-size:13.5px;line-height:1.35}
+.rail a:hover{color:var(--ink);background:var(--surface-2)}
+.rail a[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+@media(min-width:1080px){
+  .hero{grid-column:2}
+  .rail{grid-column:1;grid-row:1 / span 2;align-self:start;top:calc(env(safe-area-inset-top,0px) + 28px);margin:56px 0 0;padding:0;border:0;background:none;overflow:visible}
+  .rail-title{display:block;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px 10px}
+  .rail ol{flex-direction:column;white-space:normal;gap:1px}
+  main{grid-column:2}
+}
+main{min-width:0;max-width:920px}
+
+/* ---------- hero ---------- */
+.hero{padding-block:52px 40px;display:grid;gap:28px;max-width:1000px}
+@media(min-width:880px){.hero{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+h1{font-family:var(--f-display);font-stretch:118%;font-weight:800;font-size:clamp(34px,5.2vw,50px);line-height:1.02;letter-spacing:-.022em;margin:0 0 18px;text-wrap:balance}
+.lead{font-size:18px;line-height:1.6;max-width:58ch;margin:0 0 14px}
+.hero .note{font-size:14px;color:var(--ink-2);max-width:60ch;margin:0}
+.meta{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 18px}
+.meta div{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.meta div:last-child{border-bottom:0}
+.meta dt{font-size:12.5px;color:var(--ink-3)}
+.meta dd{margin:0;font-size:14px;overflow-wrap:anywhere}
+
+/* ---------- sections ---------- */
+main>section{padding-block:56px 8px;border-top:1px solid var(--line);scroll-margin-top:56px}
+@media(min-width:1080px){main>section{scroll-margin-top:16px}}
+h2{font-family:var(--f-display);font-stretch:112%;font-weight:750;font-size:clamp(25px,3.3vw,33px);line-height:1.12;letter-spacing:-.012em;margin:0 0 12px;text-wrap:balance}
+h3{font-family:var(--f-display);font-stretch:106%;font-weight:700;font-size:19.5px;line-height:1.3;margin:40px 0 14px;text-wrap:balance}
+h4{font-size:15px;font-weight:650;margin:0 0 8px;line-height:1.4}
+.sec-intro{color:var(--ink-2);max-width:66ch;margin:0 0 26px;font-size:16px}
+ul.clean{margin:0;padding-left:1.15em}
+ul.clean li{margin:5px 0}
+ul.clean li::marker{color:var(--ink-3)}
+
+.grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.grid3{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-width:0}
+.box.quiet{background:transparent}
+.box>:last-child{margin-bottom:0}
+
+/* chips & pills */
+.id{font-family:var(--f-mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap;text-decoration:none;line-height:1.5}
+a.id:hover{outline:1px solid currentColor}
+.id.us{background:var(--accent-soft);color:var(--accent)}
+.id.err{background:var(--bad-soft);color:var(--bad)}
+.id.edge{background:var(--warn-soft);color:var(--warn)}
+.ui{font-weight:500;color:var(--ink);background:var(--info-soft);padding:1px 6px;border-radius:5px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;line-height:1.5;background:var(--surface-2);color:var(--ink-2)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+.pill.brown{background:var(--brown-soft);color:var(--brown)}
+.field-list{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px;padding:0;list-style:none}
+.field-list li{font-family:var(--f-mono);font-size:12.5px;background:var(--surface-2);padding:2px 8px;border-radius:6px}
+.field-list.opt li{background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
+.label{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.02em;margin:10px 0 2px}
+
+/* quick read */
+.quick{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--line)}
+.quick li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:13px 0;border-bottom:1px solid var(--line)}
+.quick li>b{font-family:var(--f-display);font-stretch:108%;font-weight:700;font-size:15px}
+@media(max-width:620px){.quick li{grid-template-columns:minmax(0,1fr);gap:2px}}
+
+/* glossary */
+.gloss{margin:0;border-top:1px solid var(--line)}
+.gloss div{display:grid;grid-template-columns:190px minmax(0,1fr);gap:18px;padding:13px 0;border-bottom:1px solid var(--line)}
+.gloss dt{font-weight:650}
+.gloss dt small{display:block;font-weight:400;font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.gloss dd{margin:0;color:var(--ink-2)}
+.gloss dd b{color:var(--ink)}
+@media(max-width:620px){.gloss div{grid-template-columns:minmax(0,1fr);gap:4px}}
+
+/* core rules */
+.core{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))}
+.core .box{padding:16px 18px}
+.core .refs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.core h4{font-family:var(--f-display);font-stretch:106%;font-size:16px;margin-bottom:4px}
+.core p{color:var(--ink-2);font-size:14.5px;margin:0}
+.roles{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.roles h4{display:flex;align-items:center;gap:8px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:1.55}
+.tbl th{text-align:left;font-weight:600;font-size:12.5px;color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface);vertical-align:bottom}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.no-chip,.tbl td.idc{font-family:var(--f-mono);font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--ink)}
+.tbl .rowhead{font-weight:600;color:var(--ink)}
+.tbl.wide{min-width:820px}
+.tbl.mid{min-width:640px}
+.tbl tr.grp th{background:var(--surface-2);color:var(--ink);font-size:13px;padding:8px 14px}
+.tbl .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+@keyframes flash{from{background:var(--accent-soft)}to{background:transparent}}
+tr.flash td{animation:flash 2.4s ease-out}
+tr{scroll-margin-top:80px}
+
+/* screens */
+.screens{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.screens h4{font-size:13px;color:var(--ink-3);font-weight:600;letter-spacing:.02em}
+
+/* steps */
+.flow{display:grid;gap:10px}
+.flow-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.flow-group .gl{font-size:12px;color:var(--ink-3);font-weight:600;width:100%}
+ol.steps{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0;counter-reset:s}
+ol.steps li{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 13px 5px 5px;font-size:13.5px;line-height:1.3}
+ol.steps li::before{counter-increment:s;content:counter(s);flex:none;width:23px;height:23px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:600 12px/23px var(--f-mono);text-align:center}
+ol.steps li.ext{border-style:dashed}
+ol.steps li.ext::before{background:var(--surface-2);color:var(--ink-2)}
+.outcomes{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));margin-top:16px}
+.outcomes .box{padding:14px 16px}
+.outcomes p{font-size:14px;color:var(--ink-2);margin:6px 0 0}
+
+/* timelines */
+.tl{display:grid;gap:8px}
+.tl-row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px 18px}
+.tl-row h4{margin-bottom:2px}
+.tl-row .f{font-family:var(--f-mono);font-size:13px;color:var(--ink-2);margin:0}
+.track{position:relative;height:30px;border-radius:7px;background:var(--surface-2);margin:34px 0 30px}
+.track.thin{height:16px;margin:30px 0 8px;background:transparent}
+.seg{position:absolute;top:0;bottom:0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:6px}
+.seg.old{background:var(--accent-soft);color:var(--accent)}
+.seg.new{background:var(--accent);color:var(--accent-ink)}
+.seg.gap{background:repeating-linear-gradient(135deg,var(--hatch) 0 6px,transparent 6px 12px);color:var(--bad)}
+.seg.ghost{background:repeating-linear-gradient(135deg,var(--surface-2) 0 6px,transparent 6px 12px);border:1px dashed var(--ink-3);color:var(--ink-2);font-size:11px}
+.mk{position:absolute;font:500 11.5px/1.2 var(--f-mono);color:var(--ink-2);white-space:nowrap}
+.mk.top{bottom:calc(100% + 6px)}
+.mk.bot{top:calc(100% + 6px)}
+.mk.c{transform:translateX(-50%)}
+.mk.r{transform:translateX(-100%)}
+.mk b{color:var(--ink);font-weight:600}
+
+/* upgrade checks */
+.checks{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.if{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+.if:last-child{border-bottom:0}
+.formula{font-family:var(--f-mono);font-size:13.5px;line-height:2;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;overflow-x:auto;white-space:nowrap}
+.formula .k{color:var(--accent);font-weight:600}
+.formula .c{color:var(--ink-3)}
+
+/* calculator */
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-top:20px}
+.calc-controls{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:end;margin-top:12px}
+.ctl{display:grid;gap:5px;font-size:12.5px;color:var(--ink-2);font-weight:500}
+.ctl.grow{flex:1 1 220px}
+select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:120px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+output{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
+.chipbtn{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;line-height:1.3}
+.chipbtn:hover{border-color:var(--accent)}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.credit-line{font-family:var(--f-mono);font-size:13.5px;margin:16px 0 12px;padding:10px 14px;background:var(--surface-2);border-radius:10px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.credit-line b{color:var(--accent)}
+.banner{margin:0 0 12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--ink);font-size:14px}
+.matrix-wrap{overflow-x:auto}
+table.matrix{border-collapse:separate;border-spacing:4px;width:100%;min-width:640px}
+.matrix th{font-size:12px;color:var(--ink-3);font-weight:600;text-align:center;padding:4px;white-space:nowrap}
+.matrix th[scope=row]{text-align:left;font-family:var(--f-mono);color:var(--ink);font-size:13px;padding-right:8px}
+.matrix td{padding:0}
+.cell{width:100%;min-height:54px;border-radius:8px;border:1px solid transparent;font:inherit;cursor:pointer;display:grid;place-content:center;gap:1px;text-align:center;padding:6px 4px;line-height:1.25}
+.cell .v{font-family:var(--f-mono);font-weight:600;font-size:13.5px;font-variant-numeric:tabular-nums}
+.cell .s{font-size:11px;opacity:.8}
+.cell.ok{background:var(--ok-soft);color:var(--ok)}
+.cell.off{background:repeating-linear-gradient(135deg,var(--bad-soft) 0 7px,var(--surface) 7px 12px);color:var(--bad);border-color:var(--bad-soft)}
+.cell.cur{background:var(--surface);border:2px solid var(--accent);color:var(--accent)}
+.cell.none{background:var(--surface-2);color:var(--ink-3)}
+.cell[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--ink-2);margin-top:10px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:6px}
+.sw.ok{background:var(--ok-soft);border:1px solid var(--ok)}
+.sw.off{background:repeating-linear-gradient(135deg,var(--bad-soft) 0 3px,var(--surface) 3px 6px);border:1px solid var(--bad)}
+.sw.cur{border:2px solid var(--accent)}
+.sw.none{background:var(--surface-2)}
+.explain{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:14.5px;min-height:48px}
+
+/* storage meter */
+.meter-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:44px 22px 18px}
+.meter{position:relative;display:flex;height:22px}
+.meter .z{display:block;height:100%}
+.z1{flex:80;background:var(--ok-soft);border-radius:6px 0 0 6px}
+.z2{flex:10;background:var(--warn-soft)}
+.z3{flex:10;background:var(--warn-mid)}
+.z4{flex:20;background:repeating-linear-gradient(135deg,var(--hatch) 0 6px,transparent 6px 12px);border:1px dashed var(--bad);border-left:0;border-radius:0 6px 6px 0}
+.tick{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:var(--ink)}
+.tick b{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font:600 11.5px var(--f-mono);white-space:nowrap}
+.meter-scale{display:flex;justify-content:space-between;font:500 11.5px var(--f-mono);color:var(--ink-3);margin-top:8px}
+.states{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));margin-top:16px}
+.states .box{padding:14px 16px}
+.states h4{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.states .cond{font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2);margin:0 0 6px}
+.states p{font-size:14px;color:var(--ink-2);margin:0 0 6px}
+.sq{width:12px;height:12px;border-radius:3px;flex:none}
+.yes,.no,.cond-y{font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.yes{background:var(--ok-soft);color:var(--ok)}
+.no{background:var(--bad-soft);color:var(--bad)}
+.cond-y{background:var(--warn-soft);color:var(--warn)}
+
+/* mock dialog */
+.mock-grid{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:820px){.mock-grid{grid-template-columns:340px minmax(0,1fr);align-items:start}}
+.dlg{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 20px 18px;box-shadow:var(--shadow)}
+.dlg .x{position:absolute;top:10px;right:14px;color:var(--ink-3);font-size:18px;line-height:1}
+.dlg-msg{font-size:15px;margin:4px 18px 16px 0}
+.dlg-actions{display:grid;gap:8px}
+.dbtn{display:block;text-align:center;padding:10px 12px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid var(--line);color:var(--ink)}
+.dbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dbtn.disabled{background:var(--surface-2);border-color:var(--surface-2);color:var(--ink-3)}
+.dlg-largest{font-size:12.5px;color:var(--ink-2);margin:-2px 0 4px;text-align:center}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:12px;color:var(--ink-2);cursor:pointer}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.caption{font-size:12px;color:var(--ink-3);margin-top:8px}
+
+/* notifications demo */
+.nt-layout{display:grid;gap:28px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.nt-layout{grid-template-columns:360px minmax(0,1fr);align-items:start}}
+.home-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:10px;max-width:360px}
+.home-bar .ttl{font-weight:700;font-size:15px}
+.home-bar .ttl small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-3)}
+.hb-icons{display:flex;gap:8px}
+.round{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--surface-2);color:var(--ink)}
+.badge{position:absolute;top:-4px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:var(--on-bad);font:600 11px/18px var(--f-mono);text-align:center}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:8px 0 10px;box-shadow:var(--shadow);max-width:360px;overflow:hidden}
+.nt-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 12px;gap:10px}
+.nt-head .back{font-weight:700;font-size:17px}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:4px 0}
+.nt-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;padding:12px 16px;border:0;border-top:1px solid var(--line);text-align:left;background:none;font:inherit;color:inherit;cursor:pointer;width:100%}
+.nt-card:hover{background:var(--bg)}
+.nt-ico{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.t-ok{background:var(--ok-soft);color:var(--ok)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-brown{background:var(--brown-soft);color:var(--brown)}
+.t-info{background:var(--info-soft);color:var(--info)}
+.t-bad{background:var(--bad-soft);color:var(--bad)}
+.nt-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.nt-title{font-weight:700;font-size:14.5px;line-height:1.35}
+.nt-time{font-size:11.5px;color:var(--ink-3);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.nt-body{font-size:13.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.nt-chip{display:inline-flex;gap:5px;align-items:center;margin-top:8px;font-size:11.5px;background:var(--surface-2);border-radius:999px;padding:3px 10px;color:var(--ink-2);max-width:100%}
+.nt-error{padding:36px 20px;text-align:center;color:var(--ink-2);font-size:14px;border-top:1px solid var(--line)}
+.demo-ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+.btn{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.segc{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.segc button{font:inherit;font-size:13px;padding:6px 12px;border:0;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.segc button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.demo-log{font-size:13.5px;margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--surface-2);min-height:46px;max-width:360px}
+.push{display:grid;grid-template-columns:38px minmax(0,1fr);gap:12px;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);max-width:400px}
+.app-ico{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink)}
+.push .pt{font-weight:700;font-size:14px}
+.push .pb{font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.ico{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;flex:none;vertical-align:middle}
+.tname{display:flex;align-items:center;gap:10px;font-weight:600;white-space:nowrap}
+.sched{position:relative;height:6px;background:var(--surface-2);border-radius:3px;margin:46px 12px 54px}
+.sched .pt{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--warn);border:3px solid var(--surface)}
+.sched .pt.end{background:var(--bad)}
+.sched .lb{position:absolute;font:600 11.5px/1.3 var(--f-mono);white-space:nowrap;text-align:center;transform:translateX(-50%)}
+.sched .lb.t{bottom:14px}
+.sched .lb.b{top:14px;font-weight:400;color:var(--ink-2)}
+.sched .lb.r{transform:translateX(-100%);text-align:right}
+.sched .lb.l{transform:none;text-align:left}
+
+/* reference */
+.search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:8px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 52px);z-index:10}
+@media(min-width:1080px){.search{top:calc(env(safe-area-inset-top,0px) + 12px)}}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);outline:none}
+.search .cnt{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.ref-block{margin-top:28px}
+.ref-block h3{margin-top:0}
+
+/* pending */
+.pend{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.pend li{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid var(--line);align-items:baseline}
+@media(max-width:620px){.pend li{grid-template-columns:minmax(0,1fr);gap:4px}}
+.pend .pill{justify-self:start}
+
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+
+<header class="hero">
+  <div>
+    <p class="eyebrow">Functional Spec · Cloud Drive · Mobile / End User</p>
+    <h1>Cloud Storage Package</h1>
+    <p class="lead">Người dùng xem gói dung lượng, mua, nâng cấp và gia hạn thủ công trên Mobile. Hệ thống xử lý an toàn khi đầy dung lượng hoặc gói hết hạn, và báo cho người dùng qua 7 loại thông báo in-app và push.</p>
+    <p class="note">Trang này sắp xếp lại FS gốc theo từng chủ đề và viết gọn bằng tiếng Việt. Câu chữ hiển thị trên UI giữ nguyên tiếng Anh như spec. Các mã US, BR, ERR, EDGE giữ đúng số của tài liệu gốc; bấm vào một mã để nhảy tới bảng tra cứu.</p>
+  </div>
+  <dl class="meta">
+    <div><dt>Version</dt><dd class="mono">v0.25</dd></div>
+    <div><dt>Status</dt><dd><span class="pill info">Dev</span></dd></div>
+    <div><dt>Priority</dt><dd><span class="pill bad">P0</span></dd></div>
+    <div><dt>Target release</dt><dd>N/A</dd></div>
+    <div><dt>Owner</dt><dd>huyrooney32@gmail.com</dd></div>
+    <div><dt>Reviewer</dt><dd>Mr Henry (Product Manager)</dd></div>
+    <div><dt>Workflow</dt><dd>Miro board (mobile site); thông báo ở mục “notification”</dd></div>
+    <div><dt>Design</dt><dd>Not required</dd></div>
+  </dl>
+</header>
+
+<nav class="rail" aria-label="Mục lục">
+  <p class="rail-title">Mục lục</p>
+  <ol>
+    <li><a href="#overview">Tổng quan</a></li>
+    <li><a href="#terms">Thuật ngữ</a></li>
+    <li><a href="#rules">Nguyên tắc cốt lõi</a></li>
+    <li><a href="#view">Xem gói &amp; dung lượng</a></li>
+    <li><a href="#checkout">Mua, nâng cấp, gia hạn</a></li>
+    <li><a href="#upgrade">Điều kiện nâng cấp</a></li>
+    <li><a href="#storage">Đầy &amp; hết hạn</a></li>
+    <li><a href="#notif">Thông báo</a></li>
+    <li><a href="#ref">Tra cứu theo mã</a></li>
+    <li><a href="#nfr">Phi chức năng</a></li>
+    <li><a href="#open">Còn mở</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview">
+  <p class="eyebrow">FS §1 · Overview</p>
+  <h2>Đọc nhanh trong một phút</h2>
+  <ul class="quick">
+    <li><b>Xem</b><span>Danh sách gói (dung lượng, giá, thời hạn), dung lượng đang dùng và trạng thái gói của chính mình.</span></li>
+    <li><b>Mua, nâng cấp, gia hạn</b><span>Đều qua màn xác nhận rồi vào checkout có sẵn của Subscribe New Plan &amp; Payment. Gói chỉ có hiệu lực khi giao dịch on-chain trả về <b>Success</b>.</span></li>
+    <li><b>Không tự động</b><span>Không tự gia hạn, không tự trừ tiền, không tự xoá file của người dùng.</span></li>
+    <li><b>Đầy hoặc hết hạn</b><span>Đầy thì chặn ghi thêm. Hết hạn mà dung lượng đang dùng vượt quota thì tài khoản chuyển sang chỉ đọc (Over Quota) cho tới khi gia hạn, nâng cấp hoặc xoá bớt.</span></li>
+    <li><b>Thông báo</b><span>7 loại, hiện trong app (chuông có badge ở Cloud Drive home) và qua push. Tap vào là tới đúng màn để xử lý.</span></li>
+  </ul>
+
+  <h3>Phạm vi</h3>
+  <div class="grid2">
+    <div class="box">
+      <h4>Có trong tài liệu này</h4>
+      <ul class="clean">
+        <li>Người dùng: End User đã đăng nhập trên Mobile và dùng Cloud Storage</li>
+        <li>Xem gói, xem dung lượng, xem trạng thái gói</li>
+        <li>Mua, nâng cấp, gia hạn thủ công</li>
+        <li>Hành vi khi đầy dung lượng và khi gói hết hạn</li>
+        <li>Nội dung và hành vi khi tap của thông báo in-app và push (EPIC-07)</li>
+        <li>Ảnh hưởng của thao tác Admin lên người dùng, ví dụ tắt gói hoặc đổi giá</li>
+      </ul>
+    </div>
+    <div class="box quiet">
+      <h4>Không thuộc tài liệu này</h4>
+      <ul class="clean muted">
+        <li>Cấu hình gói: tạo, sửa, bật/tắt, ngừng bán (nằm trong tài liệu Admin riêng)</li>
+        <li>Hạ tầng push: gửi nền ở OS, cơ chế lập lịch, device token, channel</li>
+        <li>Thông báo về file/folder: upload xong, chia sẻ, dọn Recycle Bin</li>
+        <li>Cài đặt hoặc tắt thông báo (release này chưa có)</li>
+        <li>Hạ gói (downgrade) và mô hình phân quyền Admin</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Màn hình liên quan</h3>
+  <div class="screens">
+    <div class="box">
+      <h4>Gói &amp; thanh toán</h4>
+      <ul class="clean small">
+        <li>Available Storage Packages (danh sách gói)</li>
+        <li>Current Storage Usage / Package Management</li>
+        <li>Purchase Confirmation</li>
+        <li>Upgrade Package (chọn gói và xác nhận)</li>
+        <li>Manual Renewal Confirmation</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Trạng thái dung lượng</h4>
+      <ul class="clean small">
+        <li>Storage Full, xuất hiện theo ngữ cảnh (ví dụ lúc upload)</li>
+        <li>Các điểm chạm khi gói hết hạn</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Thông báo</h4>
+      <ul class="clean small">
+        <li>Header Cloud Drive home: chuông mới, có badge số chưa đọc</li>
+        <li>Notifications (danh sách)</li>
+        <li>Push trên khay thông báo của OS</li>
+        <li>My Subscription: đích khi tap, trừ “Plan price updated”</li>
+        <li>View Available Plans: đích khi tap “Plan price updated”</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small muted" style="margin-top:12px">Các màn gói chưa có mockup; tên màn được suy ra từ luồng nên ranh giới giữa các màn chưa chốt. Màn Notifications đã có mockup và final design. Chuông và badge chưa có trong mockup nào, được mô tả theo yêu cầu trực tiếp.</p>
+</section>
+
+<!-- ============ TERMS ============ -->
+<section id="terms">
+  <p class="eyebrow">Đọc trước khi vào chi tiết</p>
+  <h2>Thuật ngữ</h2>
+  <p class="sec-intro">FS dùng nhiều tên cho cùng một thứ. Bảng này gom lại để khỏi nhầm.</p>
+  <dl class="gloss">
+    <div><dt>Package / Plan</dt><dd>Cùng một thực thể gói dung lượng. Tài liệu này gọi là <b>Storage Package</b>, tài liệu Admin gọi là <b>Storage Plan</b>, tính năng chọn gói gọi là <b>Plan Tier</b>, còn nội dung thông báo gọi là <b>Plan</b>. Ba tài liệu phải đồng bộ khi cấu trúc gói thay đổi.</dd></div>
+    <div><dt>My Subscription<small>Package Management</small></dt><dd>Màn gói hiện tại của người dùng. Phần User Story gọi là Package Management, phần thông báo gọi là My Subscription. Đây là đích khi tap mọi thông báo, trừ “Plan price updated”.</dd></div>
+    <div><dt>View Available Plans</dt><dd>Danh sách gói có thể mua. Đích khi tap “Plan price updated”.</dd></div>
+    <div><dt>Available Storage</dt><dd>Dung lượng của gói hiện tại, <b>đã bao gồm</b> phần miễn phí, không cộng dồn. Gói 200GB nghĩa là 200GB, không phải 205GB. Không có gói trả phí thì chỉ còn phần free base (5GB).</dd></div>
+    <div><dt>Credit</dt><dd>Giá trị chưa dùng của gói hiện tại khi nâng cấp: <span class="mono">Giá gói × Số ngày còn lại / Số ngày của chu kỳ</span>.</dd></div>
+    <div><dt>DueToday</dt><dd>Số tiền phải trả khi nâng cấp: <span class="mono">Giá gói mới − Credit</span>. Luôn lớn hơn 0.</dd></div>
+    <div><dt>Full</dt><dd>Used ≥ Available. Chặn upload và mọi thao tác làm tăng dung lượng.</dd></div>
+    <div><dt>Over Quota<small>Restricted, read-only</small></dt><dd>Used &gt; Available, thường xảy ra khi gói trả phí hết hạn và quota rơi về 5GB. Vẫn xem, tải, xoá được; mọi thao tác làm tăng dung lượng bị chặn.</dd></div>
+    <div><dt>Discontinued</dt><dd>Gói bị Admin archive. Người dùng dùng tiếp tới khi hết hạn nhưng không gia hạn được. Thông báo gọi trạng thái này là “Plan archived”.</dd></div>
+    <div><dt>Checkout flow</dt><dd>Luồng thanh toán đã có của Subscribe New Plan &amp; Payment: pre-flight checks → Select account → Select token → Confirm Transaction → gas fee → Verify → Processing.</dd></div>
+  </dl>
+</section>
+
+<!-- ============ CORE RULES ============ -->
+<section id="rules">
+  <p class="eyebrow">Áp dụng cho mọi luồng</p>
+  <h2>Nguyên tắc cốt lõi</h2>
+  <p class="sec-intro">Bảy quy tắc xuyên suốt. Phần lớn edge case trong FS chỉ là hệ quả của các quy tắc này.</p>
+  <div class="core">
+    <div class="box"><div class="refs">BR-01</div><h4>Backend là nguồn sự thật</h4><p>Gói hiện tại, quota, usage, trạng thái, ngày bắt đầu và hết hạn, điều kiện nâng cấp, giá: tất cả lấy từ Backend. Mobile không tự tính, không ghi đè.</p></div>
+    <div class="box"><div class="refs">BR-04</div><h4>Chỉ kích hoạt khi thanh toán Success</h4><p>Mới khởi tạo thanh toán thì chưa có gì. Failed hoặc Pending thì gói và quota giữ nguyên.</p></div>
+    <div class="box"><div class="refs">BR-03</div><h4>Không bao giờ tự gia hạn</h4><p>Không auto-charge, không tự trừ tiền, không tự kéo dài hạn. Thông báo chỉ để nhắc; gia hạn luôn cần người dùng bấm và xác nhận.</p></div>
+    <div class="box"><div class="refs">BR-06 BR-07 BR-11</div><h4>Không bao giờ tự xoá file</h4><p>Đầy dung lượng, hết hạn hay nâng cấp đều giữ nguyên file và usage. Chỉ chặn ghi thêm.</p></div>
+    <div class="box"><div class="refs">BR-15</div><h4>Chống trùng</h4><p>Bấm nhiều lần, callback thanh toán gửi trùng: mua, gia hạn, nâng cấp chỉ được áp dụng một lần (idempotent).</p></div>
+    <div class="box"><div class="refs">BR-14</div><h4>Snapshot giao dịch</h4><p>Mỗi giao dịch lưu Package ID, Name, Capacity, Price, Currency, Validity, Purchase Time. Admin sửa gói sau đó không làm đổi lịch sử.</p></div>
+    <div class="box"><div class="refs">§5.7</div><h4>Hai loại thời gian</h4><p>Xét hết hạn dùng đồng hồ server, không tin đồng hồ máy. Ngày giờ hiển thị theo múi giờ thiết bị, không dùng UTC.</p></div>
+  </div>
+
+  <h3>Ai làm gì</h3>
+  <div class="roles">
+    <div class="box">
+      <h4><span class="pill">Backend</span></h4>
+      <ul class="clean small">
+        <li>Tính usage, quota, trạng thái gói (Active, Expiring Soon, Expired), ngày hết hạn, giá, điều kiện nâng cấp.</li>
+        <li>Kiểm tra trước thanh toán: gói còn tồn tại, đang Active, giá còn đúng, người dùng đủ điều kiện.</li>
+        <li>Kích hoạt gói khi thanh toán được xác nhận Success; idempotent.</li>
+        <li>Chạy lại hai check của BR-10 khi submit nâng cấp; trượt thì từ chối trước khi thu tiền.</li>
+        <li>Kiểm tra quota phía server để app cũ, gọi API trực tiếp, nhiều thiết bị hay upload song song đều không vượt được.</li>
+        <li>Giữ danh sách thông báo, trạng thái đã đọc và số trên badge.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4><span class="pill info">Mobile</span></h4>
+      <ul class="clean small">
+        <li>Hiển thị số liệu lấy từ Backend, không tự tính.</li>
+        <li>Màn xác nhận trước thanh toán, rồi chuyển vào checkout có sẵn.</li>
+        <li>Hiện gói bị disabled kèm lý do, trạng thái “Coming soon”, thông điệp “You're already on our largest plan.”</li>
+        <li>Popup thiếu dung lượng với Upgrade và Manage storage.</li>
+        <li>Chuông, badge, danh sách thông báo, đánh dấu đã đọc, mở đúng màn khi tap push.</li>
+        <li>Load lại dữ liệu mỗi lần mở màn (không cập nhật realtime). Mọi chuỗi có bản EN và zh-CN.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VIEW ============ -->
+<section id="view">
+  <p class="eyebrow">FS §2 · EPIC-01, EPIC-02</p>
+  <h2>Xem gói và dung lượng</h2>
+  <p class="sec-intro">Ba màn chỉ đọc. Mỗi truy vấn (danh sách gói, dung lượng, trạng thái gói) có mục tiêu dưới 2 giây trong điều kiện bình thường.</p>
+  <div class="grid3">
+    <div class="box">
+      <h4>Danh sách gói · US-01</h4>
+      <p class="label">Bắt buộc hiển thị</p>
+      <ul class="field-list"><li>Package Name</li><li>Storage Capacity</li><li>Price</li><li>Currency</li><li>Validity Period</li></ul>
+      <p class="label">Hiện khi có dữ liệu</p>
+      <ul class="field-list opt"><li>Current package</li><li>Recommended</li><li>Upgrade option</li></ul>
+      <ul class="clean small">
+        <li>Gói Inactive không mua được và không có trong danh sách (BR-02).</li>
+        <li>Không có gói nào để mua, hoặc Admin tắt Subscription: bấm <span class="ui">Upgrade now</span> hiện <span class="ui">Coming soon</span>, không có danh sách, không vào checkout (BR-17).</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Dung lượng đang dùng · US-02</h4>
+      <p class="label">Hiển thị</p>
+      <ul class="field-list"><li>Used Storage</li><li>Total Storage</li><li>Available Storage</li><li>Usage %</li><li>Current Package</li><li>Expiration Date</li></ul>
+      <p class="label">Ví dụ</p>
+      <p><span class="ui">18.5 GB / 50 GB used</span> hoặc <span class="ui">37% used</span></p>
+      <ul class="clean small">
+        <li>Số liệu từ Backend, Mobile không tự tính (BR-01).</li>
+        <li>Available là dung lượng của gói, đã gồm phần free (BR-05).</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Gói hiện tại · US-04, US-05</h4>
+      <p class="label">Hiển thị</p>
+      <ul class="field-list"><li>Package Name</li><li>Status</li><li>Total Capacity</li><li>Used</li><li>Available</li><li>Start Date</li><li>Expiration Date</li><li>Remaining Validity</li><li>Upgrade</li></ul>
+      <ul class="field-list opt"><li>Renew (khi được phép)</li></ul>
+      <p class="label">Trạng thái do Backend tính</p>
+      <p><span class="pill ok">Active</span> <span class="pill warn">Expiring Soon</span> <span class="pill bad">Expired</span></p>
+      <ul class="clean small">
+        <li>Không còn gói nào để nâng lên: nút Upgrade vẫn hiện nhưng disabled, bên dưới ghi <span class="ui">You're already on our largest plan.</span> (BR-10, EDGE-31)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHECKOUT ============ -->
+<section id="checkout">
+  <p class="eyebrow">FS §2 · EPIC-01, EPIC-03, EPIC-04</p>
+  <h2>Mua, nâng cấp, gia hạn</h2>
+  <p class="sec-intro">Ba hành động dùng chung một khung: màn xác nhận, kiểm tra, checkout có sẵn, kết quả. Chúng chỉ khác nhau ở số tiền phải trả và cách tính ngày hết hạn mới.</p>
+
+  <h3>Luồng chung</h3>
+  <div class="flow">
+    <ol class="steps">
+      <li>Màn xác nhận, người dùng bấm xác nhận</li>
+      <li>Backend kiểm tra trước thanh toán</li>
+      <li class="ext">pre-flight checks</li>
+      <li class="ext">Select account</li>
+      <li class="ext">Select token</li>
+      <li class="ext">Confirm Transaction</li>
+      <li class="ext">gas fee</li>
+      <li class="ext">Verify</li>
+      <li class="ext">Processing</li>
+    </ol>
+    <p class="small muted">Bước 3 tới 9 (viền nét đứt) là checkout đang có của Subscribe New Plan &amp; Payment. Tính năng này chỉ truyền vào số tiền, dung lượng và thời hạn; không thêm logic thanh toán mới. Bước 2 kiểm tra: gói còn tồn tại, đang Active, giá còn đúng, người dùng đủ điều kiện. Riêng nâng cấp, Backend chạy lại cả hai check của BR-10.</p>
+  </div>
+  <div class="outcomes">
+    <div class="box"><span class="pill ok">Success</span><p>Ghi giao dịch kèm snapshot, gán gói, cập nhật quota, ghi ngày bắt đầu và tính ngày hết hạn. Mobile hiện màn thành công.</p></div>
+    <div class="box"><span class="pill bad">Failed</span><p>Gói và quota giữ nguyên. <span class="ui">Try again</span> đưa về Confirm Transaction với lựa chọn cũ (ERR-01).</p></div>
+    <div class="box"><span class="pill warn">Pending</span><p>Giữ nguyên cho tới khi nhận Success. Không xác định được trạng thái thì giữ Pending và có <span class="ui">Check status</span> (EDGE-18).</p></div>
+  </div>
+
+  <h3>So sánh bốn trường hợp</h3>
+  <div class="tbl-wrap">
+    <table class="tbl wide">
+      <thead><tr><th style="width:150px"></th><th>Mua mới</th><th>Nâng cấp</th><th>Gia hạn khi còn hạn</th><th>Gia hạn khi đã hết hạn</th></tr></thead>
+      <tbody>
+        <tr><td class="rowhead">User story</td><td>US-03</td><td>US-06, US-07</td><td>US-08, US-09</td><td>US-08, US-10</td></tr>
+        <tr><td class="rowhead">Màn xác nhận hiển thị</td><td>Package, Capacity, Payment Amount (theo token đã chọn), Validity</td><td>Current Package, New Package, New Storage Capacity, Due Today, New Expiration Date</td><td colspan="2">Package, Renewal Price (theo token đã chọn), Validity Period, Current Expiration Date, New Expiration Date</td></tr>
+        <tr><td class="rowhead">Số tiền</td><td>Giá gói</td><td><span class="mono">Giá mới − Credit</span></td><td colspan="2">Giá gói</td></tr>
+        <tr><td class="rowhead">Ngày hết hạn mới</td><td>Backend ghi ngày bắt đầu và tính ngày hết hạn</td><td><span class="mono">Ngày thanh toán + Validity</span>, thay hẳn hạn cũ (BR-16)</td><td><span class="mono">Hạn cũ + Validity</span> (BR-12)</td><td><span class="mono">Lúc kích hoạt + Validity</span> (BR-13)</td></tr>
+        <tr><td class="rowhead">Thông báo khi Success</td><td><span class="pill">Không</span></td><td><span class="pill ok">Plan upgraded</span></td><td><span class="pill ok">Plan renewed</span></td><td><span class="pill">Không</span></td></tr>
+        <tr><td class="rowhead">File và usage</td><td colspan="4">Không đổi. Chỉ dung lượng tổng và thời hạn thay đổi.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ngày hết hạn được tính thế nào</h3>
+  <div class="tl">
+    <div class="tl-row">
+      <h4>Gia hạn khi còn hạn · BR-12</h4>
+      <p class="f">Hạn mới = Hạn cũ + Validity. Không mất ngày còn lại.</p>
+      <div class="track">
+        <div class="seg old" style="left:0;width:25%">còn 10 ngày</div>
+        <div class="seg new" style="left:25%;width:75%">+ 30 ngày</div>
+        <span class="mk bot" style="left:0">20/09 <b>gia hạn</b></span>
+        <span class="mk top c" style="left:25%">30/09 <b>hạn cũ</b></span>
+        <span class="mk bot r" style="left:100%">30/10/2026 <b>hạn mới</b></span>
+      </div>
+    </div>
+    <div class="tl-row">
+      <h4>Gia hạn khi đã hết hạn · BR-13</h4>
+      <p class="f">Hạn mới = Thời điểm kích hoạt + Validity. Khoảng trống không được bù.</p>
+      <div class="track">
+        <div class="seg gap" style="left:0;width:14.29%">5 ngày</div>
+        <div class="seg new" style="left:14.29%;width:85.71%">+ 30 ngày</div>
+        <span class="mk bot" style="left:0">30/09 <b>hết hạn</b></span>
+        <span class="mk top" style="left:14.29%">05/10 <b>gia hạn</b></span>
+        <span class="mk bot r" style="left:100%">04/11 <b>hạn mới</b></span>
+      </div>
+    </div>
+    <div class="tl-row">
+      <h4>Nâng cấp · BR-16</h4>
+      <p class="f">Gói cũ $10 / 30 ngày còn 10 ngày → Credit $3.33. Gói mới $25 / 30 ngày → trả $21.67. Chu kỳ mới tính từ hôm nay.</p>
+      <div class="track thin">
+        <div class="seg ghost" style="left:0;width:33.33%">gói cũ, còn 10 ngày</div>
+        <span class="mk top c" style="left:33.33%">10/02 <b>hạn cũ bị thay</b></span>
+      </div>
+      <div class="track" style="margin-top:6px">
+        <div class="seg new" style="left:0;width:100%">Chu kỳ mới: đủ 30 ngày</div>
+        <span class="mk bot" style="left:0">31/01/2027 <b>nâng cấp</b></span>
+        <span class="mk bot r" style="left:100%">02/03/2027 <b>hạn mới</b></span>
+      </div>
+      <p class="small muted" style="margin:0">Validity là số ngày cố định (Monthly = 30, Yearly = 365), không tính theo “cùng ngày tháng sau”. Vì vậy 31/01 + 30 ngày ra 02/03, không phải 28/02 hay 31/03.</p>
+    </div>
+  </div>
+
+  <h3>Tình huống cần xử lý</h3>
+  <div class="tbl-wrap">
+    <table class="tbl mid">
+      <thead><tr><th>Tình huống</th><th>Xử lý</th><th>Mã</th></tr></thead>
+      <tbody>
+        <tr><td>Bấm Purchase, Upgrade hoặc Renew nhiều lần; callback thanh toán gửi trùng</td><td>Chỉ áp dụng một lần</td><td>EDGE-03 EDGE-04 EDGE-05 EDGE-11</td></tr>
+        <tr><td>Giá đổi trước khi xác nhận</td><td>Hiện giá mới, bắt xác nhận lại</td><td>EDGE-02</td></tr>
+        <tr><td>Gói bị tắt sau khi đã mở màn mua</td><td>Backend từ chối, Mobile tải lại thông tin gói</td><td>EDGE-01</td></tr>
+        <tr><td>Mạng chậm</td><td>Hiện loading, disable nút trong lúc gửi; không đặt timeout riêng ngoài ERR-02</td><td>EDGE-17</td></tr>
+        <tr><td>Mất mạng giữa lúc thanh toán</td><td>Kiểm tra trạng thái giao dịch khi có mạng lại</td><td>ERR-03</td></tr>
+        <tr><td>Thanh toán xong nhưng người dùng đóng app</td><td>Backend vẫn kích hoạt; lần mở sau Mobile lấy trạng thái mới</td><td>EDGE-10</td></tr>
+        <tr><td>Hết phiên đăng nhập giữa chừng</td><td>Chưa ký giao dịch: không thu tiền. Đã ký: Backend vẫn kích hoạt khi thanh toán xác nhận. Hiện màn Login</td><td>ERR-06</td></tr>
+        <tr><td>App thấp hơn version tối thiểu</td><td>Không cho mua, gia hạn, nâng cấp; hiện prompt cập nhật</td><td>ERR-07</td></tr>
+        <tr><td>Gia hạn gói không còn bán</td><td>Backend áp điều kiện gia hạn và trả lỗi phù hợp</td><td>EDGE-12</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ UPGRADE ============ -->
+<section id="upgrade">
+  <p class="eyebrow">FS §3 · BR-10, BR-16</p>
+  <h2>Điều kiện nâng cấp và cách tính tiền</h2>
+  <p class="sec-intro">Mỗi gói trong catalog đi qua hai bước kiểm tra. Bước một quyết định gói có nằm trong danh sách hay không; bước hai quyết định gói đó có bấm chọn được hay không. Mục tiêu: không hỗ trợ hạ gói, và không lần nâng cấp nào khiến hệ thống phải hoàn tiền.</p>
+
+  <div class="checks">
+    <div class="box">
+      <h4>Check 1 · Có được liệt kê không?</h4>
+      <div class="if"><span>Dung lượng lớn hơn gói hiện tại (thời hạn bất kỳ)</span><span class="pill ok">Qua</span></div>
+      <div class="if"><span>Cùng dung lượng, thời hạn dài hơn</span><span class="pill ok">Qua</span></div>
+      <div class="if"><span>Dung lượng nhỏ hơn; hoặc cùng dung lượng mà thời hạn bằng hay ngắn hơn; hoặc chính gói hiện tại</span><span class="pill">Ẩn</span></div>
+    </div>
+    <div class="box">
+      <h4>Check 2 · Có chọn được không?</h4>
+      <div class="if"><span>Credit &lt; giá gói</span><span class="pill ok">Enabled</span></div>
+      <div class="if"><span>Credit ≥ giá gói. Hiện lý do: <span class="ui">Your unused {Current Package} value ({Credit}) covers more than this package's price.</span></span><span class="pill bad">Disabled</span></div>
+      <div class="if"><span>Không gói nào qua Check 1: mọi nút Upgrade (Package Management, popup thiếu dung lượng) disabled, kèm <span class="ui">You're already on our largest plan.</span></span><span class="pill warn">Khoá</span></div>
+    </div>
+  </div>
+  <p class="small muted" style="margin-top:12px">Lưu ý: nếu có gói qua Check 1 nhưng tất cả đều bị Check 2 disable, nút Upgrade vẫn bấm được và danh sách hiện các gói đó ở trạng thái disabled. Credit giảm dần theo ngày, nên một gói đang disabled có thể bấm được ở lần mở sau (EDGE-29).</p>
+
+  <h3>Công thức</h3>
+  <div class="formula">
+    <div><span class="k">Credit</span>            = CurrentPackagePrice × RemainingDays / CurrentPackageCycleDays</div>
+    <div><span class="k">DueToday</span>          = NewPackagePrice − Credit <span class="c">// luôn &gt; 0 nhờ Check 2</span></div>
+    <div><span class="k">NewStartDate</span>      = PaymentDate</div>
+    <div><span class="k">NewExpirationDate</span> = NewStartDate + PackageValidity <span class="c">// 1 tháng = 30 ngày, 1 năm = 365 ngày</span></div>
+  </div>
+  <p class="small muted" style="margin-top:10px">Dùng lại đúng công thức prorate của tính năng Change Plan. Hạn cũ bị thay hẳn, không cộng dồn như khi gia hạn.</p>
+
+  <div class="calc" id="calc">
+    <h4 style="margin:0">Thử với bảng giá mẫu trong FS</h4>
+    <p class="small muted" style="margin:2px 0 0">Giá chỉ để minh hoạ; giá thật do Admin cấu hình. Chọn gói hiện tại và số ngày còn lại, bảng bên dưới cho biết gói nào hiện, gói nào bấm được và phải trả bao nhiêu. Bấm vào một ô để xem giải thích.</p>
+    <div class="calc-controls">
+      <label class="ctl" for="c-size">Dung lượng hiện tại
+        <select id="c-size"><option value="50">50GB</option><option value="100">100GB</option><option value="200">200GB</option><option value="500">500GB</option></select>
+      </label>
+      <label class="ctl" for="c-val">Thời hạn
+        <select id="c-val"><option value="0">1 tháng</option><option value="1">2 tháng</option><option value="2">3 tháng</option><option value="3">6 tháng</option><option value="4">1 năm</option><option value="5">2 năm</option></select>
+      </label>
+      <label class="ctl grow" for="c-rem">Số ngày còn lại: <output id="c-rem-out" for="c-rem">300</output>
+        <input type="range" id="c-rem" min="1" max="365" value="300">
+      </label>
+    </div>
+    <div class="presets" role="group" aria-label="Kịch bản trong FS">
+      <span class="small muted">Kịch bản trong FS:</span>
+      <button type="button" class="chipbtn" data-p="100,0,10">1 · Gói ngắn, đã dùng một phần</button>
+      <button type="button" class="chipbtn" data-p="50,2,1">2 · Ngày cuối của gói</button>
+      <button type="button" class="chipbtn" data-p="200,1,59">3 · Mới mua hôm qua</button>
+      <button type="button" class="chipbtn" data-p="100,4,300">4 · Gói dài, Credit lớn</button>
+      <button type="button" class="chipbtn" data-p="200,3,75">5 · Credit bằng đúng giá</button>
+      <button type="button" class="chipbtn" data-p="500,5,700">6 · Gói lớn nhất</button>
+    </div>
+    <div class="credit-line" id="c-credit"></div>
+    <p class="banner" id="c-largest" hidden>Không gói nào qua Check 1. Mọi nút Upgrade bị disabled, kèm <span class="ui">You're already on our largest plan.</span> Danh sách nâng cấp không mở được.</p>
+    <div class="matrix-wrap"><table class="matrix" id="c-matrix"></table></div>
+    <div class="legend">
+      <span><i class="sw ok"></i>Chọn được, số là DueToday</span>
+      <span><i class="sw off"></i>Hiện nhưng disabled (Credit ≥ giá)</span>
+      <span><i class="sw cur"></i>Gói hiện tại, không liệt kê</span>
+      <span><i class="sw none"></i>Không liệt kê (trượt Check 1)</span>
+    </div>
+    <div class="explain" id="c-explain" aria-live="polite"></div>
+  </div>
+
+  <h3>11 trường hợp trong FS</h3>
+  <p class="small muted">Cùng một gói hiện tại: 100GB / Yearly (365 ngày) / $240, còn 73 ngày → Credit = $240 × 73 / 365 = $48.00.</p>
+  <div class="tbl-wrap">
+    <table class="tbl wide">
+      <thead><tr><th>#</th><th>Dung lượng</th><th>Thời hạn</th><th>Credit so với giá</th><th>Gói ví dụ</th><th>Kết quả</th><th>DueToday</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Lớn hơn</td><td>Dài hơn</td><td>&lt; giá</td><td class="num">200GB / 2 năm / $800</td><td><span class="pill ok">Hiện, chọn được</span></td><td class="num">$752.00</td></tr>
+        <tr><td class="num">2</td><td>Lớn hơn</td><td>Bằng</td><td>&lt; giá</td><td class="num">200GB / 1 năm / $400</td><td><span class="pill ok">Hiện, chọn được</span></td><td class="num">$352.00</td></tr>
+        <tr><td class="num">3</td><td>Lớn hơn</td><td>Ngắn hơn</td><td>&lt; giá</td><td class="num">200GB / 1 tháng / $60</td><td><span class="pill ok">Hiện, chọn được</span></td><td class="num">$12.00</td></tr>
+        <tr><td class="num">4</td><td>Lớn hơn</td><td>Bất kỳ</td><td>= giá</td><td class="num">200GB / 1 tháng / $48</td><td><span class="pill bad">Disabled</span> nâng cấp $0</td><td>—</td></tr>
+        <tr><td class="num">5</td><td>Lớn hơn</td><td>Bất kỳ</td><td>&gt; giá</td><td class="num">200GB / 1 tháng / $40</td><td><span class="pill bad">Disabled</span> hệ thống nợ user $8</td><td>—</td></tr>
+        <tr><td class="num">6</td><td>Bằng</td><td>Dài hơn</td><td>&lt; giá</td><td class="num">100GB / 2 năm / $450</td><td><span class="pill ok">Hiện, chọn được</span></td><td class="num">$402.00</td></tr>
+        <tr><td class="num">7</td><td>Bằng</td><td>Dài hơn</td><td>≥ giá</td><td class="num">100GB / 2 năm / $45</td><td><span class="pill bad">Disabled</span> hệ thống nợ user $3</td><td>—</td></tr>
+        <tr><td class="num">8</td><td>Bằng</td><td>Bằng, chính gói hiện tại</td><td>—</td><td class="num">100GB / 1 năm / $240</td><td><span class="pill">Ẩn</span></td><td>—</td></tr>
+        <tr><td class="num">9</td><td>Bằng</td><td>Bằng, gói khác</td><td>—</td><td class="num">100GB / 1 năm / $200</td><td><span class="pill">Ẩn</span></td><td>—</td></tr>
+        <tr><td class="num">10</td><td>Bằng</td><td>Ngắn hơn</td><td>—</td><td class="num">100GB / 1 tháng / $25</td><td><span class="pill">Ẩn</span></td><td>—</td></tr>
+        <tr><td class="num">11</td><td>Nhỏ hơn</td><td>Bất kỳ</td><td>—</td><td class="num">50GB / 2 năm / $300</td><td><span class="pill">Ẩn</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin-top:10px">Giữa lúc tải danh sách và lúc thanh toán mà giá hoặc gói hiện tại thay đổi khiến gói đã chọn không còn hợp lệ: Backend từ chối trước khi yêu cầu thanh toán, không thu tiền, Mobile tải lại danh sách (US-07, EDGE-30).</p>
+</section>
+
+<!-- ============ STORAGE ============ -->
+<section id="storage">
+  <p class="eyebrow">FS §2 · EPIC-05, EPIC-06</p>
+  <h2>Đầy dung lượng và hết hạn</h2>
+  <p class="sec-intro">Nguyên tắc chung: không bao giờ xoá file, chỉ chặn những thao tác làm tăng dung lượng. Xem, tải, xoá, quản lý và mua thêm luôn được phép.</p>
+
+  <div class="meter-wrap">
+    <div class="meter" aria-label="Thang dung lượng: cảnh báo 80%, 90%, đầy ở 100%, vượt 100% là Over Quota">
+      <span class="z z1"></span><span class="z z2"></span><span class="z z3"></span><span class="z z4"></span>
+      <span class="tick" style="left:66.667%"><b>80%</b></span>
+      <span class="tick" style="left:75%"><b>90%</b></span>
+      <span class="tick" style="left:83.333%"><b>100%</b></span>
+    </div>
+    <div class="meter-scale"><span>0%</span><span>Used / Available</span><span>&gt;100%</span></div>
+  </div>
+
+  <div class="states">
+    <div class="box">
+      <h4><i class="sq" style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Bình thường</h4>
+      <p class="cond">Used &lt; Available</p>
+      <p>Mọi thao tác đều được. Riêng upload hoặc batch lớn hơn phần còn trống vẫn bị từ chối (BR-18).</p>
+    </div>
+    <div class="box">
+      <h4><i class="sq" style="background:var(--warn-mid)"></i>Sắp đầy</h4>
+      <p class="cond">80% · 90%</p>
+      <p>Nên có cảnh báo “running low” ở 80%, “almost full” ở 90%. Ngưỡng nên cấu hình được. Cảnh báo không chặn gì. Mức Should (US-13).</p>
+    </div>
+    <div class="box">
+      <h4><i class="sq" style="background:var(--bad)"></i>Full</h4>
+      <p class="cond">Used ≥ Available</p>
+      <p>Chặn upload và mọi thao tác làm tăng dung lượng (BR-09). Gửi thông báo <span class="ui">Storage is full</span>.</p>
+    </div>
+    <div class="box">
+      <h4><i class="sq" style="background:repeating-linear-gradient(135deg,var(--bad) 0 3px,transparent 3px 6px);border:1px solid var(--bad)"></i>Over Quota</h4>
+      <p class="cond">Used &gt; Available</p>
+      <p>Chế độ chỉ đọc, thường xảy ra sau khi gói hết hạn (BR-08). Gửi thông báo <span class="ui">Storage is read-only</span>.</p>
+    </div>
+  </div>
+
+  <h3>Được làm gì ở từng trạng thái</h3>
+  <div class="tbl-wrap">
+    <table class="tbl mid">
+      <thead><tr><th>Thao tác</th><th>Bình thường</th><th>Full</th><th>Over Quota</th></tr></thead>
+      <tbody>
+        <tr><td>Xem, tải file</td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td></tr>
+        <tr><td>Xoá, quản lý file</td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td></tr>
+        <tr><td>Xem thông tin gói</td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td></tr>
+        <tr><td>Nâng cấp, mua gói</td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td><td><span class="yes">Được</span></td></tr>
+        <tr><td>Gia hạn</td><td><span class="yes">Được</span></td><td><span class="cond-y">FS không nêu</span></td><td><span class="yes">Được</span></td></tr>
+        <tr><td>Upload file mới</td><td><span class="cond-y">Nếu vừa chỗ trống</span></td><td><span class="no">Chặn</span></td><td><span class="no">Chặn</span></td></tr>
+        <tr><td>Tạo dữ liệu mới, thư mục mới, sync (làm tăng dung lượng)</td><td><span class="cond-y">Nếu vừa chỗ trống</span></td><td><span class="no">Chặn</span></td><td><span class="no">Chặn</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Upload không đủ chỗ · US-12, BR-18</h3>
+  <div class="mock-grid">
+    <div>
+      <div class="dlg" aria-label="Minh hoạ popup thiếu dung lượng">
+        <span class="x" aria-hidden="true">×</span>
+        <p class="dlg-msg">Not enough space. This upload needs <b>3 GB</b>, but you only have <b>2 GB</b> left.</p>
+        <div class="dlg-actions">
+          <span class="dbtn primary" id="dlg-up">Upgrade</span>
+          <p class="dlg-largest" id="dlg-largest" hidden>You're already on our largest plan.</p>
+          <span class="dbtn">Manage storage</span>
+        </div>
+      </div>
+      <label class="toggle" for="dlg-toggle"><input type="checkbox" id="dlg-toggle"> Giả lập người dùng đang ở gói lớn nhất</label>
+      <p class="caption">Minh hoạ theo nội dung spec, không phải design. Ví dụ trong FS: còn 2GB trên gói 50GB, chọn file 3GB.</p>
+    </div>
+    <div>
+      <ul class="clean">
+        <li>Kiểm tra theo <b>tổng kích thước</b> file hoặc batch so với phần còn trống, kể cả khi tài khoản còn xa mới Full.</li>
+        <li>Từ chối <b>trước khi</b> lưu. Không tạo file dở dang hay hỏng.</li>
+        <li>Batch vượt chỗ trống thì <b>từ chối cả batch</b>, kể cả những file lẻ đủ chỗ. Không tự cắt bớt (EDGE-20).</li>
+        <li><span class="ui">Upgrade</span> mở luồng nâng cấp của tính năng này (US-07).</li>
+        <li><span class="ui">Manage storage</span> mở màn Manage Storage dùng chung của Cloud Drive (cùng đích với View My Subscription).</li>
+        <li>Có cách đóng popup mà không upload.</li>
+        <li>Đang ở gói lớn nhất: Upgrade disabled, kèm <span class="ui">You're already on our largest plan.</span> Manage storage và nút đóng không đổi.</li>
+        <li>Kích thước client báo khác thực tế: Backend dùng kích thước thực đã lưu để tính quota (EDGE-15).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Khi gói hết hạn · US-15, US-16, US-17</h3>
+  <div class="grid2">
+    <div class="box">
+      <h4>Chuyện gì xảy ra</h4>
+      <ul class="clean small">
+        <li>Backend so giờ hiện tại (đồng hồ server) với giờ hết hạn rồi chuyển gói sang Expired.</li>
+        <li>Dung lượng của gói hết hạn không còn tính vào Available Storage.</li>
+        <li>File cũ vẫn tính vào usage và vẫn thuộc về người dùng.</li>
+        <li>Ví dụ: free 5GB, gói 50GB hết hạn, đang dùng 35GB → Available còn 5GB, Used 35GB → <b>Over Quota</b>.</li>
+        <li>App đang mở khi gói hết hạn: trạng thái Backend được ưu tiên, Mobile tải lại (EDGE-07). Hết hạn giữa lúc upload: Backend áp quy tắc ở thời điểm ghi cuối (EDGE-08).</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Cách thoát Over Quota</h4>
+      <ul class="clean small">
+        <li><b>Gia hạn hoặc mua</b> đủ dung lượng sao cho Available ≥ Used. Ví dụ: dùng 35GB, có gói 55GB → bình thường.</li>
+        <li><b>Xoá bớt</b> tới khi Used ≤ Available. Ví dụ: Available 5GB, xoá còn 4.5GB → bình thường.</li>
+        <li>Sau mọi thao tác làm đổi quota hoặc usage, Backend tính lại trạng thái (EDGE-09).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NOTIFICATIONS ============ -->
+<section id="notif">
+  <p class="eyebrow">FS §2 · EPIC-07 · US-18 → US-26</p>
+  <h2>Thông báo</h2>
+  <p class="sec-intro">Danh sách thông báo trong app, mở từ chuông mới ở header Cloud Drive home, cộng một push tương ứng cho mỗi sự kiện. Spec chỉ quy định nội dung hiển thị và hành vi khi tap; hạ tầng gửi push nằm ngoài phạm vi.</p>
+
+  <div class="nt-layout">
+    <div>
+      <div class="home-bar">
+        <span class="ttl">Cloud Drive<small>Header ở home</small></span>
+        <span class="hb-icons">
+          <span class="round" aria-label="Chuông thông báo"><i data-icon="bell"></i><span class="badge" id="nt-badge">3</span></span>
+          <span class="round" aria-label="Profile / settings"><i data-icon="user"></i></span>
+        </span>
+      </div>
+      <div class="phone">
+        <div class="nt-head">
+          <span class="back">‹ Notifications</span>
+          <button type="button" class="linkbtn" id="nt-markall">Mark all as read</button>
+        </div>
+        <div id="nt-list"></div>
+      </div>
+      <div class="demo-ctl">
+        <span class="segc" role="group" aria-label="Ngôn ngữ">
+          <button type="button" id="lang-en" aria-pressed="true">EN</button>
+          <button type="button" id="lang-zh" aria-pressed="false">中文</button>
+        </span>
+        <button type="button" class="btn" id="nt-err">Giả lập lỗi tải</button>
+        <button type="button" class="btn" id="nt-reset">Đặt lại</button>
+      </div>
+      <div class="demo-log" id="nt-log" aria-live="polite">Thử bấm vào một thông báo hoặc “Mark all as read”.</div>
+      <p class="caption">Demo dựng từ nội dung spec, không phải design chính thức. Hôm nay giả định là 07/10/2026. Chip giữ tiếng Anh vì bản zh-CN của chip còn chờ xác nhận.</p>
+    </div>
+
+    <div>
+      <h3 style="margin-top:0">Đã đọc và chưa đọc · BR-22</h3>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Người dùng làm gì</th><th>Kết quả</th></tr></thead>
+          <tbody>
+            <tr><td>Chỉ mở màn Notifications</td><td>Không gì được đánh dấu đã đọc, badge giữ nguyên</td></tr>
+            <tr><td>Tap card chưa đọc</td><td>Mất chấm, badge −1, mở màn đích</td></tr>
+            <tr><td>Tap push</td><td>Thông báo tương ứng thành đã đọc, badge −1, mở thẳng màn đích không qua danh sách</td></tr>
+            <tr><td>Tap card đã đọc</td><td>Mở màn đích; trạng thái và badge không đổi</td></tr>
+            <tr><td><span class="ui">Mark all as read</span></td><td>Tất cả đã đọc, badge về 0, vẫn ở màn Notifications, link ẩn đi. Link chỉ hiện khi có ít nhất 1 chưa đọc</td></tr>
+            <tr><td>Đọc trên thiết bị khác</td><td>Thiết bị này cập nhật ở lần tải sau; không realtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Card và danh sách · US-19</h3>
+      <ul class="clean small">
+        <li>Header <span class="ui">‹ Notifications</span>, mới nhất ở trên. Back quay về Cloud Drive home.</li>
+        <li>Card gồm: icon theo màu của loại, title in đậm, giờ ở góc phải trên, body, và meta chip (chỉ loại liên quan gói; cảnh báo dung lượng không có chip).</li>
+        <li>Giờ: sự kiện hôm nay hiện giờ (<span class="ui">6:29 PM</span>); ngày trước hiện ngày (<span class="ui">30 Aug 2026</span>). “Hôm nay” theo múi giờ thiết bị.</li>
+        <li>Tải lỗi: hiện <span class="ui">Couldn't load notifications. Please try again later.</span> Không hiện dữ liệu cũ, không có nút Retry (ERR-08).</li>
+      </ul>
+      <h3>Push · US-22, BR-23</h3>
+      <div class="push" aria-label="Minh hoạ push notification">
+        <span class="app-ico"><i data-icon="cloud"></i></span>
+        <span><span class="pt">Plan expiring soon</span><br><span class="pb">Your plan expires in 2 days. Renew now to keep your storage without interruption.</span></span>
+      </div>
+      <ul class="clean small" style="margin-top:12px">
+        <li>Bắn khi app đang chạy nền hoặc đã đóng, song song với thông báo in-app.</li>
+        <li>Dùng icon của app (giống nhau cho cả 7 loại), không dùng icon theo loại.</li>
+        <li>Title và body giống hệt card in-app theo ngôn ngữ app. Không có bản rút gọn riêng cho push. Không có chip, không có giờ.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Bảy loại thông báo · BR-19, BR-20, BR-21</h3>
+  <div class="tbl-wrap">
+    <table class="tbl wide">
+      <thead><tr><th>Loại (title)</th><th>Nhóm</th><th>Bắn khi</th><th>Meta chip</th><th>Tap mở</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tname"><i class="ico t-ok" data-icon="check"></i>Plan renewed</span></td><td>Thành công</td><td>Gia hạn gói đang còn hạn thành công (cùng gói, không đứt quãng) · US-09</td><td class="mono small">✓ {Plan} · {period} · now expires {date}</td><td>My Subscription</td></tr>
+        <tr><td><span class="tname"><i class="ico t-ok" data-icon="up"></i>Plan upgraded</span><span class="pill warn" style="margin-top:6px">Chờ design</span></td><td>Thành công</td><td>Nâng cấp thành công · US-07</td><td class="mono small">▲ {Plan} · {period} · now {N}GB total</td><td>My Subscription</td></tr>
+        <tr><td><span class="tname"><i class="ico t-warn" data-icon="clock"></i>Plan expiring soon</span></td><td>Vòng đời gói</td><td>Mỗi mốc 7, 2, 1, 0 ngày trước hạn, lúc 7:00 sáng · BR-24</td><td class="mono small">{Plan} · {period} · expires {date}</td><td>My Subscription</td></tr>
+        <tr><td><span class="tname"><i class="ico t-brown" data-icon="box"></i>Plan archived</span></td><td>Vòng đời gói</td><td>Admin archive gói người dùng đang dùng · BR-26</td><td class="mono small">{Plan} · {period} · expires {date}</td><td>My Subscription</td></tr>
+        <tr><td><span class="tname"><i class="ico t-info" data-icon="info"></i>Plan price updated</span></td><td>Vòng đời gói</td><td>Admin đổi base price của đúng gói người dùng đang dùng · BR-25</td><td class="mono small">{Plan} · {period} · now {price}</td><td><b>View Available Plans</b></td></tr>
+        <tr><td><span class="tname"><i class="ico t-bad" data-icon="disk"></i>Storage is full</span><span class="pill warn" style="margin-top:6px">Chờ design</span></td><td>Cảnh báo dung lượng</td><td>Trạng thái chuyển sang Full, dùng 100% · BR-09</td><td class="muted">Không có</td><td>My Subscription</td></tr>
+        <tr><td><span class="tname"><i class="ico t-bad" data-icon="lock"></i>Storage is read-only</span><span class="pill warn" style="margin-top:6px">Chờ design</span></td><td>Cảnh báo dung lượng</td><td>Vào Over Quota: dùng vượt dung lượng, thường do gói trả phí hết hạn và quota về 5GB · BR-08</td><td class="muted">Không có</td><td>My Subscription</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="box">
+      <h4>Không bắn thông báo khi</h4>
+      <ul class="clean small">
+        <li>Mua gói lần đầu (US-03)</li>
+        <li>Gia hạn một gói đã hết hạn (US-10)</li>
+        <li>Giao dịch Pending hoặc Failed. Kết quả vẫn hiện trên màn checkout và được ghi lại như thường.</li>
+        <li>Hoạt động file/folder: upload xong, chia sẻ, dọn Recycle Bin</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>Quy tắc meta chip</h4>
+      <ul class="clean small">
+        <li>Dùng lại mẫu chip đã có ở My Subscription và Payment History (icon + Plan · period · status). Không thiết kế chip mới.</li>
+        <li>“Plan expiring soon”: {date} là ngày hết hạn thật, giống nhau ở cả 4 lần gửi.</li>
+        <li>“Plan price updated”: {price} là base price mới cho đúng billing cycle của người dùng.</li>
+        <li>Ví dụ: gia hạn gói Standard theo năm, hạn mới 23/12/2027 → chip <span class="ui">✅ Standard · 1 × Yearly · now expires 23/12/2027</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Lịch nhắc “Plan expiring soon” · BR-24</h3>
+  <div class="box">
+    <p class="small muted" style="margin:0">Ví dụ gói hết hạn ngày 09/10/2026. Bốn lần gửi riêng biệt, không phải gửi một lần và không lặp hằng ngày. Gửi lúc 7:00 sáng theo múi giờ của người dùng (Backend/ops cấu hình được, người dùng không chỉnh được).</p>
+    <div class="sched" aria-hidden="true">
+      <span class="pt" style="left:0"></span><span class="pt" style="left:71.43%"></span><span class="pt" style="left:85.71%"></span><span class="pt end" style="left:100%"></span>
+      <span class="lb t l" style="left:0">D-7</span><span class="lb t" style="left:71.43%">D-2</span><span class="lb t" style="left:85.71%">D-1</span><span class="lb t r" style="left:100%">D-0</span>
+      <span class="lb b l" style="left:0">02/10<br>07:00</span><span class="lb b" style="left:71.43%">07/10<br>07:00</span><span class="lb b" style="left:85.71%">08/10<br>07:00</span><span class="lb b r" style="left:100%">09/10<br>07:00</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl mid">
+        <thead><tr><th>Mốc</th><th>Body (EN)</th><th>Body (zh-CN)</th></tr></thead>
+        <tbody>
+          <tr><td class="num">D-7</td><td>Your plan expires in 7 days. Renew now to keep your storage without interruption.</td><td lang="zh-CN">您的套餐将在 7 天后到期,请立即续订以免存储服务中断。</td></tr>
+          <tr><td class="num">D-2</td><td>Your plan expires in 2 days. Renew now to keep your storage without interruption.</td><td lang="zh-CN">您的套餐将在 2 天后到期,请立即续订以免存储服务中断。</td></tr>
+          <tr><td class="num">D-1</td><td>Your plan expires tomorrow. Renew now to keep your storage without interruption.</td><td lang="zh-CN">您的套餐将于明天到期,请立即续订以免存储服务中断。</td></tr>
+          <tr><td class="num">D-0</td><td>Your plan expires today. Renew now to keep your storage without interruption.</td><td lang="zh-CN">您的套餐今天到期,请立即续订以免存储服务中断。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="clean small" style="margin-top:12px">
+      <li>Title giống nhau ở mọi mốc; chỉ phần ngày trong body thay đổi.</li>
+      <li>Gia hạn hoặc nâng cấp thành công giữa chừng: huỷ các lần gửi còn lại của hạn cũ, đặt lại 4 mốc theo hạn mới, và bắn “Plan renewed” hoặc “Plan upgraded” ngay (EDGE-22).</li>
+      <li>Chỉ nhắc. Không có hành động gì thì cũng không tự gia hạn (BR-03).</li>
+    </ul>
+  </div>
+
+  <h3>Thông báo do Admin gây ra · US-25</h3>
+  <div class="grid2">
+    <div class="box">
+      <h4><span class="tname"><i class="ico t-brown" data-icon="box"></i>Plan archived · BR-26</span></h4>
+      <ul class="clean small">
+        <li>Admin archive gói → gói thành Discontinued: dùng tiếp tới hết hạn nhưng không gia hạn được.</li>
+        <li>Gửi <b>ngay</b> cho mọi người dùng đang có subscription active của gói đó.</li>
+        <li>Discontinued là cách diễn đạt, không phải một trạng thái gói mới.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4><span class="tname"><i class="ico t-info" data-icon="info"></i>Plan price updated · BR-25</span></h4>
+      <ul class="clean small">
+        <li>Chỉ khi Admin lưu thay đổi <b>base price</b>.</li>
+        <li>Chỉ gửi người dùng có subscription active, không Discontinued, của <b>đúng</b> gói đó (cùng tier và cùng billing cycle).</li>
+        <li>Không gửi: gói khác (kể cả cùng tier khác cycle), không có gói, gói đã hết hạn, gói Discontinued, người chỉ đang xem.</li>
+        <li>Đổi tên, mô tả, dung lượng, badge, Recommended, Active, khuyến mãi, hoặc lưu mà giá không đổi: không gửi (EDGE-24).</li>
+        <li>Mỗi lần lưu đổi giá gửi một lần; không gộp nhiều lần đổi (EDGE-23).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Nội dung thông báo EN và zh-CN · BR-20</h3>
+  <div class="tbl-wrap">
+    <table class="tbl wide">
+      <thead><tr><th>Loại</th><th>Body (EN)</th><th>Title · Body (zh-CN)</th></tr></thead>
+      <tbody>
+        <tr><td class="rowhead">Plan renewed</td><td>Your renewal was successful. Enjoy uninterrupted storage for another cycle.</td><td lang="zh-CN"><b>套餐已续订</b><br>续订成功,尽享不间断的存储空间。</td></tr>
+        <tr><td class="rowhead">Plan expiring soon</td><td class="muted">Theo từng mốc, xem bảng lịch nhắc ở trên</td><td lang="zh-CN"><b>套餐即将到期</b></td></tr>
+        <tr><td class="rowhead">Plan archived</td><td>Your plan won't be renewable after it expires. You can keep using it until then.</td><td lang="zh-CN"><b>套餐已归档</b><br>您的套餐到期后将无法续订,在此之前您仍可继续使用。</td></tr>
+        <tr><td class="rowhead">Plan price updated</td><td>The price for your current plan has changed. Your active cycle is not affected.</td><td lang="zh-CN"><b>套餐价格已更新</b><br>您当前套餐的价格已变更,本计费周期不受影响。</td></tr>
+        <tr><td class="rowhead">Plan upgraded</td><td>Your plan was upgraded to {Plan}. The extra storage is available now.</td><td lang="zh-CN"><b>套餐已升级</b><br>您的套餐已升级为 {Plan},额外存储空间现已可用。</td></tr>
+        <tr><td class="rowhead">Storage is full</td><td>You've used 100% of your storage. Free up space or upgrade your plan.</td><td lang="zh-CN"><b>存储空间已满</b><br>您的存储空间已使用 100%,请清理空间或升级套餐。</td></tr>
+        <tr><td class="rowhead">Storage is read-only</td><td>You're over your storage limit. Uploads, sync and new folders are disabled until you free up space or upgrade.</td><td lang="zh-CN"><b>存储空间已设为只读</b><br>您的存储空间已超出限额,上传、同步和新建文件夹功能已被禁用,直至您释放空间或升级套餐。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin-top:10px">Toàn bộ title/body zh-CN còn chờ người bản ngữ review. Icon và copy in-app của Plan upgraded, Storage full, Over-limit còn chờ design.</p>
+</section>
+
+<!-- ============ REFERENCE ============ -->
+<section id="ref">
+  <p class="eyebrow">FS §2 · §3 · §4</p>
+  <h2>Tra cứu theo mã</h2>
+  <p class="sec-intro">Toàn bộ User Story, Business Rule, Error và Edge case, viết gọn. Gõ để lọc; tìm được cả khi gõ không dấu.</p>
+  <label class="search" for="q">
+    <i data-icon="search"></i>
+    <input id="q" type="search" placeholder="Ví dụ: BR-10, gia han, badge, Over Quota" autocomplete="off">
+    <span class="cnt" id="q-cnt"></span>
+  </label>
+
+  <div class="ref-block">
+    <h3>User Stories <span class="muted small">(26)</span></h3>
+    <div class="tbl-wrap"><table class="tbl wide" id="t-us"><thead><tr><th style="width:84px">Mã</th><th>Câu chuyện và điểm chính</th><th style="width:70px">Mức</th><th style="width:210px">Liên quan</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="ref-block">
+    <h3>Business Rules <span class="muted small">(27)</span></h3>
+    <div class="tbl-wrap"><table class="tbl mid" id="t-br"><thead><tr><th style="width:84px">Mã</th><th>Quy tắc</th><th style="width:190px">Áp dụng cho</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="ref-block">
+    <h3>Error cases <span class="muted small">(8)</span></h3>
+    <div class="tbl-wrap"><table class="tbl wide" id="t-err"><thead><tr><th style="width:84px">Mã</th><th>Tình huống</th><th>Hệ thống</th><th>UI / thông điệp</th><th>Khôi phục</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="ref-block">
+    <h3>Edge cases <span class="muted small">(30)</span></h3>
+    <div class="tbl-wrap"><table class="tbl mid" id="t-edge"><thead><tr><th style="width:90px">Mã</th><th>Tình huống</th><th>Hành vi mong đợi</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============ NFR ============ -->
+<section id="nfr">
+  <p class="eyebrow">FS §3.4 · §5</p>
+  <h2>Yêu cầu phi chức năng và giới hạn</h2>
+  <div class="grid2">
+    <div class="box"><h4>Hiệu năng</h4><p class="small muted">Danh sách gói, thông tin dung lượng, trạng thái gói: mỗi loại dưới 2 giây trong điều kiện bình thường.</p></div>
+    <div class="box"><h4>Bảo mật</h4><p class="small muted">Người dùng chỉ truy cập được gói, giao dịch, usage và file của chính mình. API mua, gia hạn, nâng cấp bắt buộc xác thực. Quyền Admin thuộc module khác.</p></div>
+    <div class="box"><h4>Độ tin cậy và nhất quán</h4><p class="small muted">Kiểm tra quota phía server. API mua, nâng cấp, gia hạn và callback thanh toán phải idempotent. Không để xảy ra: trả tiền xong mà không có gói, kích hoạt hai lần, cộng quota hai lần. Kích hoạt chỉ dựa trên trạng thái thanh toán phía server.</p></div>
+    <div class="box"><h4>Thời gian</h4><p class="small muted">Xét hết hạn: đồng hồ server, không tin đồng hồ máy. Hiển thị ngày giờ: múi giờ thiết bị, không UTC. Nhắc hết hạn: 7:00 sáng giờ địa phương. “Hôm nay” trên timestamp: theo múi giờ thiết bị.</p></div>
+    <div class="box"><h4>Ngôn ngữ</h4><p class="small muted">Tiếng Anh (gốc) và tiếng Trung giản thể cho mọi chuỗi: danh sách gói, màn xác nhận, cảnh báo đầy, thông báo hết hạn, card và push. Team Design phụ trách bản tiếng Trung; spec không tự dịch.</p></div>
+    <div class="box"><h4>Tương thích và log</h4><p class="small muted">Giả định ngang với Cloud Drive hiện tại (iOS và Android). Ghi log tối thiểu: mua, nâng cấp, gia hạn, hết hạn, kèm mã thanh toán và thay đổi quyền lợi.</p></div>
+  </div>
+
+  <h3>Giới hạn và ngưỡng</h3>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Mục</th><th>Giá trị</th></tr></thead>
+      <tbody>
+        <tr><td>Dung lượng gói tối thiểu</td><td>&gt; 0 (ví dụ 20GB, 50GB, 100GB, 500GB)</td></tr>
+        <tr><td>Giá tối thiểu</td><td>≥ 0, theo cấu hình hệ thống</td></tr>
+        <tr><td>Thời hạn ví dụ</td><td class="num">30 / 90 / 365 ngày</td></tr>
+        <tr><td>Ngưỡng cảnh báo dung lượng</td><td>80% running low, 90% almost full, 100% full. Khuyến nghị, nên cấu hình được</td></tr>
+        <tr><td>Mốc nhắc hết hạn</td><td>7 / 2 / 1 / 0 ngày trước hạn, 7:00 sáng giờ địa phương</td></tr>
+        <tr><td>Số loại thông báo</td><td class="num">7</td></tr>
+        <tr><td>Hiện “Mark all as read”</td><td>Khi có ≥ 1 thông báo chưa đọc</td></tr>
+        <tr><td>Thời gian lưu / số lượng tối đa của danh sách thông báo</td><td><span class="pill warn">Chờ xác nhận</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ OPEN ============ -->
+<section id="open">
+  <p class="eyebrow">Cần chốt trước khi hoàn thiện</p>
+  <h2>Còn mở</h2>
+  <h3 style="margin-top:8px">FS đã đánh dấu đang chờ</h3>
+  <ul class="pend">
+    <li><span class="pill warn">Chờ design</span><span>Icon và copy in-app cho Plan upgraded, Storage full, Over-limit/read-only.</span></li>
+    <li><span class="pill warn">Chờ design</span><span>Empty state khi chưa có thông báo nào (EDGE-26).</span></li>
+    <li><span class="pill info">Chờ review</span><span>Title và body zh-CN, chờ người bản ngữ.</span></li>
+    <li><span class="pill">Chờ xác nhận</span><span>Bản zh-CN của meta chip.</span></li>
+    <li><span class="pill">Chờ xác nhận</span><span>Thời gian lưu và số lượng tối đa của danh sách thông báo (EDGE-27).</span></li>
+    <li><span class="pill">Chờ xác nhận</span><span>Title/body dài hơn card hiển thị được (EDGE-28).</span></li>
+    <li><span class="pill">Chờ xác nhận</span><span>Accessibility cho phần thông báo (§5.5).</span></li>
+    <li><span class="pill">Chưa có</span><span>Thông điệp cho người dùng khi thanh toán thất bại và khi timeout (ERR-01, ERR-02). Target release đang để N/A.</span></li>
+  </ul>
+  <h3>Điểm trong FS gốc nên làm rõ</h3>
+  <ul class="pend">
+    <li><span class="pill bad">Câu bị cụt</span><span>Ví dụ ở US-06 AC-04 đang là “Package 200GB / 30 days / 164.38 ≥ $30)”. Có vẻ ý là gói 200GB / 30 ngày / $30 bị disabled vì Credit $164.38 ≥ $30.</span></li>
+    <li><span class="pill bad">Mâu thuẫn nhẹ</span><span>US-17 AC-02 và EDGE-09 nói Used ≤ Available là “về bình thường”, nhưng BR-09 coi Used = Available là Full (vẫn chặn upload). Nên ghi rõ: thoát Over Quota nhưng có thể vẫn ở Full.</span></li>
+    <li><span class="pill">Thiếu</span><span>US-11 liệt kê các thao tác được phép khi Full nhưng không nhắc tới Gia hạn, trong khi US-16 (Over Quota) có. Gia hạn không làm tăng dữ liệu nên nhiều khả năng vẫn được; nên ghi rõ.</span></li>
+    <li><span class="pill">Đặt tên</span><span>Package Management (User Story) và My Subscription (Notifications) có vẻ là cùng một màn. Nên chốt một tên.</span></li>
+    <li><span class="pill">Đánh số</span><span>Không có EDGE-14; danh sách nhảy từ EDGE-13 sang EDGE-15.</span></li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- icons ---------- */
+  var ICONS = {
+    check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    box:'<rect x="3.5" y="4.5" width="17" height="4.5" rx="1"/><path d="M5 9v9.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/>',
+    info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.2"/>',
+    up:'<path d="M12 19V6"/><path d="M6.5 11.5L12 6l5.5 5.5"/>',
+    disk:'<ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/>',
+    lock:'<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+    bell:'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+    user:'<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
+    cloud:'<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7 9.5a4.5 4.5 0 0 0 0 9z"/>',
+    search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>'
+  };
+  function svg(k, s){ s = s || 16; return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[k]||"")+'</svg>'; }
+  function fillIcons(root){
+    (root||document).querySelectorAll("i[data-icon]").forEach(function(el){
+      var big = el.classList.contains("ico");
+      el.innerHTML = svg(el.getAttribute("data-icon"), big ? 15 : 18);
+      el.style.fontStyle = "normal";
+      if(!big){ el.style.display = "inline-grid"; el.style.color = "inherit"; }
+    });
+  }
+
+  /* ---------- reference data ---------- */
+  var U = function(s){ return '<span class="ui">'+s+'</span>'; };
+  var US = [
+    ["EPIC-01","Khám phá và mua gói"],
+    ["US-01","Xem danh sách gói","Must","Mỗi gói hiện Name, Capacity, Price, Currency, Validity; có thể kèm nhãn Current, Recommended, Upgrade. Gói Inactive không mua được. Không có gói hoặc Subscription tắt thì bấm "+U("Upgrade now")+" hiện "+U("Coming soon")+".","BR-02 BR-17 · EDGE-01 EDGE-02 EDGE-16"],
+    ["US-02","Xem dung lượng đang dùng","Must","Used, Total, Available, %, gói hiện tại, ngày hết hạn. Số liệu từ Backend, Mobile không tự tính.","BR-01 BR-05"],
+    ["US-03","Mua gói","Must","Màn xác nhận (Package, Capacity, Amount theo token, Validity). Kiểm tra trước thanh toán. Vào checkout có sẵn. Success mới kích hoạt; Failed hoặc Pending giữ nguyên quota.","BR-02 BR-04 BR-14 BR-15 · ERR-01 ERR-02 ERR-03 EDGE-01 EDGE-02 EDGE-03 EDGE-11 EDGE-13"],
+    ["EPIC-02","Quản lý gói hiện tại"],
+    ["US-04","Xem gói hiện tại","Must","Package Management: Name, Status, Capacity, Used, Available, Start, Expiration, Remaining, Upgrade, Renew khi được phép. Không còn gói lớn hơn thì Upgrade disabled kèm "+U("You're already on our largest plan.")+".","BR-01 BR-05 BR-10 · EDGE-31"],
+    ["US-05","Xem trạng thái gói","Must","Một trong Active, Expiring Soon, Expired, đúng như Backend trả về. Backend tính hết hạn, không phải Mobile.","BR-01"],
+    ["EPIC-03","Nâng cấp gói"],
+    ["US-06","Xem các gói nâng cấp được","Must","Chỉ gói qua Check 1 (lớn hơn, hoặc cùng dung lượng mà dài hơn). Ẩn gói hiện tại và gói nhỏ hơn. Giá ≤ Credit thì hiện disabled kèm lý do. Không gói nào qua Check 1 thì khoá Upgrade.","BR-10 BR-16 · EDGE-29 EDGE-31"],
+    ["US-07","Nâng cấp gói","Must","Màn xác nhận (Current, New, Capacity, Due Today, New Expiration). Checkout có sẵn. Success: đổi gói, chu kỳ mới từ hôm nay, file và usage giữ nguyên. Backend kiểm tra lại BR-10 khi submit; trượt thì từ chối trước khi thu tiền.","BR-04 BR-10 BR-11 BR-14 BR-15 BR-16 · ERR-01 ERR-02 ERR-03 EDGE-04 EDGE-11 EDGE-13 EDGE-30"],
+    ["EPIC-04","Gia hạn thủ công"],
+    ["US-08","Gia hạn gói","Must","Hiện nút Renew khi được phép. Không bao giờ tự trừ tiền. Màn xác nhận (Package, Renewal Price, Validity, hạn hiện tại, hạn mới). Success mới áp dụng.","BR-03 BR-14 BR-15 · EDGE-05 EDGE-10 EDGE-11 EDGE-12 EDGE-13"],
+    ["US-09","Gia hạn trước khi hết hạn","Must","Hạn mới = Hạn cũ + Validity. Ví dụ: hạn 30/09/2026, gói 30 ngày, gia hạn ngày 20/09 → 30/10/2026.","BR-12"],
+    ["US-10","Gia hạn gói đã hết hạn","Must","Hạn mới = Thời điểm kích hoạt + Validity. Ví dụ: hết hạn 30/09, gia hạn 05/10, gói 30 ngày → 04/11.","BR-13"],
+    ["EPIC-05","Xử lý đầy dung lượng"],
+    ["US-11","Dung lượng chạm quota","Must","Trạng thái thành Full. Vẫn xem, tải, xoá, quản lý, xem gói, nâng cấp. Chặn upload và mọi thao tác làm tăng dung lượng.","BR-06 BR-07 BR-09 · EDGE-06"],
+    ["US-12","Upload vượt chỗ trống","Must","Từ chối trước khi lưu, popup "+U("Not enough space…")+" với Upgrade, Manage storage và cách đóng. Không tạo file dở. Batch vượt thì từ chối cả batch.","BR-07 BR-10 BR-18 · ERR-04 ERR-05 EDGE-15 EDGE-20 EDGE-31"],
+    ["US-13","Cảnh báo sắp đầy","Should","Ngưỡng 80%, 90%, 100%; nên cấu hình được. Cảnh báo không chặn thao tác bình thường.","Không có"],
+    ["EPIC-06","Gói hết hạn"],
+    ["US-14","Sắp hết hạn","Must","“Plan expiring soon” ở 7, 2, 1, 0 ngày trước hạn, lúc 7:00 sáng. Tap mở My Subscription. Không tự gia hạn.","BR-03 BR-20 BR-21 BR-24 · EDGE-22"],
+    ["US-15","Gói hết hạn","Must","Backend chuyển gói sang Expired khi tới giờ hết hạn. Dung lượng gói không còn tính vào Available.","BR-01 · EDGE-07 EDGE-08"],
+    ["US-16","Dùng vượt quota sau khi hết hạn","Must","Không xoá file. Over Quota: xem, tải, xoá, quản lý, gia hạn, mua và nâng cấp được; chặn mọi thao tác làm tăng dung lượng.","BR-06 BR-07 BR-08 · EDGE-06"],
+    ["US-17","Thoát Over Quota","Must","Gia hạn hoặc mua đủ dung lượng, hoặc xoá bớt, thì về bình thường. Backend tính lại sau mỗi thay đổi quota hoặc usage.","BR-08 · EDGE-09"],
+    ["EPIC-07","Thông báo"],
+    ["US-18","Chuông ở Cloud Drive home","Must","Chuông cạnh icon profile/settings, badge là số chưa đọc. Mở màn Notifications không làm giảm badge.","BR-22 · EDGE-21"],
+    ["US-19","Danh sách thông báo","Must","Header "+U("‹ Notifications")+", mới nhất ở trên. Card: icon, title, giờ, body, chip. Chấm cho chưa đọc. Mở màn không đánh dấu đã đọc. Tải lỗi: hiện thông điệp, không Retry.","BR-20 BR-22 BR-27 · ERR-08 EDGE-21 EDGE-26 EDGE-27 EDGE-28"],
+    ["US-20","Mở một thông báo","Must","Tap: thành đã đọc, badge −1. Mở My Subscription; riêng “Plan price updated” mở View Available Plans. Card đã đọc thì chỉ mở màn.","BR-21 BR-22 · EDGE-25"],
+    ["US-21","Đánh dấu tất cả đã đọc","Must","Link "+U("Mark all as read")+" chỉ hiện khi có chưa đọc. Tap: tất cả đã đọc, badge về 0, vẫn ở màn hiện tại, link ẩn.","BR-22"],
+    ["US-22","Nhận và mở push","Must","App chạy nền hoặc đã đóng thì có push kèm in-app. Icon app, cùng title/body, không chip, không giờ. Tap mở thẳng màn đích và đánh dấu đã đọc.","BR-20 BR-21 BR-22 BR-23"],
+    ["US-23","Thông báo gia hạn, nâng cấp thành công","Must","“Plan renewed” (chip là hạn mới), “Plan upgraded” (chip là tổng GB). Mua lần đầu, gia hạn gói đã hết hạn, Pending hoặc Failed thì không có thông báo.","BR-19 BR-20 · EDGE-22"],
+    ["US-24","Nhắc sắp hết hạn","Must","Bốn lần gửi riêng ở 7, 2, 1, 0 ngày, 7:00 sáng. Title giữ nguyên, body đổi theo mốc. Gia hạn hoặc nâng cấp thì đặt lại lịch theo hạn mới.","BR-03 BR-20 BR-24 · EDGE-22"],
+    ["US-25","Thông báo do Admin","Must","Archive gói → “Plan archived” ngay. Đổi base price → “Plan price updated” chỉ cho người dùng đúng gói. Đổi field khác → không gửi.","BR-20 BR-25 BR-26 · EDGE-23 EDGE-24"],
+    ["US-26","Cảnh báo dung lượng","Must","Chuyển sang Full → “Storage is full”. Vào Over Quota → “Storage is read-only”. Không có chip.","BR-08 BR-09 BR-19 BR-20"]
+  ];
+  var BR = [
+    ["BR-01","Backend là nguồn sự thật cho gói hiện tại, quota, usage, trạng thái, ngày bắt đầu và hết hạn, điều kiện nâng cấp, giá. Mobile không tự tính, không ghi đè.","Mọi luồng"],
+    ["BR-02","Chỉ gói Active mới mua được. Gói bị tắt sau khi người dùng đã mua thì người đó vẫn dùng tới hết hạn.","US-01, US-03"],
+    ["BR-03","Không tự gia hạn, không tự trừ tiền, không tự kéo dài hạn. Gia hạn cần người dùng chủ động và xác nhận. Hệ thống được phép nhắc.","US-08, US-14, US-24"],
+    ["BR-04","Gói chỉ có hiệu lực khi Backend xác nhận thanh toán thành công. Mới khởi tạo thanh toán thì chưa kích hoạt.","US-03, US-07"],
+    ["BR-05","Available Storage là dung lượng của gói hiện tại, đã gồm phần free, không cộng dồn (gói 200GB là 200GB, không phải 205GB). Không có gói trả phí thì chỉ có free base.","US-02, US-04"],
+    ["BR-06","File đã lưu vẫn tính vào usage dù gói đã hết hạn. Hết hạn không làm mất quyền sở hữu file.","US-11, US-16"],
+    ["BR-07","Hết dung lượng hay hết hạn đều không tự xoá file. Chỉ hạn chế ghi thêm.","US-11, US-12, US-16"],
+    ["BR-08","Used > Available thì tài khoản thành Over Quota: đọc và xoá vẫn được, các thao tác ghi làm tăng dung lượng bị chặn.","US-16, US-17"],
+    ["BR-09","Used ≥ Available thì chặn upload mới.","US-11"],
+    ["BR-10","Gói nâng cấp hợp lệ khi (1) lớn hơn, hoặc cùng dung lượng mà thời hạn dài hơn, và (2) giá > Credit. Trượt (1) thì ẩn; qua (1) trượt (2) thì hiện disabled. Không gói nào qua (1) thì mọi nút Upgrade disabled kèm "+U("You're already on our largest plan.")+" Không hỗ trợ hạ gói; không bao giờ phải hoàn tiền.","US-04, US-06, US-07, US-12"],
+    ["BR-11","Nâng cấp không xoá hay di chuyển file. Usage giữ nguyên, chỉ dung lượng tổng tăng.","US-07"],
+    ["BR-12","Gia hạn khi còn hạn: Hạn mới = Hạn cũ + Validity. Giữ nguyên ngày còn lại.","US-09"],
+    ["BR-13","Gia hạn khi đã hết hạn: Hạn mới = Thời điểm kích hoạt + Validity.","US-10"],
+    ["BR-14","Mỗi giao dịch (mua, nâng cấp, gia hạn) lưu snapshot: Package ID, Name, Capacity, Price, Currency, Validity, Purchase Time. Admin sửa gói sau đó không làm đổi lịch sử.","US-03, US-07, US-08"],
+    ["BR-15","Chặn kích hoạt, gia hạn, nâng cấp hoặc trừ tiền trùng do request lặp (bấm hai lần, callback trùng). Hỗ trợ idempotency.","US-03, US-07, US-08"],
+    ["BR-16","Nâng cấp bắt đầu chu kỳ mới đủ thời hạn từ hôm nay. Credit = Giá × Ngày còn / Ngày của chu kỳ; DueToday = Giá mới − Credit (> 0); Hạn mới = Ngày thanh toán + Validity (Monthly 30, Yearly 365 ngày). Hạn cũ bị thay hẳn. Dùng lại công thức của Change Plan.","US-06, US-07"],
+    ["BR-17","Không có gói để mua hoặc Admin tắt Subscription: bấm "+U("Upgrade now")+" hiện "+U("Coming soon")+", không mua được. Gói đang active vẫn dùng tới hết hạn.","US-01"],
+    ["BR-18","Upload hoặc batch có tổng kích thước lớn hơn phần còn trống thì bị từ chối kèm popup so sánh cần bao nhiêu và còn bao nhiêu, kể cả khi chưa Full.","US-12"],
+    ["BR-19","Đúng 7 loại thông báo, mỗi loại một trigger: Plan renewed, Plan upgraded, Plan expiring soon, Plan archived, Plan price updated, Storage full, Over-limit/read-only. Không sự kiện nào khác bắn thông báo.","US-23 → US-26"],
+    ["BR-20","Mỗi loại có icon, title, body (EN và zh-CN) và meta chip cố định; card in-app và push dùng chung title/body.","US-19, US-22 → US-26"],
+    ["BR-21","Tap thông báo (in-app hoặc push) mở My Subscription; riêng “Plan price updated” mở View Available Plans. Tap push mở thẳng, không qua danh sách.","US-20, US-22"],
+    ["BR-22","Chưa đọc có chấm và được đếm vào badge. Chỉ thành đã đọc khi tap (in-app hoặc push) hoặc bấm "+U("Mark all as read")+". Backend giữ trạng thái; thiết bị khác thấy ở lần tải sau.","US-18 → US-22"],
+    ["BR-23","App chạy nền hoặc đã đóng thì mỗi thông báo kèm một push: icon app, cùng title/body với card, không chip, không giờ.","US-22"],
+    ["BR-24","“Plan expiring soon” gửi ở 7, 2, 1, 0 ngày trước hạn, lúc 7:00 sáng giờ địa phương, luôn tính theo hạn hiện tại. Gia hạn hoặc nâng cấp giữa chừng thì huỷ lịch cũ, đặt lại theo hạn mới.","US-14, US-24"],
+    ["BR-25","“Plan price updated” chỉ khi đổi base price, chỉ gửi người dùng có subscription active, không Discontinued, của đúng gói (tier và billing cycle). Mỗi lần lưu gửi một lần.","US-25"],
+    ["BR-26","“Plan archived” gửi ngay khi Admin archive gói, tới mọi người dùng đang có subscription active của gói đó.","US-25"],
+    ["BR-27","Timestamp: sự kiện hôm nay hiện giờ; ngày trước hiện ngày tuyệt đối.","US-19"]
+  ];
+  var ERR = [
+    ["ERR-01","Thanh toán thất bại","Gói giữ nguyên","Chưa có trong spec","Bấm "+U("Try again")+" quay lại Confirm Transaction với lựa chọn cũ (như Subscribe & Payment), hoặc mua/nâng cấp lại"],
+    ["ERR-02","Thanh toán timeout","Chưa kích hoạt tới khi nhận được trạng thái thanh toán đã xác nhận","Chưa có trong spec","Mobile kiểm tra hoặc chờ trạng thái đã xác nhận"],
+    ["ERR-03","Mất mạng giữa lúc thanh toán","—","—","Mobile kiểm tra trạng thái giao dịch khi có mạng lại"],
+    ["ERR-04","Đầy dung lượng giữa lúc upload","Upload thất bại an toàn, không tạo dữ liệu hỏng",U("Not enough space. This upload needs {needed}, but you only have {available} left.")+" + Upgrade / Manage storage","Giải phóng qua Manage storage, nâng cấp, hoặc chọn ít file hơn"],
+    ["ERR-05","Chỗ trống nhỏ hơn kích thước file (BR-18)","Từ chối trước khi hoàn tất","Như ERR-04","Như ERR-04"],
+    ["ERR-06","Hết phiên đăng nhập khi đang mua, gia hạn, nâng cấp","Chưa ký: không thu tiền. Đã ký: Backend vẫn kích hoạt khi thanh toán xác nhận (BR-04)","Màn Login","Đăng nhập lại và quay về màn gói"],
+    ["ERR-07","App thấp hơn version tối thiểu","Không cho mua, gia hạn, nâng cấp; server vẫn kiểm tra quota với mọi version","Prompt cập nhật app","Cập nhật app"],
+    ["ERR-08","Không tải được danh sách thông báo (lỗi mạng, timeout, lỗi API, mất mạng)","Không hiện dữ liệu cũ hoặc dở dang",U("Couldn't load notifications. Please try again later.")+" Không có nút Retry","Bấm ‹ back rồi mở lại Notifications"]
+  ];
+  var EDGE = [
+    ["EDGE-01","Gói bị tắt sau khi người dùng đã mở màn mua","Backend từ chối; Mobile tải lại thông tin gói"],
+    ["EDGE-02","Giá gói đổi trước khi xác nhận","Hiện giá mới và yêu cầu xác nhận lại"],
+    ["EDGE-03","Bấm Purchase nhiều lần","Chặn giao dịch trùng (BR-15)"],
+    ["EDGE-04","Bấm Upgrade nhiều lần","Chặn nâng cấp trùng (BR-15)"],
+    ["EDGE-05","Bấm Renew nhiều lần","Chặn gia hạn trùng (BR-15)"],
+    ["EDGE-06","Usage vượt quota sau khi hết hạn","Giữ file, chặn ghi mới (BR-07, BR-08)"],
+    ["EDGE-07","Gói hết hạn khi app đang mở","Trạng thái Backend được ưu tiên; Mobile tải lại"],
+    ["EDGE-08","Gói hết hạn giữa lúc upload","Backend áp quy tắc dung lượng ở thời điểm ghi/commit cuối"],
+    ["EDGE-09","Xoá file khi đang Over Quota","Tính lại usage; gỡ hạn chế khi usage ≤ quota"],
+    ["EDGE-10","Gia hạn thành công nhưng người dùng đóng app","Backend vẫn kích hoạt; Mobile lấy trạng thái mới ở lần mở sau"],
+    ["EDGE-11","Payment provider gửi callback trùng","Chỉ kích hoạt một lần (BR-15)"],
+    ["EDGE-12","Gia hạn một gói không còn bán","Backend áp điều kiện gia hạn đã cấu hình và trả lỗi phù hợp"],
+    ["EDGE-13","Tài khoản bị hạn chế giữa lúc mua","Chặn hoặc xử lý theo quy tắc đủ điều kiện của tài khoản"],
+    ["EDGE-15","Kích thước file client báo khác thực tế","Dùng kích thước thực đã lưu để tính quota"],
+    ["EDGE-16","Không có gói, hoặc Admin tắt Subscription, khi bấm "+U("Upgrade now"),"Hiện "+U("Coming soon")+"; không mua được (BR-17)"],
+    ["EDGE-17","Mạng chậm khi mua, gia hạn, nâng cấp","Hiện loading, disable nút Purchase/Upgrade/Renew khi đang gửi; không có timeout riêng ngoài ERR-02"],
+    ["EDGE-18","Không xác định được trạng thái thanh toán (mạng, explorer, payment provider lỗi)","Giữ Pending ("+U("Check status")+"); chưa kích hoạt tới khi Backend xác nhận (BR-04)"],
+    ["EDGE-19","Người dùng chưa có lịch sử mua","Dùng lại empty state của Payment History"],
+    ["EDGE-20","Batch có tổng vượt chỗ trống, dù vài file lẻ vẫn vừa","Từ chối cả batch; không tự cắt bớt để upload phần vừa (BR-18)"],
+    ["EDGE-21","Thông báo được đọc trên thiết bị khác","Danh sách và badge ở thiết bị này cập nhật ở lần tải sau; không realtime (BR-22)"],
+    ["EDGE-22","Gia hạn hoặc nâng cấp khi còn lượt “Plan expiring soon” chưa gửi","Huỷ các lượt của hạn cũ, đặt lại 4 mốc theo hạn mới; bắn “Plan renewed” hoặc “Plan upgraded” ngay (BR-24)"],
+    ["EDGE-23","Admin đổi giá cùng một gói nhiều lần","Mỗi lần lưu gửi một thông báo cho mỗi người dùng bị ảnh hưởng; không gộp (BR-25)"],
+    ["EDGE-24","Admin lưu mà giá không đổi, hoặc chỉ đổi field khác","Không gửi thông báo (BR-25)"],
+    ["EDGE-25","Tap card đã đọc","Mở màn đích (BR-21); trạng thái và badge không đổi"],
+    ["EDGE-26","Chưa có thông báo nào (empty state)","<span class=\"pill warn\">Chờ design</span>"],
+    ["EDGE-27","Thông báo tích luỹ lâu (thời gian lưu, giới hạn)","<span class=\"pill\">Chờ xác nhận</span>"],
+    ["EDGE-28","Title/body dài hơn card hiển thị được","<span class=\"pill\">Chờ xác nhận</span>"],
+    ["EDGE-29","Giá gói nâng cấp ≤ Credit của gói hiện tại","Hiện disabled kèm lý do, không chọn được. Credit giảm dần nên lần sau có thể bấm được (BR-10)"],
+    ["EDGE-30","Giá hoặc gói hiện tại đổi giữa lúc tải danh sách và lúc submit, khiến gói đã chọn không còn qua BR-10","Backend từ chối trước khi yêu cầu thanh toán, không thu tiền; Mobile tải lại danh sách"],
+    ["EDGE-31","Không gói nào qua Check 1 (đang có dung lượng lớn nhất và thời hạn dài nhất)","Mọi nút Upgrade (Package Management, popup thiếu chỗ) disabled kèm "+U("You're already on our largest plan.")+"; Admin thêm gói lớn hơn thì lần tải sau bấm được"]
+  ];
+
+  function td(html, cls){ return "<td"+(cls?' class="'+cls+'"':"")+">"+html+"</td>"; }
+  var tb;
+  tb = document.querySelector("#t-us tbody");
+  tb.innerHTML = US.map(function(r){
+    if(r.length === 2) return '<tr class="grp" data-grp="'+r[0]+'"><th colspan="4">'+r[0]+" · "+r[1]+"</th></tr>";
+    var pr = r[2] === "Must" ? '<span class="pill">Must</span>' : '<span class="pill warn">Should</span>';
+    return '<tr id="ref-'+r[0]+'" data-ref>'+td(r[0],"no-chip")+td("<b>"+r[1]+"</b><br><span class=\"muted\">"+r[3]+"</span>")+td(pr)+td('<span class="small">'+r[4]+"</span>")+"</tr>";
+  }).join("");
+  tb = document.querySelector("#t-br tbody");
+  tb.innerHTML = BR.map(function(r){ return '<tr id="ref-'+r[0]+'" data-ref>'+td(r[0],"no-chip")+td(r[1])+td('<span class="small">'+r[2]+"</span>")+"</tr>"; }).join("");
+  tb = document.querySelector("#t-err tbody");
+  tb.innerHTML = ERR.map(function(r){ return '<tr id="ref-'+r[0]+'" data-ref>'+td(r[0],"no-chip")+td(r[1])+td(r[2])+td(r[3])+td(r[4])+"</tr>"; }).join("");
+  tb = document.querySelector("#t-edge tbody");
+  tb.innerHTML = EDGE.map(function(r){ return '<tr id="ref-'+r[0]+'" data-ref>'+td(r[0],"no-chip")+td(r[1])+td(r[2])+"</tr>"; }).join("");
+
+  /* ---------- search ---------- */
+  var q = document.getElementById("q"), qc = document.getElementById("q-cnt");
+  var norm = function(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d"); };
+  var refRows = Array.prototype.slice.call(document.querySelectorAll("tr[data-ref]"));
+  refRows.forEach(function(r){ r.dataset.s = norm(r.textContent); });
+  function filter(){
+    var v = norm(q.value.trim()), n = 0;
+    refRows.forEach(function(r){ var hit = !v || r.dataset.s.indexOf(v) !== -1; r.hidden = !hit; if(hit) n++; });
+    document.querySelectorAll("#t-us tr.grp").forEach(function(g){
+      var el = g.nextElementSibling, any = false;
+      while(el && !el.classList.contains("grp")){ if(!el.hidden) any = true; el = el.nextElementSibling; }
+      g.hidden = !any;
+    });
+    qc.textContent = v ? (n + " / " + refRows.length + " mục") : (refRows.length + " mục");
+  }
+  q.addEventListener("input", filter);
+  filter();
+
+  /* ---------- ID chips ---------- */
+  var RE = /\b(US|BR|ERR|EDGE)-\d{2}\b/g;
+  function goRef(e){
+    e.preventDefault();
+    var row = document.getElementById(this.getAttribute("href").slice(1));
+    if(!row) return;
+    if(row.hidden){ q.value = ""; filter(); }
+    row.scrollIntoView({behavior: reduce ? "auto" : "smooth", block: "center"});
+    row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+  }
+  function makeChip(m, p){
+    var exists = document.getElementById("ref-"+m);
+    var el = document.createElement(exists ? "a" : "span");
+    el.className = "id " + p.toLowerCase();
+    el.textContent = m;
+    if(exists){ el.href = "#ref-"+m; el.addEventListener("click", goRef); }
+    return el;
+  }
+  function chipify(root){
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function(n){
+      RE.lastIndex = 0;
+      if(!RE.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+      if(n.parentElement.closest(".ui,.no-chip,.id,script,style,select,option,textarea,h2,.eyebrow")) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    var nodes = [];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(n){
+      var s = n.nodeValue, frag = document.createDocumentFragment(), last = 0, m;
+      RE.lastIndex = 0;
+      while((m = RE.exec(s))){
+        frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+        frag.appendChild(makeChip(m[0], m[1]));
+        last = m.index + m[0].length;
+      }
+      frag.appendChild(document.createTextNode(s.slice(last)));
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
+  chipify(document.querySelector("main"));
+
+  /* ---------- rail scroll-spy ---------- */
+  var rail = document.querySelector(".rail");
+  var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+  links.forEach(function(a){
+    a.addEventListener("click", function(e){
+      var t = document.getElementById(a.getAttribute("href").slice(1));
+      if(!t) return;
+      e.preventDefault();
+      t.scrollIntoView({behavior: reduce ? "auto" : "smooth", block: "start"});
+    });
+  });
+  if("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting) return;
+        links.forEach(function(l){
+          var on = l.getAttribute("href") === "#" + en.target.id;
+          if(on){ l.setAttribute("aria-current","true"); if(rail.scrollWidth > rail.clientWidth){ rail.scrollTo({left: l.offsetLeft - rail.clientWidth/2 + l.clientWidth/2, behavior: reduce ? "auto" : "smooth"}); } }
+          else l.removeAttribute("aria-current");
+        });
+      });
+    }, {rootMargin: "-35% 0px -60% 0px"});
+    document.querySelectorAll("main > section").forEach(function(s){ io.observe(s); });
+  }
+
+  /* ---------- upgrade calculator ---------- */
+  var CAT = {50:[3,6,8,15,28,50],100:[5,10,14,27,50,90],200:[9,18,25,48,90,160],500:[20,40,55,105,200,360]};
+  var VAL = [{vi:"1 tháng",en:"1 month",d:30},{vi:"2 tháng",en:"2 months",d:60},{vi:"3 tháng",en:"3 months",d:90},{vi:"6 tháng",en:"6 months",d:180},{vi:"1 năm",en:"1 year",d:365},{vi:"2 năm",en:"2 years",d:730}];
+  var SIZES = [50,100,200,500];
+  var r2 = function(x){ return Math.round(x*100)/100; };
+  var money = function(x){ return "$" + x.toFixed(2); };
+  var price$ = function(x){ return "$" + x; };
+
+  function evaluate(S, V, R){
+    var price = CAT[S][V], cyc = VAL[V].d, credit = r2(price * R / cyc);
+    var any = false;
+    var cells = SIZES.map(function(s){
+      return VAL.map(function(v, j){
+        var p = CAT[s][j];
+        if(s === S && j === V) return {kind:"cur", s:s, j:j, p:p};
+        var bigger = s > S, longer = s === S && v.d > cyc;
+        if(!(bigger || longer)) return {kind:"none", s:s, j:j, p:p, why: s < S ? "smaller" : "shorter"};
+        any = true;
+        if(credit < p) return {kind:"ok", s:s, j:j, p:p, due: r2(p - credit), bigger:bigger};
+        return {kind:"off", s:s, j:j, p:p, bigger:bigger};
+      });
+    });
+    return {price:price, cyc:cyc, credit:credit, cells:cells, any:any};
+  }
+
+  var cSize = document.getElementById("c-size"), cVal = document.getElementById("c-val"), cRem = document.getElementById("c-rem"), cOut = document.getElementById("c-rem-out");
+  var cMatrix = document.getElementById("c-matrix"), cCredit = document.getElementById("c-credit"), cLargest = document.getElementById("c-largest"), cExplain = document.getElementById("c-explain");
+  var presetBtns = Array.prototype.slice.call(document.querySelectorAll(".presets .chipbtn"));
+  var state = {S:100, V:4, R:300, sel:null};
+
+  function explain(res, c){
+    var S = state.S, V = state.V, cur = S + "GB / " + VAL[V].en;
+    var name = "<b>" + c.s + "GB · " + VAL[c.j].vi + "</b> (" + price$(c.p) + ")";
+    if(c.kind === "cur") return name + ": đây là gói hiện tại nên không có trong danh sách nâng cấp.";
+    if(c.kind === "none") return name + ": " + (c.why === "smaller" ? "dung lượng nhỏ hơn gói hiện tại" : "cùng dung lượng nhưng thời hạn bằng hoặc ngắn hơn") + " → trượt Check 1, không liệt kê.";
+    var why = c.bigger ? "dung lượng lớn hơn" : "cùng dung lượng, thời hạn dài hơn";
+    if(c.kind === "ok") return name + ": " + why + " → qua Check 1. Credit " + money(res.credit) + " &lt; giá " + price$(c.p) + " → chọn được. Trả hôm nay " + price$(c.p) + " − " + money(res.credit) + " = <b>" + money(c.due) + "</b>; hạn mới = ngày thanh toán + " + VAL[c.j].d + " ngày.";
+    return name + ": " + why + " → qua Check 1. Nhưng Credit " + money(res.credit) + " ≥ giá " + price$(c.p) + " → hiện disabled với lý do <span class=\"ui\">Your unused " + cur + " value (" + money(res.credit) + ") covers more than this package's price.</span>";
+  }
+
+  function render(){
+    var res = evaluate(state.S, state.V, state.R);
+    var n = {ok:0, off:0, none:0};
+    res.cells.forEach(function(row){ row.forEach(function(c){ if(n[c.kind] !== undefined) n[c.kind]++; }); });
+    cCredit.innerHTML = "<span>Credit = " + price$(res.price) + " × " + state.R + " / " + res.cyc + " = <b>" + money(res.credit) + "</b></span>" +
+      '<span class="muted">' + n.ok + " chọn được · " + n.off + " disabled · " + n.none + " không liệt kê</span>";
+    cLargest.hidden = res.any;
+    var html = "<thead><tr><th></th>" + VAL.map(function(v){ return "<th scope=\"col\">" + v.vi + "</th>"; }).join("") + "</tr></thead><tbody>";
+    res.cells.forEach(function(row, i){
+      html += "<tr><th scope=\"row\">" + SIZES[i] + "GB</th>";
+      row.forEach(function(c){
+        var key = c.s + "-" + c.j, inner;
+        if(c.kind === "ok") inner = '<span class="v">' + money(c.due) + '</span><span class="s">giá ' + price$(c.p) + "</span>";
+        else if(c.kind === "off") inner = '<span class="v">Disabled</span><span class="s">giá ' + price$(c.p) + "</span>";
+        else if(c.kind === "cur") inner = '<span class="v">Hiện tại</span><span class="s">' + price$(c.p) + "</span>";
+        else inner = '<span class="v">—</span>';
+        var cls = c.kind === "cur" ? "cur" : c.kind;
+        html += '<td><button type="button" class="cell ' + cls + '" data-k="' + key + '" aria-pressed="' + (state.sel === key) + '">' + inner + "</button></td>";
+      });
+      html += "</tr>";
+    });
+    cMatrix.innerHTML = html + "</tbody>";
+    var flat = []; res.cells.forEach(function(r){ flat = flat.concat(r); });
+    var selCell = flat.filter(function(c){ return (c.s + "-" + c.j) === state.sel; })[0];
+    if(!selCell){
+      selCell = flat.filter(function(c){ return c.kind === "off"; })[0] || flat.filter(function(c){ return c.kind === "ok"; })[0] || flat.filter(function(c){ return c.kind === "cur"; })[0];
+      state.sel = selCell.s + "-" + selCell.j;
+      var b = cMatrix.querySelector('[data-k="' + state.sel + '"]'); if(b) b.setAttribute("aria-pressed","true");
+    }
+    cExplain.innerHTML = res.any ? explain(res, selCell) : "Đang ở gói lớn nhất với thời hạn dài nhất, không gói nào qua Check 1.";
+    cMatrix.querySelectorAll(".cell").forEach(function(btn){
+      btn.addEventListener("click", function(){ state.sel = btn.getAttribute("data-k"); render(); });
+    });
+    presetBtns.forEach(function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-p") === [state.S, state.V, state.R].join(","))); });
+  }
+  function syncControls(){
+    cSize.value = String(state.S); cVal.value = String(state.V);
+    cRem.max = String(VAL[state.V].d); cRem.value = String(state.R); cOut.textContent = String(state.R);
+  }
+  cSize.addEventListener("change", function(){ state.S = +cSize.value; state.sel = null; render(); });
+  cVal.addEventListener("change", function(){ state.V = +cVal.value; state.R = Math.min(state.R, VAL[state.V].d); state.sel = null; syncControls(); render(); });
+  cRem.addEventListener("input", function(){ state.R = +cRem.value; cOut.textContent = cRem.value; render(); });
+  presetBtns.forEach(function(b){
+    b.addEventListener("click", function(){
+      var p = b.getAttribute("data-p").split(",").map(Number);
+      state.S = p[0]; state.V = p[1]; state.R = p[2]; state.sel = null; syncControls(); render();
+    });
+  });
+  syncControls(); render();
+
+  /* ---------- upload dialog toggle ---------- */
+  var dlgT = document.getElementById("dlg-toggle"), dlgUp = document.getElementById("dlg-up"), dlgL = document.getElementById("dlg-largest");
+  dlgT.addEventListener("change", function(){ dlgUp.classList.toggle("primary", !dlgT.checked); dlgUp.classList.toggle("disabled", dlgT.checked); dlgL.hidden = !dlgT.checked; });
+
+  /* ---------- notifications demo ---------- */
+  var NT = {
+    renewed:{ic:"check",tone:"ok",dest:"My Subscription",en:["Plan renewed","Your renewal was successful. Enjoy uninterrupted storage for another cycle."],zh:["套餐已续订","续订成功,尽享不间断的存储空间。"]},
+    expiring:{ic:"clock",tone:"warn",dest:"My Subscription",en:["Plan expiring soon","Your plan expires in 2 days. Renew now to keep your storage without interruption."],zh:["套餐即将到期","您的套餐将在 2 天后到期,请立即续订以免存储服务中断。"]},
+    price:{ic:"info",tone:"info",dest:"View Available Plans",en:["Plan price updated","The price for your current plan has changed. Your active cycle is not affected."],zh:["套餐价格已更新","您当前套餐的价格已变更,本计费周期不受影响。"]},
+    full:{ic:"disk",tone:"bad",dest:"My Subscription",en:["Storage is full","You've used 100% of your storage. Free up space or upgrade your plan."],zh:["存储空间已满","您的存储空间已使用 100%,请清理空间或升级套餐。"]}
+  };
+  function seed(){ return [
+    {type:"full", time:"6:29 PM", unread:true},
+    {type:"expiring", time:"7:00 AM", unread:true, chip:"Standard · 1 × Monthly · expires 09/10/2026"},
+    {type:"price", time:"30 Sep 2026", unread:true, chip:"Standard · 1 × Monthly · now $6.00"},
+    {type:"renewed", time:"9 Sep 2026", unread:false, chip:"Standard · 1 × Monthly · now expires 09/10/2026", lead:"check"}
+  ]; }
+  var items = seed(), lang = "en", failed = false;
+  var ntList = document.getElementById("nt-list"), ntBadge = document.getElementById("nt-badge"), ntMark = document.getElementById("nt-markall"), ntLog = document.getElementById("nt-log");
+  function unread(){ return items.filter(function(i){ return i.unread; }).length; }
+  function renderNT(){
+    var u = unread();
+    ntBadge.textContent = String(u); ntBadge.hidden = u === 0;
+    ntMark.hidden = failed || u === 0;
+    if(failed){ ntList.innerHTML = '<div class="nt-error">Couldn\'t load notifications. Please try again later.</div>'; return; }
+    ntList.innerHTML = items.map(function(it, idx){
+      var t = NT[it.type], txt = t[lang];
+      var chip = it.chip ? '<span class="nt-chip">' + (it.lead ? svg(it.lead, 12) : "") + it.chip + "</span>" : "";
+      return '<button type="button" class="nt-card" data-i="' + idx + '"><span class="nt-ico t-' + t.tone + '">' + svg(t.ic, 17) + '</span><span><span class="nt-top"><span class="nt-title"' + (lang === "zh" ? ' lang="zh-CN"' : "") + ">" + txt[0] + '</span><span class="nt-time">' + (it.unread ? '<i class="dot" aria-label="Chưa đọc"></i>' : "") + it.time + '</span></span><span class="nt-body"' + (lang === "zh" ? ' lang="zh-CN"' : "") + ' style="display:block">' + txt[1] + "</span>" + chip + "</span></button>";
+    }).join("");
+    ntList.querySelectorAll(".nt-card").forEach(function(b){
+      b.addEventListener("click", function(){
+        var it = items[+b.getAttribute("data-i")], t = NT[it.type], before = unread();
+        if(it.unread){ it.unread = false; ntLog.innerHTML = "Tap “" + t.en[0] + "” → mở <b>" + t.dest + "</b>. Đánh dấu đã đọc, badge " + before + " → " + (before - 1) + "."; }
+        else ntLog.innerHTML = "Tap “" + t.en[0] + "” (đã đọc) → mở <b>" + t.dest + "</b>. Badge giữ nguyên " + before + ".";
+        renderNT();
+      });
+    });
+  }
+  ntMark.addEventListener("click", function(){
+    items.forEach(function(i){ i.unread = false; });
+    ntLog.innerHTML = "Mark all as read → tất cả đã đọc, badge về 0, vẫn ở màn Notifications, link ẩn đi.";
+    renderNT();
+  });
+  function setLang(l){ lang = l; document.getElementById("lang-en").setAttribute("aria-pressed", String(l === "en")); document.getElementById("lang-zh").setAttribute("aria-pressed", String(l === "zh")); renderNT(); }
+  document.getElementById("lang-en").addEventListener("click", function(){ setLang("en"); });
+  document.getElementById("lang-zh").addEventListener("click", function(){ setLang("zh"); });
+  document.getElementById("nt-err").addEventListener("click", function(){
+    failed = !failed;
+    this.textContent = failed ? "Tải lại thành công" : "Giả lập lỗi tải";
+    ntLog.innerHTML = failed ? "Tải lỗi → chỉ hiện thông điệp, không dữ liệu cũ, không nút Retry. Người dùng back rồi mở lại." : "Tải lại thành công.";
+    renderNT();
+  });
+  document.getElementById("nt-reset").addEventListener("click", function(){
+    items = seed(); failed = false; document.getElementById("nt-err").textContent = "Giả lập lỗi tải";
+    ntLog.textContent = "Đã đặt lại: 3 chưa đọc.";
+    renderNT();
+  });
+  renderNT();
+
+  fillIcons(document);
+})();
+</script>
+
+</body></html>

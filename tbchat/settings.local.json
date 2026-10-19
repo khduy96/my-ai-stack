@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(git submodule *)",
+      "mcp__ide__getDiagnostics",
+      "PowerShell(dart analyze *)",
+      "PowerShell(dart run *)",
+      "Bash(dart run *)",
+      "Edit(lib/app/global/languages/modules/cloud/l10n/**)",
+      "Write(lib/app/global/languages/modules/cloud/l10n/**)",
+      "Edit(.claude/**)",
+      "Write(.claude/**)",
+      "PowerShell($d=\"D:\\\\nexsoft\\\\tbchat_CS_Fav\\\\lib\\\\app\\\\global\\\\languages\\\\modules\\\\cloud\\\\l10n\"; foreach\\($f in @\\(\"cloud_en.arb\",\"cloud_en_US.arb\",\"cloud_zh.arb\",\"cloud_zh_CN.arb\",\"cloud_zh_TW.arb\"\\)\\){ try { [void]\\(Get-Content \"$d\\\\$f\" -Raw -Encoding utf8 | ConvertFrom-Json\\); \"$f OK\" } catch { \"$f INVALID: $_\" } })",
+      "Bash(sed -i -E 's/\\(e\\\\.id == FileSpaceEnum\\\\.\\(privacy|fileRestore|encrypt\\)\\)\\\\.space/\\\\1.id/g' lib/features/cloud_storage/_new_cloud_storage/data/_grpc/mapper/cloud_file_proto.dart lib/features/cloud_storage/_new_cloud_storage/data/_grpc/mapper/cloud_folder_proto.dart)",
+      "Bash(sed -i -E 's/\\(parentRemoteId == FileSpaceEnum\\\\.fileRestore\\)\\\\.space/\\\\1.id/' lib/features/cloud_storage/_new_cloud_storage/data/db/cloud_folder_db.dart)"
+    ]
+  }
+}

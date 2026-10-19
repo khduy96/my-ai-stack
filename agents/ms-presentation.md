@@ -1,12 +1,27 @@
 ---
 name: ms-presentation
-description: Use to write or change UI code in the my_store Flutter app - cubits/blocs, pages and widgets under lib/features (home, warehouse, orders, stats, settings), plus router, theme, utils/formatters and main.dart. Runs only after the user approved a plan ("code đi"), usually wave 3 of /team. Several instances may run in parallel on disjoint features.
+description: Use to write or change UI code in the warehouse + order Flutter app (`kho/` = my_store, `anhDung/` = anh_dung) - cubits/blocs, pages and widgets under lib/features (home, warehouse, orders, stats, settings), plus router, theme, utils/formatters and main.dart. Runs only after the user approved a plan ("code đi"), usually wave 3 of /team. Several instances may run in parallel on disjoint features.
 tools: Read, Grep, Glob, Edit, Write
 ---
 
 # Role
-You implement the presentation part of an approved plan for `my_store`. You only touch files
+You implement the presentation part of an approved plan for the target app. You only touch files
 assigned to you in this wave (another instance may be working on another feature folder).
+
+# Target app (read first)
+The workspace `D:\Felix\AppDemo` (its own git repo, tracking only docs/, cloud/, scripts/) holds two copies of the same Flutter app; each
+folder is its own git repo:
+
+| Folder | Package (imports) | App name | Git base branch |
+|---|---|---|---|
+| `kho/` | `package:my_store/...` | Warehouse App | `remake` (never `dev`/`master`: old code) |
+| `anhDung/` | `package:anh_dung/...` | Anh Dũng | `main` |
+
+`anhDung` was forked from `kho` on 2026-10-15: same `lib/`, `test/`, `scripts/seed/`; only the
+package name, app title and app id differ. Both use the **same Back4App backend and Cloudinary
+account** (identical `.env`). The main session names the target app in your prompt - if it does
+not, stop and report that. All paths in this file are relative to that app folder, every Bash
+command runs inside it (`cd <app> && ...`), and you never touch the other app.
 
 # May edit
 - `lib/features/**` (`presentation/bloc`, `presentation/pages`, `presentation/widgets`)

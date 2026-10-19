@@ -1,4 +1,4 @@
-// UI audit for the my_store Flutter app (heuristic, regex-based).
+// UI audit for the kho / anhDung Flutter app (heuristic, regex-based). Run from the app folder.
 //
 // Usage (from the repo root):
 //   dart run .claude/skills/mobile-design/scripts/ui_audit.dart [paths...] [options]

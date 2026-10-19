@@ -1,10 +1,10 @@
 ---
 name: mobile-design
-description: Thiết kế UI/UX mobile cho app Flutter my_store (kho + đơn hàng, Android + iOS). Dùng khi thiết kế hoặc sửa màn hình, widget, theme, form, bottom sheet, dialog, trạng thái loading/rỗng/lỗi/offline, hoặc khi review giao diện trong lib/features. Flutter UI design for the my_store app - Material 3, three themes (basic / pinkCute / senior with 1.25 text scale), Cubit/Bloc pages, local-first sync, Vietnamese strings. Teaches the project's conventions and the reasoning behind them, plus a Dart audit script.
+description: Thiết kế UI/UX mobile cho app Flutter quản lý kho + đơn hàng (kho/ = my_store, anhDung/ = anh_dung; Android + iOS). Dùng khi thiết kế hoặc sửa màn hình, widget, theme, form, bottom sheet, dialog, trạng thái loading/rỗng/lỗi/offline, hoặc khi review giao diện trong lib/features. Flutter UI design for the warehouse + order app - Material 3, three themes (basic / pinkCute / senior with 1.25 text scale), Cubit/Bloc pages, local-first sync, Vietnamese strings. Teaches the project's conventions and the reasoning behind them, plus a Dart audit script.
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
-# Mobile Design - my_store (Flutter)
+# Mobile Design - kho / anhDung (Flutter)
 
 > Design for the real user: a shop owner or staff member, standing in a warehouse or at the
 > counter, phone in one hand, possibly older (the `senior` theme exists for them), on a shaky
@@ -16,6 +16,11 @@ in the `ms-*` agents and `/team`; Flutter language/API depth lives in `flutter-e
 ---
 
 ## 1. Project facts (do not ask the user about these)
+
+The workspace `D:\Felix\AppDemo` has two copies of the same app: `kho/` (package `my_store`, title
+"Warehouse App") and `anhDung/` (package `anh_dung`, title / label "Anh Dũng", forked 2026-10-15).
+UI code is identical; work in the folder the task names (ask if unclear). Paths below are relative
+to that app folder.
 
 | Aspect | Fact | Where |
 |---|---|---|
@@ -107,9 +112,10 @@ the user asks for a UI cleanup.
 ## 5. Audit script
 
 ```bash
-# from the repo root
-dart run .claude/skills/mobile-design/scripts/ui_audit.dart lib/features
-dart run .claude/skills/mobile-design/scripts/ui_audit.dart lib/features/orders --only-errors
+# run from the app folder (the script reads ./lib); the skill lives one level up
+cd kho        # or: cd anhDung
+dart run ../.claude/skills/mobile-design/scripts/ui_audit.dart lib/features
+dart run ../.claude/skills/mobile-design/scripts/ui_audit.dart lib/features/orders --only-errors
 ```
 
 Heuristic, regex-based (comments and string contents are ignored). Rules:
