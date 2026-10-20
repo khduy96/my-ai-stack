@@ -7,6 +7,7 @@ Bộ agent, skill, rule… dùng chung cho mọi dự án. Thiết kế theo ki�
 - Cài trên máy mới, cấp quyền và xử lý lỗi thường gặp: [INSTALL.md](INSTALL.md).
 - Đưa vào một dự án có sẵn, điều chỉnh riêng, commit gì và gỡ ra: [INTEGRATE.md](INTEGRATE.md).
 - Dùng theo từng tình huống (review, làm tính năng, sửa lỗi…): [USAGE.md](USAGE.md).
+- Dự án đã có bộ agent, skill riêng: [EXTEND.md](EXTEND.md).
 
 ```bash
 # 1. cài CLI (một lần)

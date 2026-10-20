@@ -39,6 +39,8 @@ Cập nhật: 2026-10-19 · kernel 0.3.0
 - [ ] Pack đầu tiên: `flutter`, thử trên `kho/` và `anhDung/` (lens lifecycle/rebuild, context Flutter)
 - [ ] Integration MCP: Zentao (ticket → feature), Figma
 - [ ] Role `researcher`
+- [ ] Flow gọi được agent viết tay (không do stack build), ví dụ khai `external: true` trong step
+- [ ] Loại module `skill` (skill một bước, không phải flow)
 - [ ] **Mốc nghiệm thu:** dự án thứ hai chạy được mà không phải sửa core
 
 ### P4 – Ổn định
