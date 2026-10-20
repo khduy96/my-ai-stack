@@ -4,6 +4,10 @@ Bộ agent, skill, rule… dùng chung cho mọi dự án. Thiết kế theo ki�
 
 ## Bắt đầu nhanh
 
+- Cài trên máy mới, cấp quyền và xử lý lỗi thường gặp: [INSTALL.md](INSTALL.md).
+- Đưa vào một dự án có sẵn, điều chỉnh riêng, commit gì và gỡ ra: [INTEGRATE.md](INTEGRATE.md).
+- Dùng theo từng tình huống (review, làm tính năng, sửa lỗi…): [USAGE.md](USAGE.md).
+
 ```bash
 # 1. cài CLI (một lần)
 cd .claude/stack/kernel/cli && npm install
