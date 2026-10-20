@@ -1,0 +1,20 @@
+{
+  "name": "ai-stack-cli",
+  "version": "0.3.0",
+  "description": "Composes ai-stack modules and a project profile into Claude Code agents.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "stack": "./stack.mjs"
+  },
+  "engines": {
+    "node": ">=18.3"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "yaml": "^2.6.1"
+  }
+}

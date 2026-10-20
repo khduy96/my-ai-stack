@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/flow.schema.json",
+  "title": "Flow",
+  "description": "How several agents cooperate on one job. Engine-agnostic: an engine turns it into something runnable (kernel 0.3: a Claude Code skill).",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "required": ["description", "steps"],
+  "properties": {
+    "kind": { "const": "flow" },
+    "argument_hint": { "type": "string", "description": "Shown next to the command, e.g. \"[target]\"." },
+    "input": {
+      "type": "object",
+      "description": "What the flow input ($input) means.",
+      "properties": {
+        "description": { "type": "string" },
+        "default": { "type": "string", "description": "Used when the user gives no input." }
+      },
+      "additionalProperties": false
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "report": { "type": "string", "description": "What the final report to the user contains." }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": ["id", "goal"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "agent": { "type": "string", "description": "Role or role-variant id, without the prefix (e.g. verifier-security)." },
+        "fanout": { "type": "array", "minItems": 2, "items": { "type": "string" }, "description": "Agents run in parallel on the same inputs." },
+        "goal": { "type": "string", "description": "The task goal handed to the agent(s)." },
+        "in": {
+          "type": "object",
+          "description": "Inputs: '$input', '$<step>' or '$<step>.<output|findings|artifacts|questions|summary|checks>' refer to earlier results; anything else is literal text.",
+          "additionalProperties": { "type": "string" }
+        },
+        "when": {
+          "type": "object",
+          "description": "Run the step only if an earlier step's handoffs meet the condition.",
+          "required": ["step", "is"],
+          "properties": {
+            "step": { "type": "string" },
+            "is": { "enum": ["has-findings", "has-major-findings", "no-findings", "has-questions"] }
+          },
+          "additionalProperties": false
+        },
+        "gate": { "enum": ["auto", "human", "on-questions"], "default": "auto", "description": "auto = continue; human = wait for approval; on-questions = wait only when there are questions." }
+      },
+      "oneOf": [{ "required": ["agent"] }, { "required": ["fanout"] }],
+      "additionalProperties": false
+    }
+  }
+}

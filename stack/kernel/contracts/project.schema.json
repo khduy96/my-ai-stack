@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/project.schema.json",
+  "title": "Project",
+  "description": "<project>/.claude/project.yaml (and project.local.yaml): what a project declares it needs.",
+  "type": "object",
+  "properties": {
+    "stack": { "type": "string", "description": "Compatible stack version range, e.g. ^0.1." },
+    "name": { "type": "string" },
+    "prefix": { "type": "string", "pattern": "^[a-z0-9-]*$", "description": "Prefix of generated agent names." },
+    "context": { "type": "string", "description": "Short project description injected into every role." },
+    "read_first": { "type": "array", "items": { "type": "string" }, "description": "Files every agent reads before starting." },
+    "packs": { "type": "array", "items": { "type": "string" } },
+    "modules": { "type": "array", "items": { "type": "string" }, "description": "Extra module directories, relative to the project root." },
+    "runs": { "type": "string", "description": "Directory for flow run state, relative to the project root. Default: .ai-runs (outside .claude/, which Claude Code guards with permission prompts)." },
+    "cli": { "type": "string", "description": "Command generated skills use to run this CLI. Default: node \"<absolute path to stack.mjs>\"." },
+    "enable": {
+      "type": "object",
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "flows": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Flow overrides; `steps` may be a map keyed by step id to change single steps, e.g. { plan: { gate: auto } }." }
+  }
+}

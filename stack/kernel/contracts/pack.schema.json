@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/pack.schema.json",
+  "title": "Pack",
+  "description": "packs/<id>/pack.yaml: a bundle of modules (in packs/<id>/modules/) plus overrides of existing ones.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "properties": {
+    "kind": { "const": "pack" },
+    "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } }
+  },
+  "unevaluatedProperties": false
+}

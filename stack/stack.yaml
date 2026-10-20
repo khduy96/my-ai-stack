@@ -1,0 +1,9 @@
+# Root manifest of the stack.
+name: ai-stack
+version: 0.3.0
+
+# Defaults every project starts from; project.yaml and project.local.yaml override them.
+defaults:
+  prefix: ai-
+  enable:
+    roles: ['*']

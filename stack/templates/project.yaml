@@ -1,0 +1,39 @@
+# Copy to <project>/.claude/project.yaml, then run:
+#   node <stack>/kernel/cli/stack.mjs build --project <project>
+# Personal tweaks go in <project>/.claude/project.local.yaml (same format, keep it out of git).
+
+stack: ^0.3                  # compatible stack versions
+name: my-project
+
+# Injected into every agent as "Project context". Keep it short: what the project is,
+# the stack, where things live. Details belong in the files listed under read_first.
+context: |
+  One or two sentences about the project.
+
+read_first:
+  - CLAUDE.md
+
+# prefix: ai-                # agents: <prefix><role>, flow commands: /<prefix><flow>
+# cli: npx ai-stack          # how flow skills call this CLI; default: node "<abs path>/stack.mjs"
+# runs: .ai-runs            # flow run state, outside .claude/ (writes there always prompt)
+packs: []                    # e.g. [flutter]
+modules: []                  # extra module directories, relative to the project root
+
+enable:
+  roles: ['*']               # e.g. ['*', '-builder'] to skip one
+  flows: ['*']
+
+# Per-module overrides. Lists: a plain list replaces, '+x' / '-x' adjust.
+# Body: body + body_mode (replace | append | prepend).
+roles: {}
+#  builder:
+#    model: sonnet
+#    traits: ['+test-first']
+#    body: |
+#      Always run `npm test` before reporting done.
+#    body_mode: append
+traits: {}
+flows: {}
+#  review:
+#    steps:                   # a map keyed by step id changes single steps
+#      confirm: { gate: human }

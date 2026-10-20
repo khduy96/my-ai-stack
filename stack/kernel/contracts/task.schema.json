@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/task.schema.json",
+  "title": "Task",
+  "description": "What an orchestrator hands to an agent.",
+  "type": "object",
+  "required": ["goal"],
+  "properties": {
+    "id": { "type": "string", "description": "Stable id of this task within a run." },
+    "goal": { "type": "string", "description": "The outcome wanted, in one or two sentences." },
+    "context": { "type": "string", "description": "Background the agent cannot discover by reading the code." },
+    "scope": {
+      "type": "object",
+      "description": "Where the agent may act.",
+      "properties": {
+        "files": { "type": "array", "items": { "type": "string" }, "description": "Paths or globs the agent owns for this task." },
+        "allow_new_files": { "type": "boolean" }
+      }
+    },
+    "acceptance": { "type": "array", "items": { "type": "string" }, "description": "Criteria that define done." },
+    "constraints": { "type": "array", "items": { "type": "string" }, "description": "Things the agent must not do." },
+    "inputs": { "type": "object", "description": "Outputs of earlier steps, keyed by step id." }
+  }
+}

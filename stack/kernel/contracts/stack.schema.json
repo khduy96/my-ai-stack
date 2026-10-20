@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/stack.schema.json",
+  "title": "Stack",
+  "description": "stack.yaml at the stack root.",
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "defaults": { "$ref": "project.schema.json" }
+  },
+  "additionalProperties": false
+}

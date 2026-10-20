@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/handoff.schema.json",
+  "title": "Handoff",
+  "description": "What an agent returns when it finishes a task.",
+  "type": "object",
+  "required": ["status", "summary"],
+  "properties": {
+    "status": { "enum": ["done", "partial", "blocked", "failed"], "description": "done = fully complete; partial = some acceptance criteria unmet; blocked = needs a decision or input; failed = could not proceed." },
+    "summary": { "type": "string", "description": "One to three sentences on what happened." },
+    "output": { "type": "object", "description": "The role's structured result, shaped by the contract the role produces (spec, plan, diagnosis…). Omit when the role produces none." },
+    "artifacts": {
+      "type": "array",
+      "description": "Files created, modified or deleted.",
+      "items": {
+        "type": "object",
+        "required": ["path", "change"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative to the project root." },
+          "change": { "enum": ["created", "modified", "deleted"] },
+          "note": { "type": "string", "description": "Why, when not obvious." }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "description": "Verification commands that were run.",
+      "items": {
+        "type": "object",
+        "required": ["command", "result"],
+        "properties": {
+          "command": { "type": "string" },
+          "result": { "enum": ["pass", "fail", "skipped"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Problems or observations worth acting on.",
+      "items": {
+        "type": "object",
+        "required": ["severity", "title"],
+        "properties": {
+          "severity": { "enum": ["critical", "major", "minor", "info"] },
+          "title": { "type": "string" },
+          "evidence": { "type": "string", "description": "path:line reference." },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "questions": { "type": "array", "items": { "type": "string" }, "description": "Decisions needed from a human or the orchestrator." },
+    "next": { "type": "array", "items": { "type": "string" }, "description": "Suggested follow-up work outside this task's scope." },
+    "confidence": { "enum": ["low", "medium", "high"] }
+  }
+}

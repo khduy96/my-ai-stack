@@ -1,0 +1,89 @@
+# ai-stack
+
+Bộ agent, skill, rule… dùng chung cho mọi dự án. Thiết kế theo kiểu **lõi nhỏ + module**: mọi thứ được khai báo, ghép theo tầng, rồi build ra cấu hình Claude Code cho từng dự án.
+
+## Bắt đầu nhanh
+
+```bash
+# 1. cài CLI (một lần)
+cd .claude/stack/kernel/cli && npm install
+
+# 2. khai báo dự án
+cp .claude/stack/templates/project.yaml <project>/.claude/project.yaml   # rồi sửa
+
+# 3. build và kiểm tra
+node .claude/stack/kernel/cli/stack.mjs build  --project <project>
+node .claude/stack/kernel/cli/stack.mjs doctor --project <project>
+```
+
+`build --dry-run` cho xem trước, không ghi gì. Chạy `doctor` mà không có `--project` (và thư mục hiện tại không có `project.yaml`) thì chỉ kiểm tra bản thân stack.
+
+## Cấu trúc
+
+```
+stack/
+├── stack.yaml              manifest gốc + giá trị mặc định
+├── kernel/
+│   ├── conventions.md      luật chung: module, cascade, placeholder, build, mã lỗi
+│   ├── contracts/          JSON Schema, nguồn sự thật cho cấu trúc
+│   └── cli/                stack build | doctor | check (Node ≥ 18.3, deps: yaml, ajv)
+├── engines/
+│   └── claude-code/        flow-skill.md: protocol orchestrator cho flow
+├── modules/
+│   ├── roles/              ai làm
+│   ├── traits/             làm theo phong cách nào
+│   └── flows/              nhiều agent phối hợp ra sao
+├── packs/                  gói module theo công nghệ/domain
+└── templates/project.yaml
+```
+
+## Có sẵn
+
+| Role | Quyền | Output | Variants |
+|---|---|---|---|
+| `analyst` | read | spec | |
+| `architect` | read | plan | |
+| `builder` | exec | artifacts, checks | |
+| `investigator` | read + Bash | diagnosis | |
+| `verifier` | read + Bash | findings | `correctness`, `security`, `conventions`, `adversarial` |
+
+| Trait | Dùng cho |
+|---|---|
+| `cite-evidence`, `report-handoff` | mọi role |
+| `clarify-first` | analyst, architect |
+| `options-tradeoffs` | architect |
+| `adversarial`, `lens-correctness`, `lens-security`, `lens-conventions` | verifier |
+
+| Flow | Lệnh | Các bước |
+|---|---|---|
+| `review` | `/ai-review [target]` | 3 verifier song song (correctness · security · conventions), sau đó adversarial lọc false positive |
+
+Build mặc định sinh ra 9 agent (`ai-analyst`, `ai-architect`, `ai-builder`, `ai-investigator`, `ai-verifier` và 4 `ai-verifier-*`), cộng skill `/ai-review`.
+
+## Mô hình
+
+| Thành phần | Trạng thái |
+|---|---|
+| Role, Trait, Variants, output contract | ✔ kernel 0.2 |
+| Flow (`agent`, `fanout`, `when`, `gate`) + skill engine + `stack check` | ✔ kernel 0.3 |
+| Pack (modules + override) | ✔ có cơ chế, chưa có pack nào |
+| Flow `foreach`/`loop`, Skill, Knowledge (RAG), Policy (rule/guard), Integration (MCP), Workflow/SDK engine | lộ trình P1–P5 |
+
+## Lộ trình
+
+Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md](ROADMAP.md).
+
+| Giai đoạn | Nội dung |
+|---|---|
+| **P0 – Lõi** ✔ | contracts, conventions, CLI build/doctor, 1 role + 2 trait mẫu |
+| P1 – Bộ tối thiểu | ✔ 5 role, 8 trait, variants, output contract · ✔ flow `review` + skill engine · ☐ flow `feature`/`bugfix` (`foreach`, `loop`) · ☐ skill `/stack` |
+| P2 – Tri thức & chính sách | retriever grep, scribe, guard (hook) |
+| P3 – Pack & integration | pack đầu tiên, MCP adapter; dự án thứ 2 chạy không cần sửa core |
+| P4 – Ổn định | evals, semver từng module |
+| P5 – Mở rộng | engine Agent SDK, retriever vector |
+
+## Phát triển kernel
+
+```bash
+cd kernel/cli && npm test
+```
