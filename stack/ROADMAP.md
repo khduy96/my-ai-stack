@@ -1,13 +1,13 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 0.4.0
+Cập nhật: 2026-10-21 · kernel 0.4.1
 
 ## Trạng thái
 
 | Giai đoạn | Trạng thái | Còn lại |
 |---|---|---|
 | **P0 – Lõi** | ✔ xong | Không còn gì |
-| **P1 – Bộ tối thiểu** | Gần xong | Skill `/stack` |
+| **P1 – Bộ tối thiểu** | ✔ xong | Không còn gì |
 | **P2 – Tri thức & chính sách** | Chưa làm | Toàn bộ |
 | **P3 – Pack & integration** | Mới có cơ chế pack | Pack đầu tiên, MCP adapter |
 | **P4 – Ổn định** | Mới có test cho kernel | Eval cho agent và flow, lên 1.0 |
@@ -25,6 +25,9 @@ Cập nhật: 2026-10-21 · kernel 0.4.0
     - `/ai-bugfix`: chạy được cả vòng loop `retry/1/…`; `--resume` tiếp tục được một run đang chờ câu trả lời.
   - Chạy thật phát hiện verifier gắn `major` cho lỗi có sẵn từ trước, khiến vòng sửa đụng code ngoài phạm vi. Đã sửa (verifier 0.2.0): lỗi có sẵn chỉ ở mức `info` "Pre-existing:". Chạy lại thì diff chỉ còn đúng chỗ cần sửa.
   - Chưa kiểm chứng riêng được thứ tự chạy song song trong một đợt của `foreach` (run state không ghi thời điểm từng agent bắt đầu).
+- **P1 – skill `/stack` (0.4.1):** `stack install` cài skill vào `~/.claude/` (lock riêng). Skill khảo sát repo, hỏi những gì còn thiếu, chờ duyệt, rồi ghi file, build và chạy doctor; tự áp dụng cách làm của PARTIAL.md khi chọn "cá nhân" hoặc "một phần".
+  - Đã chạy end-to-end trên một repo Node mới: `project.yaml` đúng, `npm test` vào builder và verifier, `git status` sạch, doctor 0 lỗi.
+  - Chạy headless thì việc ghi vào `.claude/` và `.git/` bị từ chối (thư mục được bảo vệ); skill dừng lại và báo rõ, không tìm đường vòng.
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
@@ -32,7 +35,7 @@ Cập nhật: 2026-10-21 · kernel 0.4.0
 ### P1 – Bộ tối thiểu
 - [x] Flow `feature`, cùng kernel `foreach` và `loop`
 - [x] Flow `bugfix`
-- [ ] Skill `/stack`: hỏi đáp về dự án → viết `project.yaml` → `stack build`
+- [x] Skill `/stack`: hỏi đáp về dự án → viết `project.yaml` → `stack build` (cài bằng `stack install`)
 
 ### P2 – Tri thức & chính sách
 - [ ] Knowledge: `knowledge/` + `INDEX.md`, retriever kiểu grep
@@ -68,9 +71,8 @@ Cập nhật: 2026-10-21 · kernel 0.4.0
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Commit để có điểm mốc (branch `feat/ai-stack`)
-2. Áp `/ai-review` lên `kho/`: lần đầu kiểm chứng trên code thật, đồng thời cho thấy pack Flutter cần những gì
-3. Skill `/stack` (khép lại P1)
+1. Áp ai-stack lên `kho/` bằng `/stack`, rồi chạy `/ai-review`: lần đầu kiểm chứng trên code thật, đồng thời cho thấy P2 và pack Flutter cần những gì
+2. P2: policy + khóa `scope`, rồi knowledge + `scribe`/`explainer`
 
 ## Các quyết định đã chốt
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 — 2026-10-21 (P1, skill `/stack`)
+
+- CLI: `stack install [--target <dir>] [--dry-run] [--force]` installs the `/stack` setup skill into `~/.claude/skills/stack/`, tracked in its own lock (`.stack-user-lock.json`) so it never touches a project build in the same `.claude/` or a skill it did not write.
+- Skill `/stack` (protocol in `engines/claude-code/stack-skill.md`): survey the repository read-only, ask what the survey did not settle (context, read_first, shared or personal, scope, checks, what to enable), show the full plan and wait for approval, then write `project.yaml` (and `.git/info/exclude`, permissions, `scope-guard` hook when needed), build and run doctor. Modes: create, update, rebuild, check; answers can be given as arguments. Its catalog of agents and flows is generated from the modules.
+- Generated files use `/` in paths on every OS.
+- Docs: INSTALL (install step), INTEGRATE ("cách nhanh: /stack"), README.
+
 ## 0.4.0 — 2026-10-21 (P1, flow `feature` và `bugfix`)
 
 - Kernel: flow steps `agent` + `foreach` (one agent per list item, in waves by `depends_on`, parallel unless `files` overlap) and `loop` (`max`, `until`, body of agent steps; no nesting); inputs may be a list of references meaning "the most recent available"; reference rules for this / previous / last iteration; condition `no-major-findings`; `foreach` fields checked against the producing role's contract; project overrides reach steps inside loops.

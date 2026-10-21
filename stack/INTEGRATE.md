@@ -6,7 +6,29 @@ Máy chưa cài stack thì làm theo [INSTALL.md](INSTALL.md) trước.
 
 Trong tài liệu này, `<stack>` là đường dẫn tới thư mục `stack/`, còn `<dự án>` là thư mục gốc của dự án, tức nơi bạn mở Claude Code.
 
-## Các bước
+## Cách nhanh: `/stack`
+
+Đã chạy `stack install` (xem [INSTALL.md](INSTALL.md), bước 3) thì mở Claude Code trong `<dự án>` và gõ:
+
+```
+/stack
+```
+
+Skill sẽ:
+1. Khảo sát repo, chỉ đọc: công nghệ, lệnh test/lint, tài liệu, `.claude/` đang có.
+2. Hỏi những gì khảo sát chưa trả lời được: context, file cần đọc trước, **dùng chung hay cá nhân**, **toàn repo hay một phần**, lệnh kiểm tra, bật những gì.
+3. Cho bạn xem toàn bộ `project.yaml` và mọi file sẽ tạo hoặc sửa, rồi **chờ bạn duyệt**.
+4. Ghi file, `build`, `doctor`, và báo cáo kết quả.
+
+Chọn "cá nhân" hoặc "một phần" thì skill tự làm các bước trong [PARTIAL.md](PARTIAL.md) (`.git/info/exclude`, `settings.local.json`, hook `scope-guard`).
+
+Ở bước 4, Claude Code sẽ **hỏi quyền** cho từng file ghi vào `.claude/` và `.git/`, vì đây là các thư mục được bảo vệ. Điều này là bình thường; đồng ý để tiếp tục. Khi chạy headless (`claude -p`) thì không có ai để hỏi, nên các lần ghi đó bị từ chối và skill dừng lại, báo những file chưa ghi được.
+
+Gọi lại `/stack` sau này để **cập nhật** cấu hình, **build lại**, hoặc chỉ **kiểm tra**. Có thể trả lời trước ngay trong lệnh, ví dụ `/stack cá nhân, toàn repo, kiểm tra bằng npm test`.
+
+Các bước dưới đây là cách **làm tay**, cũng là những gì `/stack` làm thay bạn.
+
+## Các bước (làm tay)
 
 ### 1. Tạo file khai báo dự án
 

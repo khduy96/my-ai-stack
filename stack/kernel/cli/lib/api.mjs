@@ -1,11 +1,14 @@
 // The CLI commands, usable from the CLI and from tests.
+import { homedir } from 'node:os';
+import path from 'node:path';
 import YAML from 'yaml';
 import { createDiagnostics } from './diag.mjs';
-import { applyEmit, checkDrift, planEmit } from './emit.mjs';
+import { applyEmit, checkDrift, planEmit, USER_LOCK_FILE } from './emit.mjs';
 import { renderFlow } from './flow.mjs';
 import { loadWorkspace, readText } from './load.mjs';
 import { enabledIds, renderAgents } from './render.mjs';
 import { resolve } from './resolve.mjs';
+import { renderSetupSkill } from './setup.mjs';
 import { getContract, validate } from './validate.mjs';
 
 // Renders everything; `all` = also disabled roles and flows (doctor checks them too).
@@ -53,6 +56,25 @@ export async function doctor({ stackRoot, projectRoot = null }) {
   const counts = {};
   for (const m of modules.values()) counts[m.kind] = (counts[m.kind] ?? 0) + 1;
   return { diags, counts };
+}
+
+// Installs the /stack setup skill into <target>/.claude/ (default: the user's home), so it
+// is available in projects that do not use the stack yet. Tracked in its own lock file.
+export async function install({ stackRoot, target = homedir(), force = false, dryRun = false }) {
+  const diags = createDiagnostics();
+  const ws = await loadWorkspace({ stackRoot, projectRoot: null }, diags);
+  if (diags.hasErrors()) return { diags, ops: [] };
+
+  const modules = resolve(ws, diags);
+  const agents = renderAgents(modules, ws, diags);
+  const skill = await renderSetupSkill(ws, modules, agents, diags, stackRoot);
+  if (diags.hasErrors() || !skill) return { diags, ops: [] };
+
+  const claudeDir = path.join(target, '.claude');
+  const plan = await planEmit(claudeDir, [skill], { force, lockFile: USER_LOCK_FILE }, diags);
+  if (diags.hasErrors()) return { diags, ops: [] };
+  if (!dryRun) await applyEmit(claudeDir, plan);
+  return { diags, ops: plan.ops, claudeDir };
 }
 
 // Validates one saved handoff: the handoff contract, plus handoff.output against the

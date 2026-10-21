@@ -11,13 +11,17 @@ Bộ agent, skill, rule… dùng chung cho mọi dự án. Thiết kế theo ki�
 - Chỉ phụ trách một phần của repo dùng chung: [PARTIAL.md](PARTIAL.md).
 
 ```bash
-# 1. cài CLI (một lần)
-cd .claude/stack/kernel/cli && npm install
+# 1. cài CLI và skill /stack (một lần mỗi máy)
+cd .claude/stack/kernel/cli && npm ci && node stack.mjs install
 
-# 2. khai báo dự án
+# 2. trong Claude Code, ở dự án muốn dùng:
+/stack
+```
+
+Hoặc làm tay:
+
+```bash
 cp .claude/stack/templates/project.yaml <project>/.claude/project.yaml   # rồi sửa
-
-# 3. build và kiểm tra
 node .claude/stack/kernel/cli/stack.mjs build  --project <project>
 node .claude/stack/kernel/cli/stack.mjs doctor --project <project>
 ```
@@ -32,9 +36,10 @@ stack/
 ├── kernel/
 │   ├── conventions.md      luật chung: module, cascade, placeholder, build, mã lỗi
 │   ├── contracts/          JSON Schema, nguồn sự thật cho cấu trúc
-│   └── cli/                stack build | doctor | check (Node ≥ 18.3, deps: yaml, ajv)
+│   └── cli/                stack build | doctor | check | install (Node ≥ 18.3, deps: yaml, ajv)
 ├── engines/
 │   └── claude-code/        flow-skill.md: protocol orchestrator cho flow
+│                           stack-skill.md: protocol hỏi đáp của skill /stack
 ├── modules/
 │   ├── roles/              ai làm
 │   ├── traits/             làm theo phong cách nào
@@ -76,7 +81,8 @@ Build mặc định sinh ra 9 agent (`ai-analyst`, `ai-architect`, `ai-builder`,
 | Flow (`agent`, `fanout`, `when`, `gate`) + skill engine + `stack check` | ✔ kernel 0.3 |
 | Flow `foreach`, `loop`, input "mới nhất trong các nguồn" | ✔ kernel 0.4 |
 | Pack (modules + override) | ✔ có cơ chế, chưa có pack nào |
-| Skill `/stack`, Knowledge (RAG), Policy (rule/guard), Integration (MCP), Workflow/SDK engine | lộ trình P1–P5 |
+| Skill `/stack` (hỏi đáp tạo `project.yaml`, cài bằng `stack install`) | ✔ kernel 0.4.1 |
+| Knowledge (RAG), Policy (rule/guard), Integration (MCP), Workflow/SDK engine | lộ trình P2–P5 |
 
 ## Lộ trình
 
@@ -85,7 +91,7 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 | Giai đoạn | Nội dung |
 |---|---|
 | **P0 – Lõi** ✔ | contracts, conventions, CLI build/doctor, 1 role + 2 trait mẫu |
-| P1 – Bộ tối thiểu | ✔ 5 role, 8 trait, variants, output contract · ✔ flow `review`, `feature`, `bugfix` + skill engine · ☐ skill `/stack` |
+| **P1 – Bộ tối thiểu** ✔ | 5 role, 8 trait, variants, output contract · flow `review`, `feature`, `bugfix` + skill engine · skill `/stack` |
 | P2 – Tri thức & chính sách | retriever grep, scribe, guard (hook) |
 | P3 – Pack & integration | pack đầu tiên, MCP adapter; dự án thứ 2 chạy không cần sửa core |
 | P4 – Ổn định | evals, semver từng module |

@@ -7,25 +7,27 @@ import { GENERATOR, KERNEL_VERSION } from './kernel.mjs';
 import { normalizeEol, readText } from './load.mjs';
 
 export const LOCK_FILE = '.stack-lock.json';
+// Lock of what `stack install` put in the user's ~/.claude/, kept apart from any project lock.
+export const USER_LOCK_FILE = '.stack-user-lock.json';
 
 // Line endings are normalised so a git autocrlf checkout does not look like a hand edit.
 export const hash = (text) => createHash('sha256').update(normalizeEol(text)).digest('hex');
 
-async function readLock(claudeDir, diags) {
-  const file = path.join(claudeDir, LOCK_FILE);
+async function readLock(claudeDir, diags, lockFile = LOCK_FILE) {
+  const file = path.join(claudeDir, lockFile);
   const text = await readText(file);
   if (text === null) return {};
   try {
     return JSON.parse(text).files ?? {};
   } catch {
-    diags.error('parse-error', `${LOCK_FILE} is not valid JSON; delete it and rebuild with --force`, file);
+    diags.error('parse-error', `${lockFile} is not valid JSON; delete it and rebuild with --force`, file);
     return {};
   }
 }
 
 // Decides what to do with every file before anything is written, so a conflict aborts the whole build.
-export async function planEmit(claudeDir, outputs, { force }, diags) {
-  const locked = await readLock(claudeDir, diags);
+export async function planEmit(claudeDir, outputs, { force, lockFile = LOCK_FILE }, diags) {
+  const locked = await readLock(claudeDir, diags, lockFile);
   const next = new Map(outputs.map((o) => [o.path, o.content]));
   const ops = [];
 
@@ -61,7 +63,7 @@ export async function planEmit(claudeDir, outputs, { force }, diags) {
   }
 
   const files = Object.fromEntries([...next.keys()].sort().map((rel) => [rel, hash(next.get(rel))]));
-  return { ops, lock: { generator: GENERATOR, kernel: KERNEL_VERSION, files } };
+  return { ops, lockFile, lock: { generator: GENERATOR, kernel: KERNEL_VERSION, files } };
 }
 
 export async function applyEmit(claudeDir, plan) {
@@ -81,7 +83,7 @@ export async function applyEmit(claudeDir, plan) {
       }
     }
   }
-  const lockPath = path.join(claudeDir, LOCK_FILE);
+  const lockPath = path.join(claudeDir, plan.lockFile ?? LOCK_FILE);
   const lockText = `${JSON.stringify(plan.lock, null, 2)}\n`;
   if ((await readText(lockPath)) !== lockText) {
     await mkdir(claudeDir, { recursive: true });
