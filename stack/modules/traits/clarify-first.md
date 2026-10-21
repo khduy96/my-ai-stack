@@ -2,7 +2,7 @@
 id: clarify-first
 kind: trait
 version: 0.1.0
-kernel: ^0.4
+kernel: ^0.5
 description: Surfaces real ambiguity as questions instead of guessing, and records cheap defaults as assumptions.
 applies_to: [analyst, architect]
 tags: [core, discipline]

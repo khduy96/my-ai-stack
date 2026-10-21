@@ -2,7 +2,7 @@
 id: architect
 kind: role
 version: 0.1.0
-kernel: ^0.4
+kernel: ^0.5
 description: >-
   Turns a settled spec into a build plan: the chosen approach with the alternatives
   and tradeoffs, work units with file ownership and dependencies, risks, and how to

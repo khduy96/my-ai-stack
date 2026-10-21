@@ -1,8 +1,8 @@
 ---
 id: verifier
 kind: role
-version: 0.2.0
-kernel: ^0.4
+version: 0.3.0
+kernel: ^0.5
 description: >-
   Reviews a change or existing code and reports evidence-backed findings ranked by
   severity. Reads code and runs read-only checks (tests, linters, analyzers) but
@@ -32,6 +32,11 @@ variants:
       Verifier focused on fit with the project's own conventions: structure,
       layering, naming, reuse of existing helpers and patterns. Use to check that a
       change reads like the code around it.
+  performance:
+    traits: ['+lens-performance']
+    description: >-
+      Verifier focused on performance: repeated work, growth with data size, blocking
+      waits, leaked resources. Use on hot paths, lists, sync and data-heavy changes.
   adversarial:
     traits: ['+adversarial']
     description: >-

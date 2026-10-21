@@ -1,10 +1,11 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 0.4. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 0.5. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
-- **3 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`.
-- **9 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-investigator`, `ai-verifier` và 4 `ai-verifier-*`.
+- **5 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`.
+- **13 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-verifier` và 5 `ai-verifier-*`.
+- **3 guard tùy chọn:** `scope`, `protect-generated`, `no-secrets`.
 
 ## Tra nhanh
 
@@ -21,6 +22,10 @@ Hiện có:
 | Chỉ chọn cách làm, chia việc | `ai-architect` | C3 |
 | Sửa một lỗi có kiểm chứng | `/ai-bugfix <triệu chứng>` | D1 |
 | Chỉ tìm nguyên nhân lỗi, chưa sửa | `ai-investigator` | D2 |
+| Chỉ viết test, không sửa code chính | `ai-builder-tests` | D3 |
+| Hiểu một đoạn code hoạt động thế nào | `/ai-explain <câu hỏi>` | F1 |
+| Ghi lại tri thức dự án sau một lần chạy | `/ai-learn <thư mục run>` | F2 |
+| Chặn sửa ngoài vùng, file generated, lộ secret | `scope`, `enable.policies` | F3 |
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
 | Chạy review không cần người (script, CI) | `claude -p "/ai-review …"` | E3 |
 
@@ -95,6 +100,7 @@ chỗ lưu token và gọi API.
 | `ai-verifier-correctness` | Logic, edge case, xử lý lỗi, state/concurrency |
 | `ai-verifier-security` | Secret, injection, phân quyền, input không tin cậy, lộ dữ liệu |
 | `ai-verifier-conventions` | Có đúng quy ước của dự án không (cấu trúc, đặt tên, tái sử dụng) |
+| `ai-verifier-performance` | Việc lặp thừa (N+1), tăng theo dữ liệu, chờ chặn luồng, rò rỉ tài nguyên. Không nằm trong `/ai-review` mặc định |
 | `ai-verifier` | Review chung, không có trọng tâm |
 
 ### B2. Kiểm chứng lại một kết luận
@@ -233,6 +239,25 @@ Dùng agent ai-builder áp dụng đề xuất sửa trong diagnosis vừa rồi
 Sau đó dùng ai-verifier-correctness kiểm tra lại thay đổi.
 ```
 
+### D3. Chỉ viết test với `ai-builder-tests`
+
+Dùng để thêm test hồi quy sau khi sửa lỗi, hoặc tăng độ phủ cho một phần code, mà **không đụng code chính**.
+
+```
+Dùng agent ai-builder-tests viết test hồi quy cho lỗi total() bỏ sót phần tử đầu
+trong src/cart.js.
+```
+
+Nếu một test chỉ pass được khi sửa code chính, agent đánh dấu test đó là skip hoặc expected-fail, rồi báo phần cần sửa ở mức `major`.
+
+Muốn builder thường **luôn viết test trước** khi sửa:
+
+```yaml
+roles:
+  builder:
+    traits: ['+test-first']
+```
+
 ---
 
 ## E. Vận hành
@@ -268,6 +293,61 @@ Trên Windows mà chạy từ Git Bash thì thêm `MSYS_NO_PATHCONV=1` ở đầ
 ### E4. Dọn run cũ
 
 `.ai-runs/` không vào git và có thể xóa bất cứ lúc nào. Chỉ giữ lại những run bạn còn muốn đối chiếu.
+
+---
+
+## F. Tri thức và guard
+
+### F1. Hiểu code với `/ai-explain`
+
+```
+/ai-explain luồng huỷ đơn hàng cộng lại tồn kho như thế nào?
+```
+
+`ai-explainer` trả lời trực tiếp trước, sau đó đi qua từng bước trong code, mỗi bước kèm `path:line`, rồi tới các điểm dễ vấp và những gì nó **chưa kiểm tra**. Agent này không sửa file nào.
+
+### F2. Ghi tri thức dự án với `/ai-learn`
+
+Cần khai thư mục tri thức một lần trong `project.yaml`, rồi chạy `build`:
+
+```yaml
+knowledge: docs/knowledge
+```
+
+Từ đó **mọi agent** được dặn đọc `docs/knowledge/INDEX.md` trước khi làm việc. Sau một lần chạy đáng nhớ, gọi:
+
+```
+/ai-learn .ai-runs/20261021-1520-feature-money-receipt
+/ai-learn cache đơn hàng phải xoá sau mỗi lần ghi, nếu không màn danh sách hiển thị dữ liệu cũ
+```
+
+`ai-scribe` cách làm việc:
+- Chỉ giữ những gì còn đúng và còn có ích lâu dài: cách hệ thống hoạt động, lý do của một quyết định, quy ước không hiển nhiên từ code, cạm bẫy.
+- Đối chiếu từng điều với code trước khi ghi.
+- Mỗi chủ đề một file. Cập nhật file cũ thay vì tạo file trùng, và giữ `INDEX.md` luôn khớp.
+- Chỉ sửa trong thư mục tri thức.
+
+Báo cáo của `/ai-feature`, `/ai-bugfix` và `/ai-explain` sẽ gợi ý `/ai-learn` khi có điều đáng ghi lại.
+
+### F3. Guard: chặn cứng những việc không được làm
+
+Guard là **hook** của Claude Code: nó từ chối lệnh sửa file **trước khi** lệnh chạy, kể cả khi lệnh đó đến từ agent con. Guard mặc định tắt, bật trong `project.yaml`:
+
+```yaml
+scope: [lib/features/orders]                 # chỉ được sửa trong vùng này
+enable:
+  policies: [protect-generated, no-secrets]
+```
+
+| Guard | Chặn | Tùy chỉnh |
+|---|---|---|
+| `scope` | Sửa file ngoài các đường dẫn trong `scope`. `.ai-runs/` và thư mục tri thức luôn được phép. `/ai-review` mặc định chỉ soát vùng này | Khai bằng `scope:` (xem [PARTIAL.md](PARTIAL.md)) |
+| `protect-generated` | Sửa file sinh tự động: `*.g.dart`, `*.freezed.dart`, `*.pb.go`, `generated/`… | `policies.protect-generated.config.patterns` |
+| `no-secrets` | Ghi AWS/GitHub/Slack/Google/Stripe key, private key, chuỗi dài gán cho `password`/`api_key`… vào file. Placeholder như `your-key` hay `process.env.X` vẫn được phép | `policies.no-secrets.config.ignore` |
+
+Ngoài việc chặn, mỗi guard còn thêm một dòng vào mục "Project rules" trong prompt của mọi agent, để agent tránh từ đầu chứ không đợi tới lúc bị chặn. Hook và quyền do build tự đăng ký trong `settings.local.json`.
+
+> Guard chỉ bắt các công cụ sửa file. Lệnh shell (`sed -i`, `echo >`) không đi qua guard.
 
 ---
 

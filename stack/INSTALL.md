@@ -69,25 +69,21 @@ Muốn xem trước mà không ghi gì thì thêm `--dry-run`. Muốn kiểm tra
 node <stack>/kernel/cli/stack.mjs doctor --project <dự án>
 ```
 
-## 5. Cho phép trước một số quyền (nên làm)
+## 5. Quyền: build tự lo
 
-Khi chạy `/ai-review`, Claude Code sẽ hỏi quyền cho mỗi lệnh chưa được cho phép trước. Để đỡ bị hỏi liên tục, thêm vào `<dự án>/.claude/settings.json`:
+Build tự thêm vào `<dự án>/.claude/settings.local.json` những quyền mà các flow cần, để Claude Code không hỏi lại mỗi lần:
 
 ```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(node *stack.mjs check *)",
-      "Bash(git diff *)",
-      "Bash(git status *)",
-      "Bash(git log *)",
-      "Write(.ai-runs/**)"
-    ]
-  }
-}
+"Bash(node \"<stack>/kernel/cli/stack.mjs\" check *)",
+"Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
+"Edit(.ai-runs/**)"
 ```
 
-Nếu file đã có sẵn khối `permissions.allow` thì chỉ thêm các dòng còn thiếu.
+cùng hook của các guard đang bật (xem [USAGE.md](USAGE.md), mục F).
+
+- Build chỉ thêm và gỡ **những mục nó tự tạo**, ghi lại trong lock. Những gì bạn đã có trong file được giữ nguyên.
+- Muốn đặt vào `settings.json` (để commit cho cả team) thì khai `settings: shared` trong `project.yaml`. Không muốn build đụng vào settings thì khai `settings: none`.
+- Đổi chỗ đặt stack thì chạy lại `build`: quyền `stack.mjs check` được cập nhật theo đường dẫn mới.
 
 ## Dùng thử
 

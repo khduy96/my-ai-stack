@@ -4,7 +4,9 @@ import path from 'node:path';
 import YAML from 'yaml';
 import { createDiagnostics } from './diag.mjs';
 import { applyEmit, checkDrift, planEmit, USER_LOCK_FILE } from './emit.mjs';
-import { renderFlow } from './flow.mjs';
+import { defaultCli, renderFlow } from './flow.mjs';
+import { FLOW_PERMISSIONS, RUNS_DIR, SETTINGS_FILES } from './kernel.mjs';
+import { applyPolicies } from './policy.mjs';
 import { loadWorkspace, readText } from './load.mjs';
 import { enabledIds, renderAgents } from './render.mjs';
 import { resolve } from './resolve.mjs';
@@ -12,7 +14,12 @@ import { renderSetupSkill } from './setup.mjs';
 import { getContract, validate } from './validate.mjs';
 
 // Renders everything; `all` = also disabled roles and flows (doctor checks them too).
+// Returns the files to write and the entries for the managed settings file.
 async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
+  const policies = await applyPolicies(modules, ws, diags);
+  ws.rules = policies.rules;
+  const prefix = ws.config.prefix ?? '';
+
   const agents = renderAgents(modules, ws, diags);
   const agentsById = new Map(agents.map((a) => [a.agentId, a]));
   // A disabled flow is only checked for consistency, so any role may back it.
@@ -27,7 +34,27 @@ async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
     if (out && enabled) flows.push(out);
   }
 
-  return [...agents.filter((a) => all || a.enabled), ...flows].map(({ path, content }) => ({ path, content }));
+  // Each guard script reads its config from the JSON file next to it.
+  const hooks = policies.guards.flatMap((g) => [
+    { path: `hooks/${prefix}${g.id}.mjs`, content: g.source },
+    { path: `hooks/${prefix}${g.id}.json`, content: `${JSON.stringify(g.config, null, 2)}\n` },
+  ]);
+
+  const mode = ws.config.settings ?? 'local';
+  const cli = ws.config.cli ?? defaultCli();
+  const flowAllow = [`Bash(${cli} check *)`, ...FLOW_PERMISSIONS, `Edit(${ws.config.runs ?? RUNS_DIR}/**)`];
+  const allow = [...(flows.length ? flowAllow : []), ...policies.permissions];
+  const settings =
+    mode === 'none'
+      ? null
+      : {
+          file: SETTINGS_FILES[mode],
+          allow: [...new Set(allow)],
+          hooks: policies.guards.map((g) => ({ event: g.event, matcher: g.matcher, command: `node .claude/hooks/${prefix}${g.id}.mjs` })),
+        };
+
+  const outputs = [...agents.filter((a) => all || a.enabled), ...flows, ...hooks].map(({ path, content }) => ({ path, content }));
+  return { outputs, settings };
 }
 
 export async function build({ stackRoot, projectRoot, force = false, dryRun = false }) {
@@ -36,10 +63,10 @@ export async function build({ stackRoot, projectRoot, force = false, dryRun = fa
   if (diags.hasErrors()) return { diags, ops: [] };
 
   const modules = resolve(ws, diags);
-  const outputs = await renderWorkspace(ws, modules, diags, stackRoot, { all: false });
+  const { outputs, settings } = await renderWorkspace(ws, modules, diags, stackRoot, { all: false });
   if (diags.hasErrors()) return { diags, ops: [] };
 
-  const plan = await planEmit(ws.claudeDir, outputs, { force }, diags);
+  const plan = await planEmit(ws.claudeDir, outputs, { force, settings }, diags);
   if (diags.hasErrors()) return { diags, ops: [] };
   if (!dryRun) await applyEmit(ws.claudeDir, plan);
   return { diags, ops: plan.ops };

@@ -2,7 +2,7 @@
 id: adversarial
 kind: trait
 version: 0.2.0
-kernel: ^0.4
+kernel: ^0.5
 description: Treats other agents' claims as unproven and keeps only those that survive an attempt to disprove them.
 applies_to: [verifier]
 slot: lens

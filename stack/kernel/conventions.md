@@ -1,4 +1,4 @@
-# Quy ước của kernel (v0.4)
+# Quy ước của kernel (v0.5)
 
 Tài liệu này là luật chung của `ai-stack`. Schema trong `contracts/` là nguồn sự thật cho cấu trúc. File này giải thích **ý nghĩa** và **cách các phần ghép với nhau**.
 
@@ -18,7 +18,7 @@ Mọi thành phần đều là module, có chung các trường sau (`contracts/
 | `body_mode` | | `replace` · `append` · `prepend`: cách ghép body với cùng module ở tầng trước |
 | `x-*` | | khóa mở rộng, kernel bỏ qua. Dùng để thử nghiệm mà không phải sửa schema |
 
-Kernel 0.4 hiện thực **role**, **trait** và **flow**. Các kind còn lại đã có tên trong schema để giữ chỗ.
+Kernel 0.5 hiện thực **role**, **trait**, **flow** và **policy**. Các kind còn lại (`skill`, `retriever`, `integration`) đã có tên trong schema để giữ chỗ.
 
 ### Định dạng file
 
@@ -26,6 +26,7 @@ Kernel 0.4 hiện thực **role**, **trait** và **flow**. Các kind còn lại 
 |---|---|---|
 | Module dạng prompt (role, trait, sau này skill, rule) | `.md` + frontmatter | `modules/<kind>s/<id>.md` |
 | Module dạng cấu hình (flow) | `.yaml` | `modules/flows/<id>.yaml` |
+| Policy | `.yaml` + script guard `.mjs` cùng thư mục | `modules/policies/<id>.yaml`, `<script>.mjs` |
 | Pack | `.yaml` | `packs/<id>/pack.yaml` |
 | Cấu hình | `.yaml` | `stack.yaml`, `<project>/.claude/project.yaml` |
 
@@ -81,8 +82,9 @@ roles:
 | Placeholder | Dùng ở | Thay bằng |
 |---|---|---|
 | `{{<slot>}}` | body role | body của các trait có `slot` tương ứng |
-| `{{project.context}}` | role, trait | `context` + danh sách `read_first` của dự án |
+| `{{project.context}}` | role, trait | `context`, danh sách `read_first`, chỉ dẫn tới thư mục `knowledge`, và mục "Project rules" từ các policy đang bật |
 | `{{project.name}}` | role, trait | `name` của dự án |
+| `{{project.knowledge}}` | role, trait | thư mục `knowledge` của dự án; để trống nếu không khai |
 | `{{role.name}}` | role, trait | tên agent sinh ra, ví dụ `ai-verifier-security` |
 | `{{role.output}}` | role, trait | mô tả contract mà role `produces`; để trống nếu role không khai |
 | `{{contract.<name>}}` | role, trait | danh sách field của `contracts/<name>.schema.json` |
@@ -91,7 +93,7 @@ Nội dung đã thay vào thì không được quét lại, nên trait có thể
 
 ## 3. Flow
 
-**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.4 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
+**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.5 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
 
 ```yaml
 steps:
@@ -198,6 +200,7 @@ Trong mỗi tầng: module file được áp trước, override (`roles:` / `tra
 | List | List thường thì **thay**. List có `'+x'`/`'-x'` thì **nối thêm phép toán**, chỉ tính ở bước cuối |
 | `enable.roles` | Giống list, có thêm `'*'` nghĩa là tất cả. Ví dụ `['*', '-builder']` |
 | `enable.flows` | Như `enable.roles` |
+| `enable.policies` | Như `enable.roles`, nhưng mặc định là `[]` (opt-in). `scope:` tự bật policy `scope` |
 | Body | `body_mode`: `replace` (mặc định) · `append` · `prepend` |
 
 Ví dụ override trong `project.yaml`:
@@ -224,14 +227,55 @@ Override không được đổi `id`/`kind`. Kết quả sau khi gộp được 
 - Mọi xung đột được kiểm tra **trước khi ghi**. Có lỗi thì không file nào bị đụng tới.
 - Build chạy lại bao nhiêu lần cũng ra cùng kết quả: lần sau không sinh diff.
 
-## 6. Phiên bản
+### Settings do build quản lý
+
+Build ghi vào **một** file settings, chọn bằng khóa `settings` trong project.yaml: `local` (mặc định) là `settings.local.json`, `shared` là `settings.json`, còn `none` thì build không đụng tới settings. Build ghi hai loại mục:
+
+- `permissions.allow`: những gì flow cần, gồm đúng lệnh `<cli> check *`, các lệnh git chỉ đọc (`diff`, `status`, `log`) và `Edit(<runs>/**)`, cùng `permissions` của các policy đang bật. Claude Code chỉ áp quy tắc `Edit(…)` khi kiểm tra việc ghi file, và yêu cầu dấu `*` đặt sau lệnh con, nên build không bao giờ sinh `Write(…)` hay `Bash(node *…)`.
+- `hooks.PreToolUse`: một mục cho mỗi guard đang bật, chạy `node .claude/hooks/<prefix><policy>.mjs`.
+
+Lock ghi lại **đúng những mục build đã thêm** (`settings` trong `.stack-lock.json`). Một mục bạn đã có sẵn từ trước thì vẫn là của bạn, kể cả khi giống hệt mục build cần. Build sau chỉ gỡ hoặc thay những mục của chính nó. Đổi `settings` từ `local` sang `shared` thì các mục được chuyển từ file này sang file kia. `doctor` cảnh báo khi một mục do build quản lý bị xóa tay.
+
+### Knowledge
+
+`knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). Kernel 0.5 tra cứu bằng grep; retriever dạng vector để sau.
+
+## 6. Policy
+
+**Policy** trả lời câu hỏi *agent được làm gì trong dự án này*. Policy là **opt-in**: `enable.policies` mặc định để trống.
+
+```yaml
+# modules/policies/protect-generated.yaml
+id: protect-generated
+kind: policy
+config: { patterns: ['**/*.g.dart'] }            # mặc định, dự án ghi đè được
+rule: Never edit generated files ({{config.patterns}}); …
+guard: { event: PreToolUse, matcher: Edit|Write|MultiEdit|NotebookEdit, script: protect-generated.mjs }
+overrides: { roles: {…}, flows: {…} }            # tùy chọn
+permissions: [ … ]                               # tùy chọn
+```
+
+| Phần | Khi policy bật |
+|---|---|
+| `rule` | Thêm một dòng vào mục "Project rules" trong context của **mọi agent**. Đây là gợi ý |
+| `guard` | Build copy script thành `.claude/hooks/<prefix><id>.mjs`, ghi `config` ra `<prefix><id>.json` cạnh đó, và đăng ký hook. Script đọc JSON input của Claude Code từ stdin; exit code `2` nghĩa là **từ chối** lệnh, kèm thông báo gửi cho Claude. Đây là bắt buộc |
+| `overrides` | Áp lên role và flow như override của dự án |
+| `permissions` | Thêm vào `permissions.allow` |
+
+- Chuỗi trong `rule`, `overrides`, `permissions` dùng được `{{config.<key>}}`; list được nối bằng dấu `, `.
+- Dự án đổi config bằng `policies: { <id>: { config: {...} } }`. Config được gộp sâu, list thì thay hẳn.
+- **`scope: [paths]`** trong project.yaml là cách viết tắt để bật policy `scope` với các đường dẫn đó. Thư mục run và thư mục knowledge luôn được thêm vào danh sách được phép.
+- Có sẵn 3 policy: `scope`, `protect-generated`, `no-secrets`. Dự án viết policy riêng trong thư mục module của mình (`policies/<id>.yaml` cùng script đặt cạnh).
+- Guard chỉ bắt các công cụ sửa file; lệnh shell không đi qua guard.
+
+## 7. Phiên bản
 
 - `stack.yaml#version`: phiên bản của bộ module. Dự án khai báo dải tương thích ở `project.yaml#stack`.
 - Phiên bản kernel là `kernel/cli/package.json#version`. Module khai báo dải tương thích ở `kernel`.
 - Dải hỗ trợ: `*`, `x.y.z`, `^x.y`, `~x.y`, `>=x.y.z`.
 - Đổi contract theo kiểu phá vỡ tương thích thì tăng minor khi còn ở 0.x, tăng major từ 1.0 trở đi.
 
-## 7. Mã lỗi
+## 8. Mã lỗi
 
 | Mã | Khi nào |
 |---|---|
@@ -247,4 +291,4 @@ Override không được đổi `id`/`kind`. Kết quả sau khi gộp được 
 | `missing-file` | Thiếu `stack.yaml` hoặc `project.yaml` |
 | `unmanaged-file` / `generated-drift` | Xem mục 5 |
 | `unsupported-key` *(warn)* | Khóa trong project.yaml mà kernel hiện tại chưa hỗ trợ |
-| `generated-missing` *(warn)* | File có trong lock nhưng đã bị xóa |
+| `generated-missing` *(warn)* | File có trong lock nhưng đã bị xóa, hoặc mục settings do build quản lý đã bị xóa tay |

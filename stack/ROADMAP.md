@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 0.4.1
+Cập nhật: 2026-10-21 · kernel 0.5.0
 
 ## Trạng thái
 
@@ -8,7 +8,7 @@ Cập nhật: 2026-10-21 · kernel 0.4.1
 |---|---|---|
 | **P0 – Lõi** | ✔ xong | Không còn gì |
 | **P1 – Bộ tối thiểu** | ✔ xong | Không còn gì |
-| **P2 – Tri thức & chính sách** | Chưa làm | Toàn bộ |
+| **P2 – Tri thức & chính sách** | ✔ xong | Không còn gì |
 | **P3 – Pack & integration** | Mới có cơ chế pack | Pack đầu tiên, MCP adapter |
 | **P4 – Ổn định** | Mới có test cho kernel | Eval cho agent và flow, lên 1.0 |
 | **P5 – Mở rộng** | Chưa làm | Engine khác, vector RAG |
@@ -28,6 +28,10 @@ Cập nhật: 2026-10-21 · kernel 0.4.1
 - **P1 – skill `/stack` (0.4.1):** `stack install` cài skill vào `~/.claude/` (lock riêng). Skill khảo sát repo, hỏi những gì còn thiếu, chờ duyệt, rồi ghi file, build và chạy doctor; tự áp dụng cách làm của PARTIAL.md khi chọn "cá nhân" hoặc "một phần".
   - Đã chạy end-to-end trên một repo Node mới: `project.yaml` đúng, `npm test` vào builder và verifier, `git status` sạch, doctor 0 lỗi.
   - Chạy headless thì việc ghi vào `.claude/` và `.git/` bị từ chối (thư mục được bảo vệ); skill dừng lại và báo rõ, không tìm đường vòng.
+- **P2 – tri thức và chính sách (0.5):** loại module `policy` (rule, guard hook, override, permissions), `scope: [paths]`, settings do build quản lý (lock ghi đúng các mục build thêm), `knowledge: <dir>`, role `scribe` và `explainer`, flow `/ai-learn` và `/ai-explain`, trait `test-first`, `test-author`, `lens-performance` (variant `ai-builder-tests`, `ai-verifier-performance`).
+  - Đã chạy thật trong Claude Code: 3 guard chặn đúng (file generated, AWS key, ngoài scope); `/ai-explain` trả lời có `path:line` và không sửa file; `/ai-learn` tạo `INDEX.md` cùng 2 file tri thức đã đối chiếu với code.
+  - Chạy thật lộ ra 2 quy tắc quyền sai (`Write(...)` bị Claude Code bỏ qua khi kiểm tra ghi file; `Bash(node *…)` khớp quá rộng). Đã sửa sang `Edit(...)` và đúng lệnh CLI, rồi kiểm chứng lại không cần cấp thêm quyền.
+  - Test phát hiện `test-first` của dự án xung đột với variant `tests`; variant giờ tự bỏ `test-first`.
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
@@ -38,11 +42,11 @@ Cập nhật: 2026-10-21 · kernel 0.4.1
 - [x] Skill `/stack`: hỏi đáp về dự án → viết `project.yaml` → `stack build` (cài bằng `stack install`)
 
 ### P2 – Tri thức & chính sách
-- [ ] Knowledge: `knowledge/` + `INDEX.md`, retriever kiểu grep
-- [ ] Role `scribe` (ghi tri thức sau mỗi flow) và `explainer` (giải thích code)
-- [ ] Policy: rule dạng gợi ý; guard bắt buộc bằng hook trong `settings.json` (chặn lộ secret, chặn sửa file generated…)
-- [ ] Khóa `scope: [paths]` trong project.yaml: build tự sinh chỉ dẫn phạm vi cho các role, `input.default` của review, gợi ý quyền và hook `scope-guard`. Hiện làm thủ công theo PARTIAL.md
-- [ ] Trait: `test-first`, `test-author`, `lens-performance`
+- [x] Knowledge: `knowledge: <dir>` + `INDEX.md`, tra cứu bằng grep
+- [x] Role `scribe` và `explainer`, flow `/ai-learn` và `/ai-explain`
+- [x] Policy: rule (gợi ý) và guard (hook bắt buộc); `scope`, `protect-generated`, `no-secrets`; settings do build quản lý
+- [x] Khóa `scope: [paths]`
+- [x] Trait: `test-first`, `test-author`, `lens-performance`
 
 ### P3 – Pack & integration
 - [ ] Pack đầu tiên: `flutter`, thử trên `kho/` và `anhDung/` (lens lifecycle/rebuild, context Flutter)
@@ -71,8 +75,8 @@ Cập nhật: 2026-10-21 · kernel 0.4.1
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Áp ai-stack lên `kho/` bằng `/stack`, rồi chạy `/ai-review`: lần đầu kiểm chứng trên code thật, đồng thời cho thấy P2 và pack Flutter cần những gì
-2. P2: policy + khóa `scope`, rồi knowledge + `scribe`/`explainer`
+1. Áp ai-stack lên `kho/` bằng `/stack` (kế hoạch đã soạn, chờ duyệt), rồi chạy `/ai-review`: lần đầu kiểm chứng trên code thật, cho thấy pack Flutter cần gì
+2. P3: pack `flutter` (lens lifecycle/rebuild, `protect-generated` mặc định, lệnh `flutter analyze`/`test`), sau đó integration MCP
 
 ## Các quyết định đã chốt
 

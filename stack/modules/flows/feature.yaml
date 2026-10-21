@@ -1,7 +1,7 @@
 id: feature
 kind: flow
-version: 0.1.0
-kernel: ^0.4
+version: 0.1.1
+kernel: ^0.5
 tags: [core]
 description: >-
   Builds a feature end to end: the analyst writes a spec, the architect plans it
@@ -87,3 +87,5 @@ report: >-
   files it changed, and the checks the builders ran. Then list the confirmed findings
   still open, by severity, with path:line (from the last fix round when it ran,
   otherwise from confirm). End with the open questions, if any, and the run directory.
+  If the run taught something lasting about the project (a decision, a convention, a
+  pitfall), suggest recording it with the learn command and this run directory.

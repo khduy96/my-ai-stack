@@ -20,7 +20,7 @@ Skill sẽ:
 3. Cho bạn xem toàn bộ `project.yaml` và mọi file sẽ tạo hoặc sửa, rồi **chờ bạn duyệt**.
 4. Ghi file, `build`, `doctor`, và báo cáo kết quả.
 
-Chọn "cá nhân" hoặc "một phần" thì skill tự làm các bước trong [PARTIAL.md](PARTIAL.md) (`.git/info/exclude`, `settings.local.json`, hook `scope-guard`).
+Chọn "cá nhân" hoặc "một phần" thì skill tự làm các bước trong [PARTIAL.md](PARTIAL.md) (`.git/info/exclude`, khóa `scope`).
 
 Ở bước 4, Claude Code sẽ **hỏi quyền** cho từng file ghi vào `.claude/` và `.git/`, vì đây là các thư mục được bảo vệ. Điều này là bình thường; đồng ý để tiếp tục. Khi chạy headless (`claude -p`) thì không có ai để hỏi, nên các lần ghi đó bị từ chối và skill dừng lại, báo những file chưa ghi được.
 
@@ -41,7 +41,7 @@ cp <stack>/templates/project.yaml <dự án>/.claude/project.yaml
 Phần quan trọng nhất là `context` và `read_first`, vì agent dựa vào đó để hiểu dự án:
 
 ```yaml
-stack: ^0.4
+stack: ^0.5
 name: kho
 context: |
   App Flutter quản lý kho + đơn hàng (Android/iOS), backend Back4App (Parse),
@@ -71,23 +71,9 @@ node <stack>/kernel/cli/stack.mjs doctor --project <dự án>
 
 `doctor` phải báo `0 error(s)`.
 
-### 5. Cho phép trước các quyền cần thiết
+### 5. Quyền: build tự lo
 
-Thêm vào `<dự án>/.claude/settings.json`; xem mục 5 của [INSTALL.md](INSTALL.md):
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(node *stack.mjs check *)",
-      "Bash(git diff *)",
-      "Bash(git status *)",
-      "Bash(git log *)",
-      "Write(.ai-runs/**)"
-    ]
-  }
-}
-```
+Build đã thêm các quyền flow cần (và hook của guard đang bật) vào `<dự án>/.claude/settings.local.json`. Chỉ những mục nó tự tạo mới bị thay đổi hay gỡ đi; mục của bạn giữ nguyên. Muốn dùng `settings.json` cho cả team thì khai `settings: shared`. Xem mục 5 của [INSTALL.md](INSTALL.md).
 
 ### 6. Thêm `.ai-runs/` vào `.gitignore` của dự án
 
@@ -111,7 +97,8 @@ Mở Claude Code trong `<dự án>`, tạo một thay đổi nhỏ rồi gõ:
 |---|---|
 | Agent hoặc skill tự viết | Không đụng tới. File của stack có prefix `ai-` và được ghi trong `.claude/.stack-lock.json` |
 | `CLAUDE.md` | Không đụng tới. Agent đọc nó qua `read_first` |
-| `settings.json` | Không đụng tới. Bạn tự thêm quyền (bước 5) |
+| `settings.json` | Không đụng tới, trừ khi bạn khai `settings: shared` |
+| `settings.local.json` | Build thêm quyền flow và hook guard vào đây; chỉ thay đổi hay gỡ những mục chính nó đã thêm (ghi trong lock) |
 | File trùng tên với file stack định tạo | Build dừng lại với lỗi `unmanaged-file`, không ghi gì |
 
 ## Điều chỉnh cho riêng dự án
@@ -144,7 +131,20 @@ roles:
   verifier:
     variants:
       conventions: null                              # bỏ
-      perf: { traits: ['+lens-performance'] }        # thêm (khi đã có trait này)
+      a11y: { traits: ['+lens-a11y'] }               # thêm (khi đã có trait này)
+```
+
+**Bật guard và tri thức dự án:**
+
+```yaml
+scope: [lib/features/orders]                         # chỉ được sửa trong vùng này (xem PARTIAL.md)
+knowledge: docs/knowledge                            # agent tra cứu; /ai-learn ghi vào
+enable:
+  policies: [protect-generated, no-secrets]
+policies:
+  protect-generated:
+    config:
+      patterns: ['**/*.g.dart', '**/*.freezed.dart']
 ```
 
 **Đổi cổng duyệt của một bước trong flow:**
@@ -165,8 +165,10 @@ Sửa `project.yaml` xong thì chạy lại `build`.
 | File | Commit? |
 |---|---|
 | `.claude/project.yaml` | ✔ |
-| `.claude/agents/ai-*`, `.claude/skills/ai-*`, `.claude/.stack-lock.json` | ✔, để cả team dùng chung. Xem lưu ý về `cli` bên dưới |
-| `.claude/project.local.yaml` | ✘, chỉ là chỉnh sửa cá nhân |
+| `.claude/agents/ai-*`, `.claude/skills/ai-*`, `.claude/hooks/ai-*`, `.claude/.stack-lock.json` | ✔, để cả team dùng chung. Xem lưu ý về `cli` bên dưới |
+| `.claude/settings.json` (khi `settings: shared`) | ✔ |
+| `.claude/project.local.yaml`, `.claude/settings.local.json` | ✘, chỉ là chỉnh sửa cá nhân |
+| Thư mục knowledge | ✔ nếu muốn cả team dùng chung tri thức |
 | `.ai-runs/` | ✘ |
 
 **Lưu ý khi dùng chung trong team:** skill sinh ra chứa đường dẫn tuyệt đối tới CLI của máy đã build nó. Để mọi máy build ra cùng một kết quả, đặt khóa `cli` trong `project.yaml` thành một lệnh chạy được trên mọi máy. Ví dụ, nếu stack nằm trong repo của dự án:
@@ -188,5 +190,5 @@ Chọn cách thứ hai khi các app khác nhau nhiều (công nghệ, quy ước
 
 ## Gỡ ra
 
-1. Đặt `enable: { roles: [], flows: [] }` trong `project.yaml`, rồi chạy `build`. Stack sẽ xóa mọi file nó đã tạo. Nếu có file sinh ra đã bị sửa tay, build dừng lại với lỗi `generated-drift` và không xóa gì; khi đó tự xử lý file đó (giữ phần sửa ở chỗ khác, hoặc chấp nhận bỏ đi bằng `--force`) rồi chạy lại.
+1. Đặt `enable: { roles: [], flows: [], policies: [] }` và bỏ `scope` trong `project.yaml`, rồi chạy `build`. Stack sẽ xóa mọi file nó đã tạo và gỡ các mục nó đã thêm vào settings. Nếu có file sinh ra đã bị sửa tay, build dừng lại với lỗi `generated-drift` và không xóa gì; khi đó tự xử lý file đó (giữ phần sửa ở chỗ khác, hoặc chấp nhận bỏ đi bằng `--force`) rồi chạy lại.
 2. Xóa `project.yaml`, `.stack-lock.json` và `.ai-runs/`.

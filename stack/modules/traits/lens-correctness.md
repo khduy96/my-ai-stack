@@ -2,7 +2,7 @@
 id: lens-correctness
 kind: trait
 version: 0.1.0
-kernel: ^0.4
+kernel: ^0.5
 description: Review focus on whether the code does what it claims for every input it can receive.
 applies_to: [verifier]
 slot: lens

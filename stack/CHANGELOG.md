@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — 2026-10-21 (P2, tri thức và chính sách)
+
+- Kernel: module kind `policy` (YAML + guard script): `rule` added to every agent's "Project rules", `guard` installed as a Claude Code PreToolUse hook (`.claude/hooks/<prefix><id>.mjs` + config JSON), `overrides` for roles and flows, `permissions`; `{{config.<key>}}` in strings; opt-in via `enable.policies`; `policies: { <id>: { config } }` overrides.
+- `scope: [paths]` enables the policy `scope` (rule, refusing hook that always allows the runs and knowledge directories, scoped review default).
+- Settings managed by the build (`settings: local | shared | none`): flow permissions and guard hooks go into `settings.local.json` (or `settings.json`); the lock records exactly the entries the build added, so user entries are never touched and switching files moves them; `doctor` warns when managed entries were removed. Permission rules use the exact `<cli> check *` command and `Edit(<runs>/**)` (Claude Code ignores `Write(...)` rules for file writes and flags wildcards before the subcommand; found in an end-to-end run).
+- Policies: `scope`, `protect-generated`, `no-secrets`; all three verified refusing writes in Claude Code.
+- `knowledge: <dir>`: every agent is pointed at `<dir>/INDEX.md`; placeholder `{{project.knowledge}}`.
+- Roles: `scribe` (produces `notes`, writes only the knowledge directory), `explainer` (produces `explanation`); builder variant `tests`; verifier variant `performance`.
+- Traits: `test-first` (opt-in per project), `test-author` (drops a project-wide `test-first` in the tests variant), `lens-performance`.
+- Flows: `/ai-learn`, `/ai-explain`; `feature` and `bugfix` reports suggest `/ai-learn` when a run taught something lasting.
+- `/stack` skill: asks about guards and knowledge; leaves permissions and hooks to the build.
+- Removed `templates/hooks/scope-guard.mjs` (superseded by the `scope` policy). PARTIAL, INSTALL, INTEGRATE, USAGE, EXTEND rewritten for 0.5.
+- Breaking: modules and projects must now target `^0.5`.
+
 ## 0.4.1 — 2026-10-21 (P1, skill `/stack`)
 
 - CLI: `stack install [--target <dir>] [--dry-run] [--force]` installs the `/stack` setup skill into `~/.claude/skills/stack/`, tracked in its own lock (`.stack-user-lock.json`) so it never touches a project build in the same `.claude/` or a skill it did not write.

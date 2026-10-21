@@ -1,0 +1,24 @@
+id: scope
+kind: policy
+version: 0.1.0
+kernel: ^0.5
+tags: [core, guard]
+description: >-
+  Limits edits to the paths you own: agents are told the boundary, a hook refuses
+  edits outside it, and /review covers only those paths by default. Enabled by
+  `scope: [paths]` in project.yaml.
+config:
+  paths: []
+  always_allowed: []    # the runs and knowledge directories are added automatically
+rule: >-
+  Only edit files under {{config.paths}}. When a task needs a change anywhere else,
+  do not make it; describe it under `next` so the owner of that code can make it.
+guard:
+  event: PreToolUse
+  matcher: Edit|Write|MultiEdit|NotebookEdit
+  script: scope.mjs
+overrides:
+  flows:
+    review:
+      input:
+        default: uncommitted changes under {{config.paths}} only.

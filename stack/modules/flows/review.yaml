@@ -1,7 +1,7 @@
 id: review
 kind: flow
 version: 0.1.0
-kernel: ^0.4
+kernel: ^0.5
 tags: [core]
 description: >-
   Multi-agent code review: three focused verifiers (correctness, security,

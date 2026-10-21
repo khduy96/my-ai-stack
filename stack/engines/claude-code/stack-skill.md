@@ -34,13 +34,15 @@ Ask only what the survey did not settle, in at most two rounds. Prefer multiple 
 1. **Context:** show a two-to-four-sentence draft (what the project is, its stack, where the code lives) and ask for corrections.
 2. **Files to read first:** propose the files from the survey; ask what to add or remove.
 3. **Shared or personal:** will the generated files be committed for the team (**shared**), or stay on this machine only (**personal**)? Recommend personal when `.claude/` is tracked and belongs to a team, or when the user says they only work on part of the repository.
-4. **Scope:** the whole repository, or only some paths? If only some: should edits outside them be **blocked** by a hook (recommended) or only **prompted**?
+4. **Scope:** the whole repository, or only some paths? Paths become `scope:`, which tells agents the boundary and installs a hook that refuses edits outside it.
 5. **Checks:** confirm the commands builders and verifiers should run, taken from the survey. Having none is fine.
-6. **What to enable:** everything (recommended), or a subset of:
+6. **Guards (optional, recommended):** refuse edits to generated files (`protect-generated`; propose patterns from the survey, e.g. `**/*.g.dart`), and refuse writing secrets into files (`no-secrets`).
+7. **Knowledge (optional):** a directory for durable project knowledge (e.g. `docs/knowledge`) that agents consult and `/{{stack.prefix}}learn` writes to. Propose one only if the user wants it; it is created on first use.
+8. **What to enable:** everything (recommended), or a subset of:
 
 {{stack.catalog}}
 
-7. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
+9. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
 
 ## 4. Propose, then wait
 
@@ -58,30 +60,31 @@ context: |
 read_first:
   - <file>
 # prefix: <only if changed>
-# enable: { roles: [...], flows: [...] }        <only for a subset>
-roles:
+# settings: shared                              <shared setup that commits settings.json>
+# scope: [<path>, ...]                          <when scoped>
+# knowledge: <dir>                              <when wanted>
+# enable: { roles: [...], flows: [...], policies: [protect-generated, no-secrets] }
+#                                               <roles/flows only for a subset; policies when chosen>
+# policies:                                     <only to change a guard's defaults>
+#   protect-generated: { config: { patterns: ['**/*.g.dart'] } }
+roles:                                          <when there are checks>
   builder:
     body: |
-      ## Project checks                          <when there are checks>
+      ## Project checks
       Run `<command>` before reporting done.
-      ## Scope                                   <when scoped>
-      Only edit files under <paths>. If the task needs a change anywhere else, do not
-      make it: describe it under `next` so the owner can do it.
     body_mode: append
-  verifier:                                      <when there are checks>
-    body: Run `<command>` as your checks.
-    body_mode: append
-  architect:                                     <when scoped>
+  architect:                                    <when scoped>
     body: |
       ## Scope
       Plan work units only inside <paths>. List changes needed elsewhere as risks,
       with the owner to ask, not as units.
     body_mode: append
-flows:                                           <when scoped>
-  review:
-    input:
-      default: uncommitted changes under <paths> only.
+  verifier:
+    body: Run `<command>` as your checks.
+    body_mode: append
 ```
+
+`scope` already adds the boundary to every agent, the refusing hook, and a scoped default for review; the build registers hooks and the flow permissions in the settings file itself.
 
 ### Other files, by answer
 
@@ -94,14 +97,12 @@ flows:                                           <when scoped>
   .claude/agents/{{stack.prefix}}*
   .claude/skills/{{stack.prefix}}*
   .claude/settings.local.json
-  .claude/hooks/scope-guard.mjs
+  .claude/hooks/{{stack.prefix}}*
   .ai-runs/
   ```
-- **Shared:** add `.ai-runs/` to `.gitignore`. Mention that generated skills contain the absolute CLI path of this machine; if the stack is inside this repository, propose `cli: node <relative path to stack.mjs>` in `project.yaml` so every machine builds the same files.
-- **Scoped with a hook:** copy `{{stack.root}}/templates/hooks/scope-guard.mjs` to `.claude/hooks/scope-guard.mjs` and set its `SCOPE` list to the paths, each ending with `/`, keeping `.ai-runs/`.
-- **Permissions:** in `.claude/settings.local.json` (personal) or the file the user chooses (shared), merge without removing anything already there:
-  - `permissions.allow`: `Bash(node *stack.mjs check *)`, `Bash(git diff *)`, `Bash(git status *)`, `Bash(git log *)`, `Write(.ai-runs/**)`; when scoped, also `Edit(<path>/**)` and `Write(<path>/**)` for each path;
-  - when scoped with a hook, `hooks.PreToolUse`: an entry with `"matcher": "Edit|Write|MultiEdit|NotebookEdit"` running `node .claude/hooks/scope-guard.mjs`.
+  Add the knowledge directory too when the user wants it kept private.
+- **Shared:** add `.ai-runs/` to `.gitignore`, and `settings: shared` to `project.yaml` if the team should get the permissions and hooks through `settings.json`. Mention that generated skills contain the absolute CLI path of this machine; if the stack is inside this repository, propose `cli: node <relative path to stack.mjs>` in `project.yaml` so every machine builds the same files.
+- **Permissions and hooks:** do not edit settings files yourself. The build adds the flow permissions and the hooks of enabled guards to `.claude/settings.local.json` (or `settings.json` with `settings: shared`), and later builds change or remove only the entries they added. Mention this in the plan.
 
 ## 5. Write and build
 

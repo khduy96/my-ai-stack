@@ -16,7 +16,16 @@ export const KINDS = {
   role: { dir: 'roles', ext: '.md' },
   trait: { dir: 'traits', ext: '.md' },
   flow: { dir: 'flows', ext: '.yaml' },
+  policy: { dir: 'policies', ext: '.yaml' },
 };
+
+// Settings file the build manages permissions and hooks in, by the project's `settings` value.
+export const SETTINGS_FILES = { local: 'settings.local.json', shared: 'settings.json' };
+
+// Read-only git commands flows use. The build adds the exact handoff check command
+// (`<cli> check *`) and `Edit(<runs dir>/**)`; Claude Code matches file writes against
+// Edit rules only, and wants wildcards after the subcommand.
+export const FLOW_PERMISSIONS = ['Bash(git diff *)', 'Bash(git status *)', 'Bash(git log *)'];
 
 // Default directory for flow run state, relative to the project root. Kept outside
 // .claude/ because Claude Code asks for permission on every write inside .claude/.

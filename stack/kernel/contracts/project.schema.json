@@ -14,16 +14,21 @@
     "modules": { "type": "array", "items": { "type": "string" }, "description": "Extra module directories, relative to the project root." },
     "runs": { "type": "string", "description": "Directory for flow run state, relative to the project root. Default: .ai-runs (outside .claude/, which Claude Code guards with permission prompts)." },
     "cli": { "type": "string", "description": "Command generated skills use to run this CLI. Default: node \"<absolute path to stack.mjs>\"." },
+    "settings": { "enum": ["local", "shared", "none"], "description": "Where the build manages permissions and policy hooks: .claude/settings.local.json (local, default), .claude/settings.json (shared), or nowhere (none). Only entries the build added are ever changed or removed." },
+    "scope": { "type": "array", "items": { "type": "string" }, "description": "Paths agents may edit, relative to the project root. Shorthand for enabling the policy 'scope' with these paths." },
+    "knowledge": { "type": "string", "description": "Directory of durable project knowledge, relative to the project root, with an INDEX.md. Agents consult it; the scribe writes to it." },
     "enable": {
       "type": "object",
       "properties": {
         "roles": { "type": "array", "items": { "type": "string" } },
-        "flows": { "type": "array", "items": { "type": "string" } }
+        "flows": { "type": "array", "items": { "type": "string" } },
+        "policies": { "type": "array", "items": { "type": "string" }, "description": "Policies are opt-in; default none." }
       },
       "additionalProperties": false
     },
     "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
     "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
-    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Flow overrides; `steps` may be a map keyed by step id to change single steps, e.g. { plan: { gate: auto } }." }
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Flow overrides; `steps` may be a map keyed by step id to change single steps, e.g. { plan: { gate: auto } }." },
+    "policies": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Policy overrides, typically { <id>: { config: {...} } }." }
   }
 }

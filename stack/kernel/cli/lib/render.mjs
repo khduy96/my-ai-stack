@@ -2,8 +2,9 @@
 //
 // Placeholders in a role body:
 //   {{<slot>}}          trait bodies whose `slot` is <slot> (declared in the role's `slots`)
-//   {{project.context}} project context + read_first list
+//   {{project.context}} project context, read_first list, knowledge pointer, policy rules
 //   {{project.name}}    project name
+//   {{project.knowledge}} knowledge directory (empty when the project has none)
 //   {{role.name}}       generated agent name, e.g. ai-verifier-security
 //   {{role.output}}     field list of the contract the role `produces` (empty if none)
 //   {{contract.<name>}} field list of kernel/contracts/<name>.schema.json
@@ -16,11 +17,18 @@ import { getContract, validate } from './validate.mjs';
 
 const PLACEHOLDER = /\{\{\s*([a-z][a-z0-9-]*)(?:\.([a-z][a-z0-9_-]*))?\s*\}\}/g;
 
-function renderContext(config) {
+function renderContext(ws) {
+  const { config } = ws;
   const parts = [];
   if (typeof config.context === 'string' && config.context.trim()) parts.push(config.context.trim());
   const readFirst = applyListOps([], config.read_first ?? []);
   if (readFirst.length) parts.push(['Read these files before you start:', ...readFirst.map((f) => `- \`${f}\``)].join('\n'));
+  if (config.knowledge) {
+    parts.push(
+      `Durable project knowledge lives in \`${config.knowledge}/\`. Start from \`${config.knowledge}/INDEX.md\`, then search that directory for the terms of your task, and cite the knowledge files you rely on. If they contradict the code, trust the code and say so.`,
+    );
+  }
+  if (ws.rules?.length) parts.push(['Project rules:', ...ws.rules.map((rule) => `- ${rule}`)].join('\n'));
   return parts.length ? `## Project context\n\n${parts.join('\n\n')}` : '';
 }
 
@@ -56,8 +64,9 @@ function renderOutput(produces) {
 // Expands project.*, role.* and contract.*; bare names go to `onSlot` (or are an error).
 function expand(text, ctx, where, diags, onSlot = null) {
   return text.replace(PLACEHOLDER, (all, ns, key) => {
-    if (ns === 'project' && key === 'context') return renderContext(ctx.ws.config);
+    if (ns === 'project' && key === 'context') return renderContext(ctx.ws);
     if (ns === 'project' && key === 'name') return ctx.ws.config.name ?? '';
+    if (ns === 'project' && key === 'knowledge') return ctx.ws.config.knowledge ?? '';
     if (ns === 'role' && key === 'name') return ctx.agentName;
     if (ns === 'role' && key === 'output') return renderOutput(ctx.data.produces);
     if (ns === 'contract' && key) {

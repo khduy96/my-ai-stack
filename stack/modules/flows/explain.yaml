@@ -1,0 +1,25 @@
+id: explain
+kind: flow
+version: 0.1.0
+kernel: ^0.5
+tags: [core, knowledge]
+description: >-
+  Answers how something in the codebase works with the explainer: a direct answer,
+  the path through the code with path:line evidence, and the gotchas. Use to
+  understand a flow, feature, class or design before changing it.
+argument_hint: "<question>"
+
+input:
+  description: The question, in the user's words.
+
+steps:
+  - id: explain
+    agent: explainer
+    goal: Answer the question with evidence from the code.
+    in:
+      question: $input
+
+report: >-
+  Give the answer, then the walkthrough as a numbered list with path:line for each
+  step, then the gotchas and anything left unverified. Offer to record the answer as
+  project knowledge with the learn command when it is worth keeping.

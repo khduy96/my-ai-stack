@@ -76,8 +76,11 @@ Cấu trúc bên trong giống thư mục `modules/` của stack:
 <dự án>/.ai/
 ├── roles/       <id>.md     # agent riêng
 ├── traits/      <id>.md     # mảnh prompt riêng (lens, quy tắc…)
-└── flows/       <id>.yaml   # quy trình nhiều agent riêng
+├── flows/       <id>.yaml   # quy trình nhiều agent riêng
+└── policies/    <id>.yaml   # rule / guard riêng, kèm script <tên>.mjs đặt cạnh
 ```
+
+Policy riêng là cách gọn nhất để biến một quy tắc của dự án thành **bắt buộc**. Ví dụ policy cấm sửa file migration đã chạy: một `rule` dặn agent, và một `guard` chạy script trả exit code `2` khi đường dẫn khớp. Xem `modules/policies/protect-generated.*` trong stack để làm mẫu, và [kernel/conventions.md](kernel/conventions.md), mục 6.
 
 Tên `.ai` chỉ là gợi ý. Thư mục nào cũng được, miễn khai trong `modules`. Nên đặt **ngoài `.claude/`**, vì Claude Code hỏi quyền mỗi khi ghi vào `.claude/`.
 
@@ -203,7 +206,7 @@ Nếu skill cũ thực chất là một quy trình (gọi agent A, rồi B, rồ
 
 ---
 
-## Giới hạn hiện tại (kernel 0.4)
+## Giới hạn hiện tại (kernel 0.5)
 
 | Giới hạn | Cách xử lý tạm |
 |---|---|

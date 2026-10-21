@@ -1,0 +1,31 @@
+id: learn
+kind: flow
+version: 0.1.0
+kernel: ^0.5
+tags: [core, knowledge]
+description: >-
+  Records lasting project knowledge with the scribe, from a finished flow run
+  directory or from a topic or note you give, into the knowledge directory. Use after
+  a run that taught something worth keeping, or to tell the project something it
+  should remember.
+argument_hint: "<run directory | topic or note>"
+
+input:
+  description: >-
+    A run directory (for example .ai-runs/20261021-1520-feature-x) whose handoffs to
+    learn from, or a topic or note in the user's words.
+
+steps:
+  - id: record
+    agent: scribe
+    goal: >-
+      Record the durable knowledge in the input into the knowledge directory, checked
+      against the code, and keep INDEX.md current.
+    in:
+      source: $input
+    gate: on-questions
+
+report: >-
+  List the knowledge files created or updated, each with a one-line summary, then
+  what was left out and why. If the project has no knowledge directory, explain how
+  to set one: `knowledge: <dir>` in .claude/project.yaml, then run the build.

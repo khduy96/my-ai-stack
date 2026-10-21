@@ -12,22 +12,29 @@ const frontmatter = (text) => YAML.parse(/^---\n([\s\S]*?)\n---/.exec(text)[1]);
 
 test('the real stack builds valid agents and rebuilding changes nothing', async () => {
   const projectRoot = await tempDir();
-  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.4\nname: demo\ncontext: Demo app.\n' });
+  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.5\nname: demo\ncontext: Demo app.\n' });
 
   const first = await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot });
   assert.deepEqual(codes(first.diags), []);
   assert.deepEqual(first.ops.map((o) => o.rel).sort(), [
     'agents/ai-analyst.md',
     'agents/ai-architect.md',
+    'agents/ai-builder-tests.md',
     'agents/ai-builder.md',
+    'agents/ai-explainer.md',
     'agents/ai-investigator.md',
+    'agents/ai-scribe.md',
     'agents/ai-verifier-adversarial.md',
     'agents/ai-verifier-conventions.md',
     'agents/ai-verifier-correctness.md',
+    'agents/ai-verifier-performance.md',
     'agents/ai-verifier-security.md',
     'agents/ai-verifier.md',
+    'settings.local.json',
     'skills/ai-bugfix/SKILL.md',
+    'skills/ai-explain/SKILL.md',
     'skills/ai-feature/SKILL.md',
+    'skills/ai-learn/SKILL.md',
     'skills/ai-review/SKILL.md',
   ]);
 

@@ -9,7 +9,8 @@
     "kind": { "const": "pack" },
     "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
     "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
-    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } }
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "policies": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } }
   },
   "unevaluatedProperties": false
 }

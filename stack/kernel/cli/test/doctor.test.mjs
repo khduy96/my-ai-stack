@@ -64,7 +64,7 @@ test('project requiring another stack version is reported', async () => {
 });
 
 test('override of an unknown module and unknown project keys', async () => {
-  const diags = await check({ modules: { 'roles/a.md': role('a') }, project: 'roles:\n  ghost: { model: sonnet }\nknowledge: [x]\n' });
+  const diags = await check({ modules: { 'roles/a.md': role('a') }, project: 'roles:\n  ghost: { model: sonnet }\nretrievers: [x]\n' });
   assert.deepEqual(codes(diags), ['unknown-ref']);
   assert.deepEqual(codes(diags, 'warn'), ['unsupported-key']);
 });

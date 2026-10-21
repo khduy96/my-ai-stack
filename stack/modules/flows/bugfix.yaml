@@ -1,7 +1,7 @@
 id: bugfix
 kind: flow
-version: 0.1.1
-kernel: ^0.4
+version: 0.1.2
+kernel: ^0.5
 tags: [core]
 description: >-
   Fixes a bug with evidence: the investigator finds the root cause (and asks when it
@@ -63,4 +63,6 @@ report: >-
   State the root cause in one or two sentences with its path:line, the fix and the
   files it changed, the test added (if any) and the checks that ran. Then list any
   critical or major findings still open, and the run directory. If no root cause was
-  confirmed, say so and list the hypotheses still open instead.
+  confirmed, say so and list the hypotheses still open instead. If the root cause is
+  a pitfall others could hit again, suggest recording it with the learn command and
+  this run directory.

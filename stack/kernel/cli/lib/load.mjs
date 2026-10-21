@@ -90,7 +90,7 @@ async function parseYamlModule(file, diags) {
   return data ? { data, body: '' } : null;
 }
 
-const overridesOf = (data) => ({ role: data?.roles ?? {}, trait: data?.traits ?? {}, flow: data?.flows ?? {} });
+const overridesOf = (data) => ({ role: data?.roles ?? {}, trait: data?.traits ?? {}, flow: data?.flows ?? {}, policy: data?.policies ?? {} });
 
 // Builds the ordered layers: core -> packs -> project -> local.
 export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
@@ -129,9 +129,9 @@ export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
     }
   }
 
-  // Module overrides (roles/traits/flows) live in layers; everything else is project config.
+  // Module overrides (roles/traits/flows/policies) live in layers; everything else is project config.
   const configOf = (d) => {
-    const { roles, traits, flows, ...rest } = d ?? {};
+    const { roles, traits, flows, policies, ...rest } = d ?? {};
     return rest;
   };
   const config = mergeValue(mergeValue(configOf(stack.defaults), configOf(project)), configOf(local));

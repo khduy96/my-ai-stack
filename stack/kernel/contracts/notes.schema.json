@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/notes.schema.json",
+  "title": "Notes",
+  "description": "Knowledge the scribe recorded, and the candidates it chose to leave out.",
+  "type": "object",
+  "required": ["written"],
+  "properties": {
+    "written": {
+      "type": "array",
+      "description": "Knowledge files created or updated.",
+      "items": {
+        "type": "object",
+        "required": ["file", "change", "title"],
+        "properties": {
+          "file": { "type": "string", "description": "Path relative to the project root." },
+          "change": { "enum": ["created", "updated"] },
+          "title": { "type": "string" },
+          "summary": { "type": "string", "description": "What the file now says, in one line." }
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "description": "Candidates not recorded.",
+      "items": {
+        "type": "object",
+        "required": ["item", "reason"],
+        "properties": {
+          "item": { "type": "string" },
+          "reason": { "type": "string", "description": "e.g. transient, already in the code, already recorded, secret." }
+        }
+      }
+    }
+  }
+}

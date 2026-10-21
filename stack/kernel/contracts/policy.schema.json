@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/policy.schema.json",
+  "title": "Policy",
+  "description": "What agents may do in a project. Opt-in. A policy can state a rule (advisory, added to every agent's project context), enforce a guard (a Claude Code hook that refuses tool calls), and change roles or flows. Strings in rule, overrides and permissions may use {{config.<key>}}.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "required": ["description"],
+  "properties": {
+    "kind": { "const": "policy" },
+    "config": { "type": "object", "description": "Defaults, overridable per project: policies: { <id>: { config: {...} } }." },
+    "rule": { "type": "string", "description": "One or two sentences added under 'Project rules' in every agent's context." },
+    "guard": {
+      "type": "object",
+      "description": "A hook script shipped next to this file. The build copies it to .claude/hooks/ai-<id>.mjs, writes the config next to it as ai-<id>.json, and registers it in the managed settings file.",
+      "required": ["event", "matcher", "script"],
+      "properties": {
+        "event": { "enum": ["PreToolUse"] },
+        "matcher": { "type": "string", "description": "Tool name pattern, e.g. Edit|Write|MultiEdit|NotebookEdit." },
+        "script": { "type": "string", "pattern": "^[A-Za-z0-9._-]+\\.mjs$", "description": "File name, relative to this policy's directory." }
+      },
+      "additionalProperties": false
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Applied to other modules while the policy is enabled, like a project's overrides.",
+      "properties": {
+        "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+        "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } }
+      },
+      "additionalProperties": false
+    },
+    "permissions": { "type": "array", "items": { "type": "string" }, "description": "Entries added to permissions.allow in the managed settings file." }
+  },
+  "unevaluatedProperties": false
+}
