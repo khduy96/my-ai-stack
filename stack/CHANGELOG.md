@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 — 2026-10-21 (/stack hỏi công cụ team dùng)
+
+- `/stack` gains step 4 and mode `tools`: asks which tools the team really uses (issue tracker, UI design, chat, docs, code hosting and CI, error monitoring, anything else), then, read-only and without calling any tool: enables an existing integration, drafts a project integration (`.ai/integrations/<id>.yaml`: read/write sets for the user to approve, delete tools left out, read-only grants) from a connected MCP server's tool names, or offers read-only CLI commands to pre-approve; writes a "Tools" paragraph into the context (chat: agents never post).
+- Tool categories live in `engines/claude-code/tools-catalog.yaml` (editable; rendered into the skill by `stack install`).
+- Rule added to /stack: never assume a tool from what happens to be connected.
+
 ## 0.6.0 — 2026-10-21 (P3, pack và integration)
 
 - Kernel: pack `defaults` (project config between the stack's defaults and the project's own, e.g. enabling a policy or pre-approving check commands); project key `permissions` (extra managed `permissions.allow` entries); `Bash(git show *)` added to the flow permissions (an agent was refused it in a real run).

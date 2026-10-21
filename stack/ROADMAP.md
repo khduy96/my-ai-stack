@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 0.6.0
+Cập nhật: 2026-10-21 · kernel 0.6.1
 
 ## Trạng thái
 
@@ -35,6 +35,8 @@ Cập nhật: 2026-10-21 · kernel 0.6.0
 - **P3 – pack và integration (0.6):** `defaults` cho pack, pack `flutter`, loại module `integration` với `zentao` (chỉ đọc), role `researcher`, step `external`, khóa `permissions`.
   - Chạy `/ai-review` với pack `flutter` trên commit thật `b6a9e53` của `kho` (bản clone, repo thật không bị đụng): 5 handoff hợp lệ, 7 finding minor có giá trị, adversarial hạ 2 mức và bác 4 finding sai (kể cả số dòng không tồn tại).
   - Lần chạy đó lộ ra `git show`/`flutter test` bị từ chối → thêm vào quyền do build quản lý. Lần thử Zentao lộ ra tool MCP cần được cho phép trước → thêm `allow` cho integration (chỉ nhóm đọc).
+- **`/stack` hỏi công cụ team dùng (0.6.1):** bước 4 và mode `/stack tools`; danh mục 6 loại (tracker, thiết kế UI, chat, tài liệu, code/CI, theo dõi lỗi) trong `tools-catalog.yaml`. Không tự suy ra công cụ từ những gì đang kết nối, không gọi tool ngoài khi setup.
+  - Đã chạy thật với một team giả định (GitHub Issues qua gh, Figma, Slack, docs trong repo, GitHub Actions): 0 lệnh gọi MCP; không bật Zentao dù đang kết nối; sinh `.ai/integrations/figma.yaml` (12 tool đọc, 8 tool ghi không cấp cho ai); `gh` chỉ đọc được cho phép sẵn; Slack ghi vào context kèm hướng dẫn kết nối.
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại

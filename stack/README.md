@@ -103,7 +103,7 @@ Build mặc định sinh ra 14 agent và 5 skill `/ai-*`, đồng thời thêm c
 | Role, Trait, Variants, output contract | ✔ kernel 0.2 |
 | Flow (`agent`, `fanout`, `when`, `gate`) + skill engine + `stack check` | ✔ kernel 0.3 |
 | Flow `foreach`, `loop`, input "mới nhất trong các nguồn" | ✔ kernel 0.4 |
-| Skill `/stack` (hỏi đáp tạo `project.yaml`, cài bằng `stack install`) | ✔ kernel 0.4.1 |
+| Skill `/stack` (hỏi đáp tạo `project.yaml`, cài bằng `stack install`) | ✔ kernel 0.4.1; hỏi công cụ team dùng (`/stack tools`) từ 0.6.1 |
 | Policy (rule, guard hook, override), `scope`, settings do build quản lý, knowledge (grep) | ✔ kernel 0.5 |
 | Pack (modules + override + defaults), pack `flutter` | ✔ kernel 0.6 |
 | Integration (MCP: grants, allow, rule), `zentao`; role `researcher`; flow gọi agent viết tay (`external`) | ✔ kernel 0.6 |

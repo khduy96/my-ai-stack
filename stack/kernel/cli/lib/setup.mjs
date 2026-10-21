@@ -33,6 +33,38 @@ function catalog(modules, agents, prefix) {
   return lines.join('\n');
 }
 
+export const TOOLS_CATALOG = path.join('engines', 'claude-code', 'tools-catalog.yaml');
+
+// The tool categories /stack asks about, as a Markdown list. null when the catalog is invalid.
+async function renderTools(stackRoot, diags) {
+  const file = path.join(stackRoot, TOOLS_CATALOG);
+  const text = await readText(file);
+  if (text === null) return 'No tool categories are defined.';
+  let categories;
+  try {
+    categories = YAML.parse(text)?.categories;
+  } catch (e) {
+    diags.error('parse-error', String(e.message).split('\n')[0], file);
+    return null;
+  }
+  if (!Array.isArray(categories) || categories.some((c) => !c?.id || !c?.title || !c?.ask)) {
+    diags.error('schema-invalid', 'tools catalog: `categories` must be a list of entries with id, title and ask', file);
+    return null;
+  }
+  const code = (list) => list.map((x) => `\`${x}\``).join(', ');
+  return categories
+    .map((c) => {
+      const lines = [`- **${c.title}** (\`${c.id}\`): ${c.ask}`];
+      if (c.examples?.length) lines.push(`  - Options to offer: ${c.examples.join(', ')}.`);
+      if (c.use) lines.push(`  - What agents do with it: ${c.use}`);
+      if (c.read_roles?.length) lines.push(`  - Read tools go to: ${code(c.read_roles)}.`);
+      if (c.cli?.length) lines.push(`  - Without MCP, read-only CLI commands to pre-approve: ${code(c.cli.map((x) => `Bash(${x})`))}.`);
+      if (c.note) lines.push(`  - Note: ${c.note}`);
+      return lines.join('\n');
+    })
+    .join('\n');
+}
+
 // -> { path, content } or null.
 export async function renderSetupSkill(ws, modules, agents, diags, stackRoot) {
   const templateFile = path.join(stackRoot, SETUP_TEMPLATE);
@@ -50,7 +82,10 @@ export async function renderSetupSkill(ws, modules, agents, diags, stackRoot) {
     if (text !== null) packs.push(describe(entry.name, YAML.parse(text)?.description));
   }
   const integrations = [...modules.values()].filter((m) => m.kind === 'integration').map((m) => describe(m.id, m.data.description));
+  const tools = await renderTools(stackRoot, diags);
+  if (tools === null) return null;
   const values = {
+    'stack.tools': tools,
     'stack.packs': packs.sort().join(', ') || 'none',
     'stack.integrations': integrations.sort().join(', ') || 'none',
     'stack.version': ws.stack.version,

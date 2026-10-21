@@ -27,7 +27,7 @@ Hiện có:
 | Ghi lại tri thức dự án sau một lần chạy | `/ai-learn <thư mục run>` | F2 |
 | Chặn sửa ngoài vùng, file generated, lộ secret | `scope`, `enable.policies` | F3 |
 | Tra tài liệu thư viện, changelog, lỗi đã biết | `ai-researcher` | G1 |
-| Làm việc từ ticket Zentao | `/ai-feature task #45`, `/ai-bugfix bug #123` | G2 |
+| Cho agent đọc ticket, thiết kế, tài liệu của team | `/stack tools`, rồi `/ai-feature SHOP-123` | G2 |
 | Dự án Flutter | `packs: [flutter]` | G3 |
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
 | Chạy review không cần người (script, CI) | `claude -p "/ai-review …"` | E3 |
@@ -365,9 +365,11 @@ Dùng agent ai-researcher kiểm tra: bản mobile_scanner dự án đang dùng 
 
 Researcher trước hết xem dự án đang dùng **phiên bản nào** (đọc file manifest và lock), rồi ưu tiên nguồn gốc: tài liệu chính thức, changelog, issue tracker. Mỗi kết luận đều kèm nguồn và ngày; chỗ nào các nguồn mâu thuẫn thì nó báo ra. Nội dung tải về được coi là **dữ liệu**, nó không làm theo bất kỳ chỉ dẫn nào nằm trong đó.
 
-### G2. Làm từ ticket Zentao
+### G2. Làm từ ticket, thiết kế, tài liệu của team
 
-Bật một lần trong `project.yaml`, rồi `build`:
+Cách nhanh nhất là gõ **`/stack tools`**. Skill hỏi team bạn dùng tracker, công cụ thiết kế, kênh chat, nơi để tài liệu, nơi chứa code/CI và theo dõi lỗi nào. Sau đó nó bật integration có sẵn, sinh integration mới từ MCP server đang kết nối (chỉ quyền đọc, bạn duyệt từng tool), hoặc cho phép sẵn lệnh CLI chỉ đọc. Nó **không gọi thử** hệ thống nào của bạn.
+
+Ví dụ làm tay với tracker Zentao (integration có sẵn trong stack). Bật một lần trong `project.yaml`, rồi `build`:
 
 ```yaml
 enable:

@@ -16,15 +16,21 @@ Trong tài liệu này, `<stack>` là đường dẫn tới thư mục `stack/`,
 
 Skill sẽ:
 1. Khảo sát repo, chỉ đọc: công nghệ, lệnh test/lint, tài liệu, `.claude/` đang có.
-2. Hỏi những gì khảo sát chưa trả lời được: context, file cần đọc trước, **dùng chung hay cá nhân**, **toàn repo hay một phần**, lệnh kiểm tra, bật những gì.
-3. Cho bạn xem toàn bộ `project.yaml` và mọi file sẽ tạo hoặc sửa, rồi **chờ bạn duyệt**.
-4. Ghi file, `build`, `doctor`, và báo cáo kết quả.
+2. Hỏi những gì khảo sát chưa trả lời được: context, file cần đọc trước, **dùng chung hay cá nhân**, **toàn repo hay một phần**, lệnh kiểm tra, guard, pack, bật những gì.
+3. Hỏi **công cụ team đang dùng**: tracker, thiết kế UI, kênh chat, nơi để tài liệu, nơi chứa code và CI, theo dõi lỗi. Với từng công cụ, skill kiểm tra (chỉ đọc, không gọi thử) xem đã kết nối MCP chưa:
+   - có integration sẵn thì đề xuất bật;
+   - đã kết nối mà chưa có integration thì sinh file `.ai/integrations/<id>.yaml` để bạn duyệt: chia tool đọc/ghi, bỏ hẳn tool xóa, chỉ cấp quyền đọc;
+   - chưa kết nối thì hướng dẫn cách kết nối, hoặc cho phép sẵn lệnh CLI chỉ đọc (ví dụ `gh issue view`).
+
+   Kết quả được ghi thành đoạn "Tools" trong `context`, để mọi agent biết ticket nằm đâu, thiết kế nằm đâu, và **không bao giờ tự đăng tin lên kênh chat**.
+4. Cho bạn xem toàn bộ `project.yaml` và mọi file sẽ tạo hoặc sửa, rồi **chờ bạn duyệt**.
+5. Ghi file, `build`, `doctor`, và báo cáo kết quả.
 
 Chọn "cá nhân" hoặc "một phần" thì skill tự làm các bước trong [PARTIAL.md](PARTIAL.md) (`.git/info/exclude`, khóa `scope`).
 
 Ở bước 4, Claude Code sẽ **hỏi quyền** cho từng file ghi vào `.claude/` và `.git/`, vì đây là các thư mục được bảo vệ. Điều này là bình thường; đồng ý để tiếp tục. Khi chạy headless (`claude -p`) thì không có ai để hỏi, nên các lần ghi đó bị từ chối và skill dừng lại, báo những file chưa ghi được.
 
-Gọi lại `/stack` sau này để **cập nhật** cấu hình, **build lại**, hoặc chỉ **kiểm tra**. Có thể trả lời trước ngay trong lệnh, ví dụ `/stack cá nhân, toàn repo, kiểm tra bằng npm test`.
+Gọi lại `/stack` sau này để **cập nhật** cấu hình, **khai lại công cụ** (`/stack tools`), **build lại**, hoặc chỉ **kiểm tra**. Có thể trả lời trước ngay trong lệnh, ví dụ `/stack cá nhân, toàn repo, kiểm tra bằng npm test`.
 
 Các bước dưới đây là cách **làm tay**, cũng là những gì `/stack` làm thay bạn.
 

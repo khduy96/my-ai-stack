@@ -24,6 +24,12 @@ test('install writes the /stack skill with the live catalog, idempotently', asyn
   assert.match(skill, /- `ai-verifier-security`: Verifier focused on security/);
   assert.match(skill, /- `\/ai-feature`: Builds a feature end to end/);
   assert.match(skill, /^stack: \^0\.\d+$/m);
+  // The tools catalog: every category, untruncated, with its CLI fallbacks.
+  for (const title of ['Issue tracker', 'UI design', 'Team chat', 'Documentation and specs', 'Code hosting and CI', 'Error monitoring']) {
+    assert.match(skill, new RegExp(`- \\*\\*${title}\\*\\*`));
+  }
+  assert.match(skill, /\(for example SHOP-123 or #45\)\?/);
+  assert.match(skill, /`Bash\(gh pr view \*\)`/);
   assert.ok(await exists(path.join(target, '.claude/.stack-user-lock.json')));
   assert.equal(await exists(path.join(target, '.claude/.stack-lock.json')), false, 'never touches a project lock');
 
