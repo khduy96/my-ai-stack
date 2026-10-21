@@ -1,4 +1,4 @@
-# Quy ước của kernel (v0.3)
+# Quy ước của kernel (v0.4)
 
 Tài liệu này là luật chung của `ai-stack`. Schema trong `contracts/` là nguồn sự thật cho cấu trúc. File này giải thích **ý nghĩa** và **cách các phần ghép với nhau**.
 
@@ -18,7 +18,7 @@ Mọi thành phần đều là module, có chung các trường sau (`contracts/
 | `body_mode` | | `replace` · `append` · `prepend`: cách ghép body với cùng module ở tầng trước |
 | `x-*` | | khóa mở rộng, kernel bỏ qua. Dùng để thử nghiệm mà không phải sửa schema |
 
-Kernel 0.3 hiện thực **role**, **trait** và **flow**. Các kind còn lại đã có tên trong schema để giữ chỗ.
+Kernel 0.4 hiện thực **role**, **trait** và **flow**. Các kind còn lại đã có tên trong schema để giữ chỗ.
 
 ### Định dạng file
 
@@ -91,7 +91,7 @@ Nội dung đã thay vào thì không được quét lại, nên trait có thể
 
 ## 3. Flow
 
-**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.3 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
+**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.4 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
 
 ```yaml
 steps:
@@ -110,12 +110,57 @@ steps:
 | Field của step | Ý nghĩa |
 |---|---|
 | `agent` *hoặc* `fanout` | Id của role hoặc variant, không kèm prefix. Phải có đúng một trong hai |
+| `foreach` | Đi kèm `agent`: chạy agent đó cho **mỗi phần tử** của một list, ví dụ `$plan.output.units` |
 | `goal` | Mục tiêu giao cho agent |
-| `in` | Input: `$input`, `$<step>` hoặc `$<step>.<output\|findings\|artifacts\|questions\|summary\|checks>`. Giá trị không bắt đầu bằng `$` là chữ thường |
-| `when` | Chỉ chạy nếu handoff của một bước trước thỏa điều kiện: `has-findings` · `has-major-findings` · `no-findings` · `has-questions` |
+| `in` | Input: `$input`, `$<step>`, `$<step>.<output[.field]\|findings\|artifacts\|questions\|summary\|checks>`, hoặc **list tham chiếu** nghĩa là "cái mới nhất đang có". Giá trị không bắt đầu bằng `$` là chữ thường |
+| `when` | Chỉ chạy nếu handoff của một bước trước thỏa điều kiện: `has-findings` · `has-major-findings` · `no-findings` · `no-major-findings` · `has-questions` |
 | `gate` | `auto` (mặc định) · `human` (luôn chờ duyệt) · `on-questions` (chỉ chờ khi có câu hỏi hoặc bị chặn) |
 
-Kernel 0.3 chưa có `foreach` và `loop`; hai dạng này sẽ thêm cùng flow `feature`. Tham chiếu và điều kiện cố ý giới hạn trong một danh sách cố định, không phải ngôn ngữ biểu thức, để `doctor` kiểm tra được.
+Có 4 dạng bước: `agent`, `fanout`, `agent` + `foreach`, và `loop`. Tham chiếu và điều kiện cố ý giới hạn trong một danh sách cố định, không phải ngôn ngữ biểu thức, để `doctor` kiểm tra được.
+
+### `foreach`
+
+```yaml
+- id: build
+  agent: builder
+  foreach: $plan.output.units
+  goal: Implement your unit of the plan.
+```
+
+- Mỗi phần tử được giao cho một agent qua `inputs.item`.
+- Phần tử có `depends_on` thì chờ các phần tử đó `done`. Các phần tử sẵn sàng tạo thành một **đợt**, chạy song song, trừ những phần tử có `files` trùng nhau thì chạy lần lượt.
+- Handoff lưu ở `<run>/<step>/<item id>.handoff.yaml`.
+- `doctor` kiểm tra field có trong contract của role tạo ra nó và đúng là list. Ví dụ `$plan.output.nope` báo `unknown-ref`.
+
+### `loop`
+
+```yaml
+- id: fix
+  when: { step: confirm, is: has-major-findings }
+  loop:
+    max: 2                                             # 1–5
+    until: { step: fix-confirm, is: no-major-findings }
+    steps:
+      - id: fix-build
+        agent: builder
+        in: { findings: [$fix-confirm.findings, $confirm.findings] }
+      - id: fix-confirm
+        agent: verifier-adversarial
+```
+
+- Lặp tối đa `max` lần, dừng sau vòng nào mà `until` (trên một bước **trong** loop) thỏa. Hết `max` mà chưa thỏa thì orchestrator hỏi người dùng.
+- Handoff của vòng thứ `n` nằm ở `<run>/<loop>/<n>/…`. Loop không lồng nhau.
+- Bước bị bỏ qua (`when` không thỏa) coi như không có finding và không có câu hỏi.
+
+**Quy tắc tham chiếu quanh loop:**
+
+| Bước đang đứng ở | Tham chiếu tới | Nghĩa là |
+|---|---|---|
+| Bất kỳ | Bước top-level đứng trước | Kết quả của bước đó |
+| Trong loop | Bước đứng trước trong cùng loop | Vòng hiện tại |
+| Trong loop | Bước đứng sau (hoặc chính nó) trong cùng loop | **Vòng trước**. Chỉ được dùng trong list, kèm một tham chiếu dự phòng cho vòng 1, ví dụ `[$fix-confirm.findings, $confirm.findings]` |
+| Top-level, sau loop | Bước trong loop | Vòng cuối cùng đã chạy |
+| (khác) | Chính bước loop, hoặc loop chưa chạy | Lỗi `unknown-ref` |
 
 **Lúc chạy** (protocol nằm ở `engines/claude-code/flow-skill.md`, sửa được mà không đụng code):
 
@@ -124,7 +169,7 @@ Kernel 0.3 chưa có `foreach` và `loop`; hai dạng này sẽ thêm cùng flow
 - Mỗi handoff được kiểm tra bằng `stack check <file> [--produces <contract>]`. Handoff sai thì agent được yêu cầu sửa 1 lần; vẫn sai thì bước đó `failed`.
 - Dừng giữa chừng thì chạy lại với `--resume <run-dir>` để tiếp tục.
 
-**Override một bước trong dự án:** `steps` viết dạng map theo id thay vì list:
+**Override một bước trong dự án:** `steps` viết dạng map theo id thay vì list. Áp dụng được cả cho bước nằm trong loop:
 
 ```yaml
 flows:

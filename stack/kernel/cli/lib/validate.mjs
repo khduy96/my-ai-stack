@@ -40,8 +40,9 @@ export function validate(name, data, file, diags) {
   const fn = ajv.getSchema(`${ID_BASE}${name}.schema.json`);
   if (!fn) throw new Error(`unknown contract "${name}"`);
   if (fn(data)) return true;
-  // allOf/$ref failures repeat the same message; report each once.
-  for (const message of new Set(fn.errors.map(describe))) {
+  // allOf/$ref failures repeat the same message; report each once. An if/then/else
+  // failure only wraps the errors of the branch, which are reported themselves.
+  for (const message of new Set(fn.errors.filter((e) => e.keyword !== 'if').map(describe))) {
     diags.error('schema-invalid', `${name} ${message}`, file);
   }
   return false;

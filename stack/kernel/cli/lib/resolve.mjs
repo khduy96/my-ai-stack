@@ -18,10 +18,18 @@ function expandStepMap(prev, data, where, diags) {
   const map = data.steps;
   if (prev.kind !== 'flow' || map === null || typeof map !== 'object' || Array.isArray(map)) return data;
   const steps = Array.isArray(prev.data.steps) ? prev.data.steps : [];
+  const ids = steps.flatMap((s) => [s?.id, ...(s?.loop?.steps ?? []).map((b) => b?.id)]);
   for (const id of Object.keys(map)) {
-    if (!steps.some((s) => s?.id === id)) diags.error('unknown-ref', `override targets unknown step "${id}" of flow "${prev.id}"`, where);
+    if (!ids.includes(id)) diags.error('unknown-ref', `override targets unknown step "${id}" of flow "${prev.id}"`, where);
   }
-  return { ...data, steps: steps.map((s) => (s?.id in map ? mergeValue(s, map[s.id]) : s)) };
+  const apply = (s) => (s?.id in map ? mergeValue(s, map[s.id]) : s);
+  return {
+    ...data,
+    steps: steps.map((s) => {
+      const out = apply(s);
+      return Array.isArray(out?.loop?.steps) ? { ...out, loop: { ...out.loop, steps: out.loop.steps.map(apply) } } : out;
+    }),
+  };
 }
 
 export function resolve(ws, diags) {

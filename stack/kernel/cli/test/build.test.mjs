@@ -12,7 +12,7 @@ const frontmatter = (text) => YAML.parse(/^---\n([\s\S]*?)\n---/.exec(text)[1]);
 
 test('the real stack builds valid agents and rebuilding changes nothing', async () => {
   const projectRoot = await tempDir();
-  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.3\nname: demo\ncontext: Demo app.\n' });
+  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.4\nname: demo\ncontext: Demo app.\n' });
 
   const first = await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot });
   assert.deepEqual(codes(first.diags), []);
@@ -26,6 +26,8 @@ test('the real stack builds valid agents and rebuilding changes nothing', async 
     'agents/ai-verifier-correctness.md',
     'agents/ai-verifier-security.md',
     'agents/ai-verifier.md',
+    'skills/ai-bugfix/SKILL.md',
+    'skills/ai-feature/SKILL.md',
     'skills/ai-review/SKILL.md',
   ]);
 

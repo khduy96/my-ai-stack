@@ -1,0 +1,66 @@
+id: bugfix
+kind: flow
+version: 0.1.1
+kernel: ^0.4
+tags: [core]
+description: >-
+  Fixes a bug with evidence: the investigator finds the root cause (and asks when it
+  cannot confirm one), a builder applies the smallest fix, and a correctness verifier
+  checks it, with one more fix round if critical or major problems remain. Use when
+  something misbehaves and you want it fixed, not only explained.
+argument_hint: "<symptom: what happens, what should happen, where>"
+
+input:
+  description: >-
+    The symptom in the user's words: what happens, what should happen, where it was
+    seen, and how to reproduce it if known.
+
+steps:
+  - id: diagnose
+    agent: investigator
+    goal: Find the root cause of the reported problem and propose the smallest fix.
+    in:
+      symptom: $input
+    gate: on-questions
+
+  - id: fix
+    agent: builder
+    goal: >-
+      Apply the fix proposed in the diagnosis. If the project already has a test
+      setup, add or update a test that fails without the fix; if it has none, do not
+      create one; say so in your summary instead of asking.
+    in:
+      diagnosis: $diagnose.output
+
+  - id: verify
+    agent: verifier-correctness
+    goal: Check that the change removes the root cause without breaking anything else.
+    in:
+      diagnosis: $diagnose.output
+      changes: $fix.artifacts
+
+  - id: retry
+    when: { step: verify, is: has-major-findings }
+    loop:
+      max: 1
+      until: { step: retry-verify, is: no-major-findings }
+      steps:
+        - id: retry-fix
+          agent: builder
+          goal: Fix the critical and major findings from the verification.
+          in:
+            findings: $verify.findings
+            diagnosis: $diagnose.output
+
+        - id: retry-verify
+          agent: verifier-correctness
+          goal: Check the new changes against the findings they address and the diagnosis.
+          in:
+            diagnosis: $diagnose.output
+            changes: $retry-fix.artifacts
+
+report: >-
+  State the root cause in one or two sentences with its path:line, the fix and the
+  files it changed, the test added (if any) and the checks that ran. Then list any
+  critical or major findings still open, and the run directory. If no root cause was
+  confirmed, say so and list the hypotheses still open instead.

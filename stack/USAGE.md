@@ -1,12 +1,10 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 0.3. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 0.4. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
-- **1 flow chạy tự động:** `/ai-review`.
+- **3 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`.
 - **9 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-investigator`, `ai-verifier` và 4 `ai-verifier-*`.
-
-Flow `feature` và `bugfix` chưa có; các mục C và D bên dưới hướng dẫn tự ghép các agent lại để làm thay.
 
 ## Tra nhanh
 
@@ -18,11 +16,11 @@ Flow `feature` và `bugfix` chưa có; các mục C và D bên dưới hướng 
 | Soát một thư mục hoặc file đang có | `/ai-review <đường dẫn>` | A4 |
 | Chỉ soát bảo mật, hoặc chỉ một góc nhìn | `ai-verifier-<lens>` | B1 |
 | Kiểm chứng lại kết luận của người khác hoặc AI khác | `ai-verifier-adversarial` | B2 |
-| Làm rõ một yêu cầu còn mơ hồ | `ai-analyst` | C1 |
-| Chọn cách làm, chia việc | `ai-architect` | C2 |
-| Làm một tính năng từ đầu đến cuối | analyst → architect → builder → `/ai-review` | C3 |
-| Tìm nguyên nhân lỗi | `ai-investigator` | D1 |
-| Sửa lỗi có kiểm chứng | investigator → builder → verifier | D2 |
+| Làm một tính năng từ đầu đến cuối | `/ai-feature <yêu cầu>` | C1 |
+| Chỉ làm rõ một yêu cầu còn mơ hồ | `ai-analyst` | C2 |
+| Chỉ chọn cách làm, chia việc | `ai-architect` | C3 |
+| Sửa một lỗi có kiểm chứng | `/ai-bugfix <triệu chứng>` | D1 |
+| Chỉ tìm nguyên nhân lỗi, chưa sửa | `ai-investigator` | D2 |
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
 | Chạy review không cần người (script, CI) | `claude -p "/ai-review …"` | E3 |
 
@@ -114,9 +112,41 @@ Kết quả: nhận định nào đứng vững thì thành finding; nhận đ�
 
 ---
 
-## C. Làm tính năng (ghép tay, khi chưa có flow `feature`)
+## C. Làm tính năng
 
-### C1. Làm rõ yêu cầu với `ai-analyst`
+### C1. Từ đầu đến cuối với `/ai-feature`
+
+```
+/ai-feature thêm lọc đơn hàng theo trạng thái và khoảng ngày ở màn danh sách đơn
+```
+
+Các bước flow chạy:
+
+| Bước | Agent | Dừng lại hỏi bạn khi |
+|---|---|---|
+| 1. `spec` | analyst viết spec | Có câu hỏi mở (yêu cầu mơ hồ) |
+| 2. `plan` | architect lập plan, chia unit | **Luôn dừng để bạn duyệt plan** |
+| 3. `build` | 1 builder cho mỗi unit, chia đợt theo `depends_on`, song song khi không chung file | Một unit bị `blocked` |
+| 4. `review` | 3 verifier song song | — |
+| 5. `confirm` | adversarial lọc false positive (chỉ chạy khi có finding) | — |
+| 6. `fix` | Tối đa 2 vòng: builder sửa → review → confirm (chỉ chạy khi còn finding critical/major) | Hết 2 vòng mà vẫn còn lỗi nặng |
+
+**Ở bước duyệt plan**, đọc kỹ các unit và file của từng unit. Muốn sửa thì nói thẳng, ví dụ *"gộp unit 2 và 3, bỏ phần export CSV"*; architect sẽ lập lại plan.
+
+Muốn bỏ bước duyệt plan cho một dự án (ví dụ thay đổi nhỏ, tin tưởng architect):
+
+```yaml
+flows:
+  feature:
+    steps:
+      plan: { gate: auto }
+```
+
+Chi phí: một lần chạy dùng khoảng 7–10 agent, nhiều hơn nếu có vòng sửa. Thay đổi nhỏ, rõ ràng thì gọi thẳng `ai-builder` sẽ rẻ hơn.
+
+Các mục C2–C4 dưới đây là cách dùng **từng agent riêng lẻ**, khi bạn chỉ cần một phần của quy trình.
+
+### C2. Chỉ làm rõ yêu cầu với `ai-analyst`
 
 ```
 Dùng agent ai-analyst viết spec cho yêu cầu: "thêm lọc đơn hàng theo trạng
@@ -125,7 +155,7 @@ thái và khoảng ngày ở màn danh sách đơn". Lưu handoff vào .ai-runs/
 
 Bạn nhận lại một **spec** gồm mục tiêu, tiêu chí hoàn thành, phần ngoài phạm vi, giả định và câu hỏi mở. Analyst không thiết kế và không sửa code. Nếu có câu hỏi mở thì trả lời rồi bảo nó cập nhật spec.
 
-### C2. Thiết kế và chia việc với `ai-architect`
+### C3. Chỉ thiết kế và chia việc với `ai-architect`
 
 ```
 Dùng agent ai-architect lập plan từ spec ở .ai-runs/manual/spec.yaml.
@@ -134,7 +164,7 @@ Lưu handoff vào .ai-runs/manual/plan.yaml.
 
 Bạn nhận lại một **plan** gồm 2–3 phương án kèm đánh đổi, phương án được chọn, và các đơn vị việc (unit). Mỗi unit có danh sách file sở hữu, thứ tự phụ thuộc và tiêu chí xong. **Đọc kỹ plan trước khi cho làm tiếp.**
 
-### C3. Hiện thực từng unit với `ai-builder`, rồi review
+### C4. Tự hiện thực từng unit với `ai-builder`, rồi review
 
 ```
 Dùng agent ai-builder làm unit "filter-state" trong .ai-runs/manual/plan.yaml.
@@ -153,11 +183,36 @@ node <stack>/kernel/cli/stack.mjs check .ai-runs/manual/plan.yaml --produces pla
 
 ---
 
-## D. Xử lý lỗi (ghép tay, khi chưa có flow `bugfix`)
+## D. Xử lý lỗi
 
-### D1. Tìm nguyên nhân với `ai-investigator`
+### D1. Tìm nguyên nhân và sửa với `/ai-bugfix`
 
-Mô tả triệu chứng càng cụ thể càng tốt: thấy gì, mong đợi gì, ở đâu, từ khi nào.
+Mô tả triệu chứng càng cụ thể càng tốt: thấy gì, mong đợi gì, ở đâu, từ khi nào, cách tái hiện.
+
+```
+/ai-bugfix sau khi huỷ một đơn hàng, tồn kho của sản phẩm không được cộng lại;
+thoát app vào lại thì đúng
+```
+
+| Bước | Agent | Dừng lại hỏi bạn khi |
+|---|---|---|
+| 1. `diagnose` | investigator tìm nguyên nhân gốc | **Chưa xác nhận được nguyên nhân** (báo `partial`): bạn bổ sung thông tin |
+| 2. `fix` | builder áp dụng cách sửa nhỏ nhất, thêm test nếu dự án có test | — |
+| 3. `verify` | verifier-correctness kiểm tra | — |
+| 4. `retry` | 1 vòng sửa nữa nếu còn lỗi critical/major | Vẫn còn lỗi nặng sau vòng đó |
+
+Muốn **duyệt cách sửa trước khi builder đụng vào code**:
+
+```yaml
+flows:
+  bugfix:
+    steps:
+      diagnose: { gate: human }
+```
+
+### D2. Chỉ tìm nguyên nhân với `ai-investigator`
+
+Dùng khi muốn hiểu lỗi trước, chưa muốn sửa.
 
 ```
 Dùng agent ai-investigator tìm nguyên nhân: sau khi huỷ một đơn hàng, số tồn
@@ -171,26 +226,25 @@ Bạn nhận lại một **diagnosis**:
 
 Investigator **không sửa code**. Nếu nó báo `partial` thì chưa chắc chắn; đọc các giả thuyết còn mở và cung cấp thêm thông tin.
 
-### D2. Sửa và kiểm chứng
+Muốn sửa tiếp sau khi đã đọc diagnosis:
 
 ```
 Dùng agent ai-builder áp dụng đề xuất sửa trong diagnosis vừa rồi.
 Sau đó dùng ai-verifier-correctness kiểm tra lại thay đổi.
 ```
 
-Nếu verifier còn báo lỗi `critical` hoặc `major`, lặp lại builder → verifier. Thường 1–2 vòng là đủ.
-
 ---
 
 ## E. Vận hành
 
-### E1. Chạy tiếp một lần review bị dừng
+### E1. Chạy tiếp một flow bị dừng
 
 ```
-/ai-review --resume .ai-runs/20261019-1745-review-uncommitted-changes
+/ai-review  --resume .ai-runs/20261019-1745-review-uncommitted-changes
+/ai-feature --resume .ai-runs/20261021-0930-feature-order-filter
 ```
 
-Orchestrator đọc `run.yaml` và chạy tiếp từ bước chưa xong.
+Orchestrator đọc `run.yaml` và chạy tiếp từ bước chưa xong, kể cả đang giữa một vòng sửa.
 
 ### E2. Đổi hành vi của flow cho dự án
 

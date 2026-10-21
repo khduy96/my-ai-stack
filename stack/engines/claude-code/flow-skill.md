@@ -16,7 +16,7 @@ If the input is `--resume <run-dir>`, read `<run-dir>/run.yaml` and continue wit
 
 Every run keeps its state in a directory, called `<run>` below.
 
-1. Create `{{engine.runs}}/<YYYYMMDD-HHMM>-{{flow.id}}-<slug>/` in the project root, where `<slug>` is two to four kebab-case words taken from the input. If `{{engine.runs}}/.gitignore` does not exist, create it with the single line `*` so run state stays out of git.
+1. Create `{{engine.runs}}/<YYYYMMDD-HHMM>-{{flow.id}}-<slug>/` in the project root, where `<slug>` is two to four kebab-case words taken from the input. Take the time from the shell (for example `date +%Y%m%d-%H%M`); never guess it. If `{{engine.runs}}/.gitignore` does not exist, create it with the single line `*` so run state stays out of git.
 2. Write the input, or the default when the input is empty, to `<run>/input.md`.
 3. Write `<run>/run.yaml` and update it whenever a step changes state:
 
@@ -55,7 +55,9 @@ Then act on the handoff's `status`:
 | `partial`, `blocked` | Show the agent's `questions` to the user, wait for answers, then run the step again with the answers added to the task |
 | `failed` | Stop the flow, mark the step and the run `failed`, report what happened and the run directory |
 
-In a fan-out step, wait for every agent before acting; the step's status is the worst status among its agents.
+In a fan-out or for-each step, wait for every agent before acting; the step's status is the worst status among its agents.
+
+A `skipped` step has no handoff: treat it as having no findings and no questions. When an input refers to handoffs that do not exist (a skipped step, or an earlier iteration that did not run), leave that input out of the task.
 
 ## Steps
 

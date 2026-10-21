@@ -1,13 +1,13 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-19 · kernel 0.3.0
+Cập nhật: 2026-10-21 · kernel 0.4.0
 
 ## Trạng thái
 
 | Giai đoạn | Trạng thái | Còn lại |
 |---|---|---|
 | **P0 – Lõi** | ✔ xong | Không còn gì |
-| **P1 – Bộ tối thiểu** | Gần xong | Flow `feature` và `bugfix`, skill `/stack` |
+| **P1 – Bộ tối thiểu** | Gần xong | Skill `/stack` |
 | **P2 – Tri thức & chính sách** | Chưa làm | Toàn bộ |
 | **P3 – Pack & integration** | Mới có cơ chế pack | Pack đầu tiên, MCP adapter |
 | **P4 – Ổn định** | Mới có test cho kernel | Eval cho agent và flow, lên 1.0 |
@@ -19,20 +19,26 @@ Cập nhật: 2026-10-19 · kernel 0.3.0
 - **P1 – role/trait (0.2):** 5 role (`analyst`, `architect`, `builder`, `investigator`, `verifier`), 8 trait, variants, `produces` kèm các contract `spec`, `plan` và `diagnosis`.
 - **P1 – flow `review` (0.3):** loại module `flow` (`agent`, `fanout`, `when`, `gate`), skill engine, lệnh `stack check`, run state ở `.ai-runs/`.
   - Đã chạy end-to-end trên repo demo: tìm ra đủ 4 lỗi cài sẵn và thêm 1 lỗi thật; cả 4 handoff đều hợp lệ.
+- **P1 – flow `feature` và `bugfix` (0.4):** bước `foreach` (chia đợt theo `depends_on`, song song khi không chung file), `loop` (`max`, `until`), input dạng list "mới nhất đang có", quy tắc tham chiếu giữa các vòng lặp.
+  - Đã chạy end-to-end trên repo demo:
+    - `/ai-feature` với plan 3 unit, có phụ thuộc: cả 3 unit xong, 9 handoff hợp lệ; cơ chế sửa handoff hỏng (YAML sai) đã chạy thật.
+    - `/ai-bugfix`: chạy được cả vòng loop `retry/1/…`; `--resume` tiếp tục được một run đang chờ câu trả lời.
+  - Chạy thật phát hiện verifier gắn `major` cho lỗi có sẵn từ trước, khiến vòng sửa đụng code ngoài phạm vi. Đã sửa (verifier 0.2.0): lỗi có sẵn chỉ ở mức `info` "Pre-existing:". Chạy lại thì diff chỉ còn đúng chỗ cần sửa.
+  - Chưa kiểm chứng riêng được thứ tự chạy song song trong một đợt của `foreach` (run state không ghi thời điểm từng agent bắt đầu).
+- **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
 
 ### P1 – Bộ tối thiểu
-- [ ] Flow `feature`, cần kernel hỗ trợ:
-  - [ ] `foreach`: chạy builder theo từng đơn vị của plan, chia đợt theo `depends_on`, và kiểm tra các đơn vị chạy song song không đụng chung file
-  - [ ] `loop`: vòng sửa lỗi build → review → confirm, tối đa N lần
-- [ ] Flow `bugfix`: investigate → build fix → verifier-correctness → loop tối đa 1 lần
+- [x] Flow `feature`, cùng kernel `foreach` và `loop`
+- [x] Flow `bugfix`
 - [ ] Skill `/stack`: hỏi đáp về dự án → viết `project.yaml` → `stack build`
 
 ### P2 – Tri thức & chính sách
 - [ ] Knowledge: `knowledge/` + `INDEX.md`, retriever kiểu grep
 - [ ] Role `scribe` (ghi tri thức sau mỗi flow) và `explainer` (giải thích code)
 - [ ] Policy: rule dạng gợi ý; guard bắt buộc bằng hook trong `settings.json` (chặn lộ secret, chặn sửa file generated…)
+- [ ] Khóa `scope: [paths]` trong project.yaml: build tự sinh chỉ dẫn phạm vi cho các role, `input.default` của review, gợi ý quyền và hook `scope-guard`. Hiện làm thủ công theo PARTIAL.md
 - [ ] Trait: `test-first`, `test-author`, `lens-performance`
 
 ### P3 – Pack & integration
@@ -46,6 +52,7 @@ Cập nhật: 2026-10-19 · kernel 0.3.0
 ### P4 – Ổn định
 - [ ] `stack eval`: bộ tình huống mẫu (kiểu repo demo có lỗi cài sẵn) để phát hiện khi prompt làm agent kém đi
 - [ ] Semver cho từng module
+- [ ] Run state ghi thời điểm bắt đầu và kết thúc của từng agent, để kiểm chứng được thứ tự và mức song song
 - [ ] Lên 1.0, để `^1` nhận được các bản thêm tính năng mà không phải sửa `kernel:` ở mọi module
 
 ### P5 – Mở rộng
@@ -61,9 +68,9 @@ Cập nhật: 2026-10-19 · kernel 0.3.0
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Áp `/ai-review` lên `kho/`: lần đầu kiểm chứng trên code thật, đồng thời cho thấy pack Flutter cần những gì
-2. Flow `feature` và `bugfix` (khép lại P1)
-3. Skill `/stack`
+1. Commit để có điểm mốc (branch `feat/ai-stack`)
+2. Áp `/ai-review` lên `kho/`: lần đầu kiểm chứng trên code thật, đồng thời cho thấy pack Flutter cần những gì
+3. Skill `/stack` (khép lại P1)
 
 ## Các quyết định đã chốt
 
