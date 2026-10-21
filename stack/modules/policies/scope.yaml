@@ -1,7 +1,7 @@
 id: scope
 kind: policy
 version: 0.1.0
-kernel: ^0.5
+kernel: ^0.6
 tags: [core, guard]
 description: >-
   Limits edits to the paths you own: agents are told the boundary, a hook refuses

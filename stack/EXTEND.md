@@ -155,13 +155,31 @@ steps:
 
 Build ra skill `/ai-data-review`. Cú pháp đầy đủ của flow xem trong [kernel/conventions.md](kernel/conventions.md), mục 3.
 
-### 2.5. Ghi đè hẳn một role của stack
+### 2.5. Gọi agent viết tay trong flow riêng
+
+Flow dùng được cả agent viết tay sẵn có, không cần chuyển nó thành role. Khai `external: true` cho bước đó:
+
+```yaml
+steps:
+  - id: data
+    agent: ms-data            # đúng tên agent viết tay, không có prefix
+    external: true
+    goal: Implement the data-layer part of the plan.
+  - id: check
+    fanout: [verifier-correctness, verifier-flutter]
+    goal: Review the data-layer changes.
+    in: { changes: $data.artifacts }
+```
+
+Build không kiểm tra agent `external`. Orchestrator dặn agent đó kết thúc bằng khối `handoff` để các bước sau đọc được kết quả. Agent nào trả về đúng định dạng càng ổn định thì càng nên chuyển hẳn sang role (mức 3).
+
+### 2.6. Ghi đè hẳn một role của stack
 
 Đặt file **cùng id** trong thư mục module của dự án, ví dụ `.ai/roles/builder.md`. File này áp lên role `builder` của stack theo cascade:
 - frontmatter được gộp sâu;
 - body thay thế hoàn toàn, hoặc thêm `body_mode: append` để nối vào sau.
 
-### 2.6. Kiểm tra
+### 2.7. Kiểm tra
 
 ```bash
 node <stack>/kernel/cli/stack.mjs doctor --project <dự án>
@@ -206,11 +224,10 @@ Nếu skill cũ thực chất là một quy trình (gọi agent A, rồi B, rồ
 
 ---
 
-## Giới hạn hiện tại (kernel 0.5)
+## Giới hạn hiện tại (kernel 0.6)
 
 | Giới hạn | Cách xử lý tạm |
 |---|---|
-| Flow chỉ gọi được agent do stack build ra, **không gọi được agent viết tay** (`ms-data`) | Chuyển agent đó thành role (mức 3), hoặc gọi nó từ skill riêng (mức 0) |
 | Stack chưa có loại module **skill** | Giữ skill viết tay như cũ; quy trình nhiều bước thì viết thành flow |
 | Prefix áp dụng chung cho mọi agent sinh ra trong một dự án | Không đổi được riêng cho từng role |
 

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/research.schema.json",
+  "title": "Research",
+  "description": "What outside sources (documentation, issue trackers, the web) say about a question, with every claim tied to a source.",
+  "type": "object",
+  "required": ["question", "answer", "sources"],
+  "properties": {
+    "question": { "type": "string", "description": "The question as you understood it." },
+    "answer": { "type": "string", "description": "The answer in a few sentences, or why there is none." },
+    "findings": {
+      "type": "array",
+      "description": "The individual facts behind the answer.",
+      "items": {
+        "type": "object",
+        "required": ["claim", "source"],
+        "properties": {
+          "claim": { "type": "string" },
+          "source": { "type": "string", "description": "URL, ticket id or path the claim comes from." },
+          "quote": { "type": "string", "description": "The exact supporting words, kept short." }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Every source consulted, with how current it is.",
+      "items": {
+        "type": "object",
+        "required": ["ref"],
+        "properties": {
+          "ref": { "type": "string", "description": "URL, ticket id or path." },
+          "title": { "type": "string" },
+          "date": { "type": "string", "description": "Publication or last-update date when known." }
+        }
+      }
+    },
+    "conflicts": { "type": "array", "items": { "type": "string" }, "description": "Places where sources disagree, or disagree with the code." },
+    "open": { "type": "array", "items": { "type": "string" }, "description": "What could not be found or confirmed." }
+  }
+}

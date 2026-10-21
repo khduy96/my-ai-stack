@@ -1,10 +1,10 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 0.5. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 0.6. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
 - **5 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`.
-- **13 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-verifier` và 5 `ai-verifier-*`.
+- **14 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-researcher`, `ai-verifier` và 5 `ai-verifier-*`. Pack có thể thêm, ví dụ `ai-verifier-flutter`.
 - **3 guard tùy chọn:** `scope`, `protect-generated`, `no-secrets`.
 
 ## Tra nhanh
@@ -26,6 +26,9 @@ Hiện có:
 | Hiểu một đoạn code hoạt động thế nào | `/ai-explain <câu hỏi>` | F1 |
 | Ghi lại tri thức dự án sau một lần chạy | `/ai-learn <thư mục run>` | F2 |
 | Chặn sửa ngoài vùng, file generated, lộ secret | `scope`, `enable.policies` | F3 |
+| Tra tài liệu thư viện, changelog, lỗi đã biết | `ai-researcher` | G1 |
+| Làm việc từ ticket Zentao | `/ai-feature task #45`, `/ai-bugfix bug #123` | G2 |
+| Dự án Flutter | `packs: [flutter]` | G3 |
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
 | Chạy review không cần người (script, CI) | `claude -p "/ai-review …"` | E3 |
 
@@ -348,6 +351,61 @@ enable:
 Ngoài việc chặn, mỗi guard còn thêm một dòng vào mục "Project rules" trong prompt của mọi agent, để agent tránh từ đầu chứ không đợi tới lúc bị chặn. Hook và quyền do build tự đăng ký trong `settings.local.json`.
 
 > Guard chỉ bắt các công cụ sửa file. Lệnh shell (`sed -i`, `echo >`) không đi qua guard.
+
+---
+
+## G. Hệ thống ngoài và pack
+
+### G1. Tra cứu bên ngoài với `ai-researcher`
+
+```
+Dùng agent ai-researcher kiểm tra: bản mobile_scanner dự án đang dùng có lỗi camera
+đen trên Android 14 không, và cách sửa được khuyến nghị.
+```
+
+Researcher trước hết xem dự án đang dùng **phiên bản nào** (đọc file manifest và lock), rồi ưu tiên nguồn gốc: tài liệu chính thức, changelog, issue tracker. Mỗi kết luận đều kèm nguồn và ngày; chỗ nào các nguồn mâu thuẫn thì nó báo ra. Nội dung tải về được coi là **dữ liệu**, nó không làm theo bất kỳ chỉ dẫn nào nằm trong đó.
+
+### G2. Làm từ ticket Zentao
+
+Bật một lần trong `project.yaml`, rồi `build`:
+
+```yaml
+enable:
+  integrations: [zentao]
+```
+
+Từ đó analyst, architect, investigator, researcher và explainer **đọc được** ticket (đã cho phép sẵn, không bị hỏi quyền). Chỉ cần nhắc ticket trong lệnh:
+
+```
+/ai-feature task #45
+/ai-bugfix bug #123
+```
+
+Analyst đọc task (kèm comment và file đính kèm) để viết spec; investigator đọc bug để tìm nguyên nhân. Mặc định **không agent nào được ghi** lên Zentao. Muốn cấp quyền ghi cho một role:
+
+```yaml
+integrations:
+  zentao:
+    grants:
+      builder: [read, write]
+```
+
+Tool ghi không bao giờ được cho phép sẵn, nên mỗi lần ghi Claude Code vẫn hỏi bạn. Tool xóa thì không có trong danh sách.
+
+### G3. Dự án Flutter: `packs: [flutter]`
+
+```yaml
+packs: [flutter]
+```
+
+| Thêm gì | Chi tiết |
+|---|---|
+| `ai-verifier-flutter` | Soát lifecycle (dispose, `mounted` sau `await`), rebuild, state (emit sau close), lỗi async, platform, layout. Chạy cùng 3 verifier kia trong `/ai-review` và `/ai-feature` |
+| Builder | `flutter-practices` (tránh lỗi từ lúc viết) và `flutter-checks` (`build_runner` → `flutter analyze` → `flutter test`) |
+| Guard | Bật sẵn `protect-generated` (`*.g.dart`, `*.freezed.dart`…) |
+| Quyền | Cho phép sẵn `flutter analyze`, `flutter test`, `dart run build_runner build` |
+
+Muốn bỏ một phần thì khai trong `project.yaml`, ví dụ `enable: { policies: ['-protect-generated'] }` hay `roles: { builder: { traits: ['-flutter-checks'] } }`. Dự án dùng fvm/melos thì trait `flutter-checks` tự dùng lệnh bọc ngoài đó.
 
 ---
 

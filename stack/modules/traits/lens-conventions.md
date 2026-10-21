@@ -2,7 +2,7 @@
 id: lens-conventions
 kind: trait
 version: 0.1.0
-kernel: ^0.5
+kernel: ^0.6
 description: Review focus on fit with this project's own conventions rather than general taste.
 applies_to: [verifier]
 slot: lens

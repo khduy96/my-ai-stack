@@ -2,7 +2,7 @@
 id: verifier
 kind: role
 version: 0.3.0
-kernel: ^0.5
+kernel: ^0.6
 description: >-
   Reviews a change or existing code and reports evidence-backed findings ranked by
   severity. Reads code and runs read-only checks (tests, linters, analyzers) but

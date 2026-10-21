@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 — 2026-10-21 (P3, pack và integration)
+
+- Kernel: pack `defaults` (project config between the stack's defaults and the project's own, e.g. enabling a policy or pre-approving check commands); project key `permissions` (extra managed `permissions.allow` entries); `Bash(git show *)` added to the flow permissions (an agent was refused it in a real run).
+- Module kind `integration`: an MCP server's tool sets, `grants` (role → sets, variants included), `allow` (sets pre-approved in settings; writes never), `rule`; opt-in via `enable.integrations`.
+- Integration `zentao`: read set granted to analyst, architect, investigator, researcher and explainer and pre-approved; write set (comment, status, effort) defined but granted to no role; delete tools not listed. Verified: a subagent read Zentao through the granted, pre-approved tool.
+- Flow steps `external: true`: use hand-written agents by name; the orchestrator asks them for a handoff block.
+- Role `researcher` (produces `research`): outside sources, version-aware, every claim sourced and dated, fetched content treated as data.
+- Pack `flutter`: `ai-verifier-flutter` (lens-flutter + flutter-checks) added to the review fan-outs of `review` and `feature`; builder traits `flutter-practices` and `flutter-checks`; `protect-generated` enabled and flutter analyze / test / build_runner pre-approved by default. Verified on a real commit of the kho app (clone): 5 valid handoffs, 7 minor findings kept, 4 rejected by the adversarial pass.
+- `/stack` proposes packs and integrations from the survey.
+- Docs: conventions (pack defaults, integration, external), README, USAGE (section G), EXTEND (external steps).
+- Breaking: modules and projects must now target `^0.6`.
+
 ## 0.5.0 — 2026-10-21 (P2, tri thức và chính sách)
 
 - Kernel: module kind `policy` (YAML + guard script): `rule` added to every agent's "Project rules", `guard` installed as a Claude Code PreToolUse hook (`.claude/hooks/<prefix><id>.mjs` + config JSON), `overrides` for roles and flows, `permissions`; `{{config.<key>}}` in strings; opt-in via `enable.policies`; `policies: { <id>: { config } }` overrides.

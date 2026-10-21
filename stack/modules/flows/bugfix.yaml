@@ -1,7 +1,7 @@
 id: bugfix
 kind: flow
 version: 0.1.2
-kernel: ^0.5
+kernel: ^0.6
 tags: [core]
 description: >-
   Fixes a bug with evidence: the investigator finds the root cause (and asks when it

@@ -90,7 +90,8 @@ function checkFlow(flow, agents, where, diags) {
   };
 
   for (const { step } of pos.values()) {
-    for (const name of agentsOf(step)) {
+    // External agents are hand-written and not built by the stack: nothing to check here.
+    for (const name of step.external ? [] : agentsOf(step)) {
       const agent = agents.get(name);
       if (!agent) fail('unknown-ref', `step "${step.id}" uses unknown agent "${name}"`);
       else if (!agent.enabled) fail('unknown-ref', `step "${step.id}" uses agent "${name}", whose role is not enabled`);
@@ -164,9 +165,16 @@ const condition = (c) => `the handoffs of step \`${c.step}\` ${CONDITIONS[c.is]}
 
 function renderAgentStep(entry, label, heading, pos, ctx) {
   const { step } = entry;
-  const name = (agent) => `\`${ctx.prefix}${agent}\``;
+  // External agents keep their own names: no prefix.
+  const name = (agent) => `\`${step.external ? '' : ctx.prefix}${agent}\``;
   const lines = [`${heading} ${label}: \`${step.id}\``, ''];
   if (step.when) lines.push(`**Run only if** ${condition(step.when)}. Otherwise mark this step \`skipped\` and go on.`, '');
+  if (step.external) {
+    lines.push(
+      'This step uses hand-written agents that do not know the handoff format: add to their task that they must end their final message with a fenced `yaml` block whose root key is `handoff`, with at least `status` (done | partial | blocked | failed) and `summary`, plus `artifacts`, `findings` and `questions` when they apply.',
+      '',
+    );
+  }
 
   if (step.fanout) {
     lines.push(`Start these agents **in parallel, in one message**: ${step.fanout.map(name).join(', ')}.`, '');
@@ -192,7 +200,7 @@ function renderAgentStep(entry, label, heading, pos, ctx) {
   lines.push(`- **Save the handoff to:** \`${handoffPath(entry)}\``);
 
   const checks = agentsOf(step).map((agent) => {
-    const produces = ctx.agents.get(agent).produces;
+    const produces = step.external ? null : ctx.agents.get(agent).produces;
     return { agent, cmd: `${ctx.cli} check <file>${produces ? ` --produces ${produces}` : ''}` };
   });
   if (new Set(checks.map((c) => c.cmd)).size === 1) lines.push(`- **Check:** \`${checks[0].cmd}\``);

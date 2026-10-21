@@ -1,4 +1,4 @@
-# Quy ước của kernel (v0.5)
+# Quy ước của kernel (v0.6)
 
 Tài liệu này là luật chung của `ai-stack`. Schema trong `contracts/` là nguồn sự thật cho cấu trúc. File này giải thích **ý nghĩa** và **cách các phần ghép với nhau**.
 
@@ -18,7 +18,7 @@ Mọi thành phần đều là module, có chung các trường sau (`contracts/
 | `body_mode` | | `replace` · `append` · `prepend`: cách ghép body với cùng module ở tầng trước |
 | `x-*` | | khóa mở rộng, kernel bỏ qua. Dùng để thử nghiệm mà không phải sửa schema |
 
-Kernel 0.5 hiện thực **role**, **trait**, **flow** và **policy**. Các kind còn lại (`skill`, `retriever`, `integration`) đã có tên trong schema để giữ chỗ.
+Kernel 0.6 hiện thực **role**, **trait**, **flow**, **policy** và **integration**. Các kind còn lại (`skill`, `retriever`) đã có tên trong schema để giữ chỗ.
 
 ### Định dạng file
 
@@ -93,7 +93,7 @@ Nội dung đã thay vào thì không được quét lại, nên trait có thể
 
 ## 3. Flow
 
-**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.5 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
+**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.6 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
 
 ```yaml
 steps:
@@ -115,6 +115,7 @@ steps:
 | `foreach` | Đi kèm `agent`: chạy agent đó cho **mỗi phần tử** của một list, ví dụ `$plan.output.units` |
 | `goal` | Mục tiêu giao cho agent |
 | `in` | Input: `$input`, `$<step>`, `$<step>.<output[.field]\|findings\|artifacts\|questions\|summary\|checks>`, hoặc **list tham chiếu** nghĩa là "cái mới nhất đang có". Giá trị không bắt đầu bằng `$` là chữ thường |
+| `external` | `true` khi agent là agent viết tay (không do stack build): dùng đúng tên, không thêm prefix, build không kiểm tra; orchestrator dặn agent trả về khối `handoff` |
 | `when` | Chỉ chạy nếu handoff của một bước trước thỏa điều kiện: `has-findings` · `has-major-findings` · `no-findings` · `no-major-findings` · `has-questions` |
 | `gate` | `auto` (mặc định) · `human` (luôn chờ duyệt) · `on-questions` (chỉ chờ khi có câu hỏi hoặc bị chặn) |
 
@@ -191,7 +192,9 @@ core (stack/modules)
       → local (override trong project.local.yaml, không commit)
 ```
 
-Trong mỗi tầng: module file được áp trước, override (`roles:` / `traits:`) áp sau.
+Trong mỗi tầng: module file được áp trước, override (`roles:` / `traits:` / `flows:` / `policies:` / `integrations:`) áp sau.
+
+**`defaults` của pack.** Ngoài module và override, `pack.yaml` có thể khai `defaults`: các giá trị cấu hình dự án (như `enable.policies`, `permissions`, `context`) nằm **giữa** giá trị mặc định của stack và cấu hình của dự án. Nhờ vậy pack bật sẵn được một guard hay cho phép sẵn các lệnh kiểm tra, còn dự án vẫn ghi đè được, ví dụ `enable.policies: ['-protect-generated']`.
 
 | Kiểu | Quy tắc |
 |---|---|
@@ -238,7 +241,7 @@ Lock ghi lại **đúng những mục build đã thêm** (`settings` trong `.sta
 
 ### Knowledge
 
-`knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). Kernel 0.5 tra cứu bằng grep; retriever dạng vector để sau.
+`knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). Kernel 0.6 tra cứu bằng grep; retriever dạng vector để sau.
 
 ## 6. Policy
 
@@ -268,14 +271,43 @@ permissions: [ … ]                               # tùy chọn
 - Có sẵn 3 policy: `scope`, `protect-generated`, `no-secrets`. Dự án viết policy riêng trong thư mục module của mình (`policies/<id>.yaml` cùng script đặt cạnh).
 - Guard chỉ bắt các công cụ sửa file; lệnh shell không đi qua guard.
 
-## 7. Phiên bản
+## 7. Integration
+
+**Integration** trả lời câu hỏi *agent dùng hệ thống bên ngoài nào, qua MCP server nào*. Integration là **opt-in** (`enable.integrations`).
+
+```yaml
+# modules/integrations/zentao.yaml
+id: zentao
+kind: integration
+mcp: zentao                          # tên MCP server trong Claude Code
+tools:
+  read: [zentao_get_details, zentao_get_comments, …]
+  write: [zentao_add_comment, zentao_update_bug_status, …]   # không bao giờ liệt kê tool xóa
+allow: [read]                        # được cho phép trước trong settings
+grants:                              # role nào nhận nhóm tool nào
+  analyst: [read]
+  investigator: [read]
+rule: When a request mentions a Zentao ticket, read it … Never change a ticket unless …
+```
+
+| Phần | Khi integration bật |
+|---|---|
+| `grants` | Role (và mọi variant của nó) được thêm các tool `mcp__<mcp>__<tool>` của nhóm được cấp |
+| `allow` | Tool của các nhóm này được thêm vào `permissions.allow`, nên agent dùng mà không bị hỏi. **Nhóm thay đổi hệ thống bên ngoài không được đặt vào đây**: những thao tác đó luôn phải có người duyệt |
+| `rule` | Thêm vào mục "Project rules" của mọi agent |
+
+Dự án đổi quyền bằng `integrations: { zentao: { grants: { builder: [read, write] } } }`. Cấp nhóm `write` chỉ nên làm cho role mà bước của nó có `gate: human`.
+
+Khóa `permissions` trong project.yaml (hoặc trong `defaults` của pack) thêm các mục `permissions.allow` do build quản lý, ví dụ lệnh kiểm tra của dự án.
+
+## 8. Phiên bản
 
 - `stack.yaml#version`: phiên bản của bộ module. Dự án khai báo dải tương thích ở `project.yaml#stack`.
 - Phiên bản kernel là `kernel/cli/package.json#version`. Module khai báo dải tương thích ở `kernel`.
 - Dải hỗ trợ: `*`, `x.y.z`, `^x.y`, `~x.y`, `>=x.y.z`.
 - Đổi contract theo kiểu phá vỡ tương thích thì tăng minor khi còn ở 0.x, tăng major từ 1.0 trở đi.
 
-## 8. Mã lỗi
+## 9. Mã lỗi
 
 | Mã | Khi nào |
 |---|---|

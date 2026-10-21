@@ -2,7 +2,7 @@
 id: lens-performance
 kind: trait
 version: 0.1.0
-kernel: ^0.5
+kernel: ^0.6
 description: Review focus on work, waits and resources that grow with real data and usage.
 applies_to: [verifier]
 slot: lens

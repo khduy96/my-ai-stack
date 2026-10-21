@@ -2,7 +2,7 @@
 id: builder
 kind: role
 version: 0.3.0
-kernel: ^0.5
+kernel: ^0.6
 description: >-
   Implements one well-scoped unit of work whose shape is already decided: edits
   only the files in scope, keeps the change minimal, verifies it, and reports a

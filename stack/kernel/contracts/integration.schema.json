@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/integration.schema.json",
+  "title": "Integration",
+  "description": "An external system reached through an MCP server configured in Claude Code. Opt-in via enable.integrations. Enabling it adds the granted MCP tools to the named roles (and their variants) and its rule to every agent's Project rules.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "required": ["description", "mcp", "tools"],
+  "properties": {
+    "kind": { "const": "integration" },
+    "mcp": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$", "description": "MCP server name; tools are named mcp__<mcp>__<tool>." },
+    "tools": {
+      "type": "object",
+      "description": "Named tool sets, e.g. read and write. Tools that delete data should not be listed at all.",
+      "additionalProperties": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" } }
+    },
+    "grants": {
+      "type": "object",
+      "description": "Role id -> tool sets it receives, e.g. { analyst: [read] }. Grant write sets only to roles whose steps are gated by a human.",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "allow": { "type": "array", "items": { "type": "string" }, "description": "Tool sets pre-approved in the managed settings file (permissions.allow), so agents can use them without a prompt. Keep sets that change the external system out of it: those should always ask a human." },
+    "rule": { "type": "string", "description": "Added under 'Project rules' in every agent's context while enabled." }
+  },
+  "unevaluatedProperties": false
+}

@@ -2,7 +2,7 @@
 id: report-handoff
 kind: trait
 version: 0.2.0
-kernel: ^0.5
+kernel: ^0.6
 description: Ends every run with a machine-readable handoff block that an orchestrator can parse.
 tags: [core, contract]
 ---

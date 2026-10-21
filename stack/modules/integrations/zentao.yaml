@@ -1,0 +1,43 @@
+id: zentao
+kind: integration
+version: 0.1.0
+kernel: ^0.6
+tags: [tracker]
+description: >-
+  Zentao issue tracker through its MCP server: lets agents read bugs, tasks, comments
+  and attachments when a request mentions a ticket. Read-only by default.
+mcp: zentao
+tools:
+  read:
+    - zentao_get_details
+    - zentao_get_comments
+    - zentao_search
+    - zentao_list_bugs
+    - zentao_list_tasks
+    - zentao_list_products
+    - zentao_list_projects
+    - zentao_list_executions
+    - zentao_get_my_bugs
+    - zentao_get_my_tasks
+    - zentao_get_assigned_to_me
+    - zentao_download_attachment
+  # Changes tickets. Not granted to any role by default; grant only to roles whose step
+  # waits for a human (gate: human). Delete tools are deliberately not listed.
+  write:
+    - zentao_add_comment
+    - zentao_update_bug_status
+    - zentao_update_task_status
+    - zentao_record_effort
+# Reading is pre-approved; writes always ask a human.
+allow: [read]
+grants:
+  analyst: [read]
+  architect: [read]
+  investigator: [read]
+  researcher: [read]
+  explainer: [read]
+rule: >-
+  When a request mentions a Zentao ticket (bug #123, task #45, or a Zentao link), read
+  it with the zentao tools, including its comments and relevant attachments, before
+  working. Never change a ticket (comment, status, effort) unless your task explicitly
+  asks you to.

@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 0.5.0
+Cập nhật: 2026-10-21 · kernel 0.6.0
 
 ## Trạng thái
 
@@ -9,7 +9,7 @@ Cập nhật: 2026-10-21 · kernel 0.5.0
 | **P0 – Lõi** | ✔ xong | Không còn gì |
 | **P1 – Bộ tối thiểu** | ✔ xong | Không còn gì |
 | **P2 – Tri thức & chính sách** | ✔ xong | Không còn gì |
-| **P3 – Pack & integration** | Mới có cơ chế pack | Pack đầu tiên, MCP adapter |
+| **P3 – Pack & integration** | Phần lớn xong | Ghi ngược lên Zentao, Figma, loại module `skill` |
 | **P4 – Ổn định** | Mới có test cho kernel | Eval cho agent và flow, lên 1.0 |
 | **P5 – Mở rộng** | Chưa làm | Engine khác, vector RAG |
 
@@ -32,6 +32,9 @@ Cập nhật: 2026-10-21 · kernel 0.5.0
   - Đã chạy thật trong Claude Code: 3 guard chặn đúng (file generated, AWS key, ngoài scope); `/ai-explain` trả lời có `path:line` và không sửa file; `/ai-learn` tạo `INDEX.md` cùng 2 file tri thức đã đối chiếu với code.
   - Chạy thật lộ ra 2 quy tắc quyền sai (`Write(...)` bị Claude Code bỏ qua khi kiểm tra ghi file; `Bash(node *…)` khớp quá rộng). Đã sửa sang `Edit(...)` và đúng lệnh CLI, rồi kiểm chứng lại không cần cấp thêm quyền.
   - Test phát hiện `test-first` của dự án xung đột với variant `tests`; variant giờ tự bỏ `test-first`.
+- **P3 – pack và integration (0.6):** `defaults` cho pack, pack `flutter`, loại module `integration` với `zentao` (chỉ đọc), role `researcher`, step `external`, khóa `permissions`.
+  - Chạy `/ai-review` với pack `flutter` trên commit thật `b6a9e53` của `kho` (bản clone, repo thật không bị đụng): 5 handoff hợp lệ, 7 finding minor có giá trị, adversarial hạ 2 mức và bác 4 finding sai (kể cả số dòng không tồn tại).
+  - Lần chạy đó lộ ra `git show`/`flutter test` bị từ chối → thêm vào quyền do build quản lý. Lần thử Zentao lộ ra tool MCP cần được cho phép trước → thêm `allow` cho integration (chỉ nhóm đọc).
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
@@ -49,12 +52,13 @@ Cập nhật: 2026-10-21 · kernel 0.5.0
 - [x] Trait: `test-first`, `test-author`, `lens-performance`
 
 ### P3 – Pack & integration
-- [ ] Pack đầu tiên: `flutter`, thử trên `kho/` và `anhDung/` (lens lifecycle/rebuild, context Flutter)
-- [ ] Integration MCP: Zentao (ticket → feature), Figma
-- [ ] Role `researcher`
-- [ ] Flow gọi được agent viết tay (không do stack build), ví dụ khai `external: true` trong step
+- [x] Pack đầu tiên: `flutter` (đã chạy thật trên bản clone của `kho/`)
+- [x] Integration `zentao` (đọc ticket); [ ] ghi ngược lên Zentao (comment, trạng thái): **chờ quyết định** vì là hành động ra bên ngoài
+- [ ] Integration Figma (cần skill của Figma MCP được nạp trước khi dùng tool)
+- [x] Role `researcher`
+- [x] Flow gọi được agent viết tay: `external: true`
 - [ ] Loại module `skill` (skill một bước, không phải flow)
-- [ ] **Mốc nghiệm thu:** dự án thứ hai chạy được mà không phải sửa core
+- [x] **Mốc nghiệm thu:** `kho` (dự án thứ hai, Flutter) chạy được chỉ bằng `project.yaml` + pack, không sửa core cho riêng nó
 
 ### P4 – Ổn định
 - [ ] `stack eval`: bộ tình huống mẫu (kiểu repo demo có lỗi cài sẵn) để phát hiện khi prompt làm agent kém đi
@@ -75,8 +79,9 @@ Cập nhật: 2026-10-21 · kernel 0.5.0
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Áp ai-stack lên `kho/` bằng `/stack` (kế hoạch đã soạn, chờ duyệt), rồi chạy `/ai-review`: lần đầu kiểm chứng trên code thật, cho thấy pack Flutter cần gì
-2. P3: pack `flutter` (lens lifecycle/rebuild, `protect-generated` mặc định, lệnh `flutter analyze`/`test`), sau đó integration MCP
+1. Áp ai-stack lên `kho/` thật (kế hoạch đã soạn, giờ thêm `packs: [flutter]`), chờ duyệt
+2. Quyết thiết kế ghi ngược lên Zentao; sau đó Figma, loại module `skill`
+3. P4: eval, semver từng module, lên 1.0
 
 ## Các quyết định đã chốt
 

@@ -89,7 +89,7 @@ test('a project overrides a step inside a loop by id', async () => {
 
 test('the real feature and bugfix flows build', async () => {
   const projectRoot = await tempDir();
-  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.5\n' });
+  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.6\n' });
   assert.deepEqual(codes((await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot })).diags), []);
   const feature = await readFile(path.join(projectRoot, '.claude/skills/ai-feature/SKILL.md'), 'utf8');
   assert.match(feature, /for each item\*\* of `handoff\.output\.units`/);

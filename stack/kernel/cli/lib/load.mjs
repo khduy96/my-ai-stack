@@ -90,7 +90,13 @@ async function parseYamlModule(file, diags) {
   return data ? { data, body: '' } : null;
 }
 
-const overridesOf = (data) => ({ role: data?.roles ?? {}, trait: data?.traits ?? {}, flow: data?.flows ?? {}, policy: data?.policies ?? {} });
+const overridesOf = (data) => ({
+  role: data?.roles ?? {},
+  trait: data?.traits ?? {},
+  flow: data?.flows ?? {},
+  policy: data?.policies ?? {},
+  integration: data?.integrations ?? {},
+});
 
 // Builds the ordered layers: core -> packs -> project -> local.
 export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
@@ -129,18 +135,21 @@ export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
     }
   }
 
-  // Module overrides (roles/traits/flows/policies) live in layers; everything else is project config.
+  // Module overrides (roles/traits/flows/policies/integrations) live in layers; everything else is project config.
   const configOf = (d) => {
-    const { roles, traits, flows, policies, ...rest } = d ?? {};
+    const { roles, traits, flows, policies, integrations, ...rest } = d ?? {};
     return rest;
   };
-  const config = mergeValue(mergeValue(configOf(stack.defaults), configOf(project)), configOf(local));
+  // The project picks its packs; each pack's `defaults` then sit between the stack's
+  // defaults and the project's own config, so a pack can e.g. enable a policy.
+  const chosen = mergeValue(mergeValue(configOf(stack.defaults), configOf(project)), configOf(local));
+  const packDefaults = [];
 
   const layers = [
     { name: 'core', file: stackFile, modules: await loadModules(path.join(stackRoot, 'modules'), 'core', diags), overrides: {} },
   ];
 
-  for (const packId of applyListOps([], config.packs ?? [])) {
+  for (const packId of applyListOps([], chosen.packs ?? [])) {
     const dir = path.join(stackRoot, 'packs', packId);
     const packFile = path.join(dir, 'pack.yaml');
     const pack = await readYaml(packFile, diags);
@@ -159,7 +168,12 @@ export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
       modules: await loadModules(path.join(dir, 'modules'), `pack:${packId}`, diags),
       overrides: overridesOf(pack.data),
     });
+    if (pack.data.defaults) packDefaults.push(pack.data.defaults);
   }
+
+  let config = configOf(stack.defaults);
+  for (const defaults of packDefaults) config = mergeValue(config, configOf(defaults));
+  config = mergeValue(mergeValue(config, configOf(project)), configOf(local));
 
   if (projectRoot) {
     const modules = [];

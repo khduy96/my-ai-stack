@@ -41,7 +41,7 @@ cp <stack>/templates/project.yaml <dự án>/.claude/project.yaml
 Phần quan trọng nhất là `context` và `read_first`, vì agent dựa vào đó để hiểu dự án:
 
 ```yaml
-stack: ^0.5
+stack: ^0.6
 name: kho
 context: |
   App Flutter quản lý kho + đơn hàng (Android/iOS), backend Back4App (Parse),
@@ -134,13 +134,15 @@ roles:
       a11y: { traits: ['+lens-a11y'] }               # thêm (khi đã có trait này)
 ```
 
-**Bật guard và tri thức dự án:**
+**Bật pack, integration, guard và tri thức dự án:**
 
 ```yaml
+packs: [flutter]                                     # bộ thêm theo công nghệ (USAGE.md, mục G3)
 scope: [lib/features/orders]                         # chỉ được sửa trong vùng này (xem PARTIAL.md)
 knowledge: docs/knowledge                            # agent tra cứu; /ai-learn ghi vào
 enable:
   policies: [protect-generated, no-secrets]
+  integrations: [zentao]                             # đọc ticket Zentao (USAGE.md, mục G2)
 policies:
   protect-generated:
     config:

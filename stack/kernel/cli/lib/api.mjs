@@ -6,8 +6,10 @@ import { createDiagnostics } from './diag.mjs';
 import { applyEmit, checkDrift, planEmit, USER_LOCK_FILE } from './emit.mjs';
 import { defaultCli, renderFlow } from './flow.mjs';
 import { FLOW_PERMISSIONS, RUNS_DIR, SETTINGS_FILES } from './kernel.mjs';
+import { applyIntegrations } from './integration.mjs';
 import { applyPolicies } from './policy.mjs';
 import { loadWorkspace, readText } from './load.mjs';
+import { applyListOps } from './merge.mjs';
 import { enabledIds, renderAgents } from './render.mjs';
 import { resolve } from './resolve.mjs';
 import { renderSetupSkill } from './setup.mjs';
@@ -17,7 +19,8 @@ import { getContract, validate } from './validate.mjs';
 // Returns the files to write and the entries for the managed settings file.
 async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
   const policies = await applyPolicies(modules, ws, diags);
-  ws.rules = policies.rules;
+  const integrations = applyIntegrations(modules, ws, diags);
+  ws.rules = [...policies.rules, ...integrations.rules];
   const prefix = ws.config.prefix ?? '';
 
   const agents = renderAgents(modules, ws, diags);
@@ -43,7 +46,7 @@ async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
   const mode = ws.config.settings ?? 'local';
   const cli = ws.config.cli ?? defaultCli();
   const flowAllow = [`Bash(${cli} check *)`, ...FLOW_PERMISSIONS, `Edit(${ws.config.runs ?? RUNS_DIR}/**)`];
-  const allow = [...(flows.length ? flowAllow : []), ...policies.permissions];
+  const allow = [...(flows.length ? flowAllow : []), ...policies.permissions, ...integrations.permissions, ...applyListOps([], ws.config.permissions ?? [])];
   const settings =
     mode === 'none'
       ? null

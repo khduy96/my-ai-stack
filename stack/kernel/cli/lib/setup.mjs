@@ -2,6 +2,7 @@
 // It has to work in projects that have no stack yet, so `stack install` puts it in the
 // user's ~/.claude/ instead of a project. Its protocol lives in
 // engines/claude-code/stack-skill.md; this file fills in the stack-specific parts.
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import YAML from 'yaml';
 import { GENERATOR, KERNEL_VERSION } from './kernel.mjs';
@@ -42,7 +43,16 @@ export async function renderSetupSkill(ws, modules, agents, diags, stackRoot) {
   }
 
   const prefix = ws.config.prefix ?? '';
+  const describe = (id, description) => `\`${id}\` (${firstSentence(description ?? '').replace(/\.$/, '')})`;
+  const packs = [];
+  for (const entry of await readdir(path.join(stackRoot, 'packs'), { withFileTypes: true }).catch(() => [])) {
+    const text = entry.isDirectory() ? await readText(path.join(stackRoot, 'packs', entry.name, 'pack.yaml')) : null;
+    if (text !== null) packs.push(describe(entry.name, YAML.parse(text)?.description));
+  }
+  const integrations = [...modules.values()].filter((m) => m.kind === 'integration').map((m) => describe(m.id, m.data.description));
   const values = {
+    'stack.packs': packs.sort().join(', ') || 'none',
+    'stack.integrations': integrations.sort().join(', ') || 'none',
     'stack.version': ws.stack.version,
     'stack.compat': compatRange(ws.stack.version),
     'stack.root': stackRoot.split(path.sep).join('/'),

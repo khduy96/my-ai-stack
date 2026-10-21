@@ -37,12 +37,13 @@ Ask only what the survey did not settle, in at most two rounds. Prefer multiple 
 4. **Scope:** the whole repository, or only some paths? Paths become `scope:`, which tells agents the boundary and installs a hook that refuses edits outside it.
 5. **Checks:** confirm the commands builders and verifiers should run, taken from the survey. Having none is fine.
 6. **Guards (optional, recommended):** refuse edits to generated files (`protect-generated`; propose patterns from the survey, e.g. `**/*.g.dart`), and refuse writing secrets into files (`no-secrets`).
-7. **Knowledge (optional):** a directory for durable project knowledge (e.g. `docs/knowledge`) that agents consult and `/{{stack.prefix}}learn` writes to. Propose one only if the user wants it; it is created on first use.
-8. **What to enable:** everything (recommended), or a subset of:
+7. **Packs and integrations:** propose the packs that match the survey (available: {{stack.packs}}; for example `flutter` when there is a `pubspec.yaml` with the Flutter SDK), and the integrations for issue trackers or tools the user works with (available: {{stack.integrations}}). Integrations only read by default; ask before granting any write set.
+8. **Knowledge (optional):** a directory for durable project knowledge (e.g. `docs/knowledge`) that agents consult and `/{{stack.prefix}}learn` writes to. Propose one only if the user wants it; it is created on first use.
+9. **What to enable:** everything (recommended), or a subset of:
 
 {{stack.catalog}}
 
-9. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
+10. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
 
 ## 4. Propose, then wait
 
@@ -63,8 +64,9 @@ read_first:
 # settings: shared                              <shared setup that commits settings.json>
 # scope: [<path>, ...]                          <when scoped>
 # knowledge: <dir>                              <when wanted>
-# enable: { roles: [...], flows: [...], policies: [protect-generated, no-secrets] }
-#                                               <roles/flows only for a subset; policies when chosen>
+# packs: [<pack>, ...]                          <when chosen>
+# enable: { roles: [...], flows: [...], policies: [...], integrations: [...] }
+#                                               <roles/flows only for a subset; policies and integrations when chosen>
 # policies:                                     <only to change a guard's defaults>
 #   protect-generated: { config: { patterns: ['**/*.g.dart'] } }
 roles:                                          <when there are checks>

@@ -1,7 +1,7 @@
 id: explain
 kind: flow
 version: 0.1.0
-kernel: ^0.5
+kernel: ^0.6
 tags: [core, knowledge]
 description: >-
   Answers how something in the codebase works with the explainer: a direct answer,

@@ -2,7 +2,7 @@
 #   node <stack>/kernel/cli/stack.mjs build --project <project>
 # Personal tweaks go in <project>/.claude/project.local.yaml (same format, keep it out of git).
 
-stack: ^0.5                  # compatible stack versions
+stack: ^0.6                  # compatible stack versions
 name: my-project
 
 # Injected into every agent as "Project context". Keep it short: what the project is,

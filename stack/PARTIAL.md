@@ -45,7 +45,7 @@ Làm bước này **trước khi tạo file**, để không lỡ `git add` nhầ
 Tạo `<repo>/.claude/project.yaml`:
 
 ```yaml
-stack: ^0.5
+stack: ^0.6
 name: orders
 
 context: |

@@ -2,7 +2,7 @@
 id: scribe
 kind: role
 version: 0.1.0
-kernel: ^0.5
+kernel: ^0.6
 description: >-
   Records durable project knowledge (how things work, decisions and their reasons,
   non-obvious conventions, pitfalls) from a finished flow run, a note or a topic into

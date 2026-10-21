@@ -44,8 +44,10 @@ stack/
 │   ├── roles/              ai làm
 │   ├── traits/             làm theo phong cách nào
 │   ├── flows/              nhiều agent phối hợp ra sao
-│   └── policies/           được làm gì: rule, guard (hook), override
-├── packs/                  gói module theo công nghệ/domain
+│   ├── policies/           được làm gì: rule, guard (hook), override
+│   └── integrations/       hệ thống ngoài qua MCP: tool nào cho role nào
+├── packs/                  gói module + override + defaults theo công nghệ
+│   └── flutter/
 └── templates/project.yaml
 ```
 
@@ -60,6 +62,7 @@ stack/
 | `verifier` | read + Bash | findings | `correctness`, `security`, `conventions`, `performance`, `adversarial` |
 | `explainer` | read | explanation | |
 | `scribe` | write (chỉ thư mục knowledge) | notes | |
+| `researcher` | read + WebSearch/WebFetch | research | |
 
 | Trait | Dùng cho |
 |---|---|
@@ -83,7 +86,15 @@ stack/
 | `protect-generated` | `enable.policies` | Sửa file sinh tự động (`*.g.dart`, `generated/`…) |
 | `no-secrets` | `enable.policies` | Ghi key, token, private key, mật khẩu vào file |
 
-Build mặc định sinh ra 13 agent và 5 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
+| Pack | Thêm gì |
+|---|---|
+| `flutter` | `ai-verifier-flutter` (lifecycle, rebuild, state, platform) trong review của `/ai-review` và `/ai-feature`; builder có `flutter-practices` và `flutter-checks`; bật sẵn `protect-generated`; cho phép sẵn `flutter analyze`/`test`, `build_runner` |
+
+| Integration (opt-in) | MCP | Mặc định |
+|---|---|---|
+| `zentao` | `zentao` | analyst, architect, investigator, researcher, explainer **đọc** được ticket (cho phép sẵn); nhóm **ghi** (comment, đổi trạng thái) chỉ có khi dự án tự cấp, và luôn phải có người duyệt |
+
+Build mặc định sinh ra 14 agent và 5 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
 
 ## Mô hình
 
@@ -94,8 +105,9 @@ Build mặc định sinh ra 13 agent và 5 skill `/ai-*`, đồng thời thêm c
 | Flow `foreach`, `loop`, input "mới nhất trong các nguồn" | ✔ kernel 0.4 |
 | Skill `/stack` (hỏi đáp tạo `project.yaml`, cài bằng `stack install`) | ✔ kernel 0.4.1 |
 | Policy (rule, guard hook, override), `scope`, settings do build quản lý, knowledge (grep) | ✔ kernel 0.5 |
-| Pack (modules + override) | ✔ có cơ chế, chưa có pack nào |
-| Integration (MCP), Workflow/SDK engine, retriever vector | lộ trình P3–P5 |
+| Pack (modules + override + defaults), pack `flutter` | ✔ kernel 0.6 |
+| Integration (MCP: grants, allow, rule), `zentao`; role `researcher`; flow gọi agent viết tay (`external`) | ✔ kernel 0.6 |
+| Workflow/SDK engine, retriever vector, loại module `skill` | lộ trình P4–P5 |
 
 ## Lộ trình
 
@@ -106,7 +118,7 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 | **P0 – Lõi** ✔ | contracts, conventions, CLI build/doctor, 1 role + 2 trait mẫu |
 | **P1 – Bộ tối thiểu** ✔ | 5 role, 8 trait, variants, output contract · flow `review`, `feature`, `bugfix` + skill engine · skill `/stack` |
 | **P2 – Tri thức & chính sách** ✔ | policy + guard + `scope`, settings do build quản lý · knowledge, `scribe`, `explainer`, `/ai-learn`, `/ai-explain` · trait test và performance |
-| P3 – Pack & integration | pack đầu tiên, MCP adapter; dự án thứ 2 chạy không cần sửa core |
+| **P3 – Pack & integration** (phần lớn ✔) | pack `flutter` (đã chạy thật trên commit của `kho`), integration `zentao`, `researcher`, `external` · còn: ghi ngược lên Zentao, Figma, loại module `skill` |
 | P4 – Ổn định | evals, semver từng module, lên 1.0 |
 | P5 – Mở rộng | engine Workflow/Agent SDK, retriever vector |
 
