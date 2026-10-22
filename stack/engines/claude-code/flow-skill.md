@@ -12,6 +12,8 @@ The input is the text the user gave with the command: `$ARGUMENTS`
 
 If the input is `--resume <run-dir>`, read `<run-dir>/run.yaml` and continue with the first step that is not `done` or `skipped`.
 
+{{flow.workflow}}
+
 ## Run state
 
 Every run keeps its state in a directory, called `<run>` below.

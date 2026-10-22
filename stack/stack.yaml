@@ -6,6 +6,7 @@ version: 1.0.0
 defaults:
   prefix: ai-
   settings: local
+  engines: [skill]
   enable:
     roles: ['*']
     flows: ['*']

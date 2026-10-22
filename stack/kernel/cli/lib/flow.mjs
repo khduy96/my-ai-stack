@@ -187,6 +187,13 @@ function renderAgentStep(entry, label, heading, pos, ctx) {
       '- Wait for the whole wave before starting the next. If an item does not finish `done`, do not start the items that depend on it.',
       '',
     );
+    if (step.isolation === 'worktree') {
+      lines.push(
+        '**Worktrees.** When no item has a `depends_on`, start every item at once with the Agent tool option `isolation: "worktree"` (file overlaps do not matter then). Worktrees start from the last commit, so when any item depends on another, run without worktrees as described above.',
+        'After the wave, apply each worktree that has changes to the main working tree, one after another, without committing: `git -C <worktree> add -N .`, `git -C <worktree> diff HEAD > <tmp patch>`, `git apply --3way <tmp patch>`, then `git worktree remove --force <worktree>`. Stop at the first conflict and show the user the files involved.',
+        '',
+      );
+    }
   } else {
     lines.push(`Start the agent ${name(step.agent)}.`, '');
   }
@@ -265,6 +272,19 @@ export async function renderFlow(flow, agents, ws, diags, stackRoot) {
     'flow.input': inputLines.join('\n\n'),
     'flow.steps': steps.join('\n\n'),
     'flow.report': (data.report ?? DEFAULT_REPORT).trim(),
+    'flow.workflow': (ws.config.engines ?? ['skill']).includes('workflow')
+      ? [
+          '## Deterministic run (`--workflow`)',
+          '',
+          `If the input starts with \`--workflow\`, do not orchestrate the steps below yourself. Call the Workflow tool with \`name: "${prefix}${flow.id}"\` and \`args: { input: "<the rest of the input>" }\`, and wait for its result.`,
+          '',
+          '- `status: done`: write the report described at the end of this skill from its `results`.',
+          '- `status: waiting`: show the user the step, its `questions`, or the step to approve. To continue, call Workflow again with the same name, `resumeFromRunId` of the previous run, and `args` extended with `approved: [<step id>]` or `answers: { <step id>: "<answer>" }`. Finished agents are reused.',
+          '- `status: failed`: report the failed step and its handoff.',
+          '',
+          'The workflow passes inputs in memory and validates every handoff itself, so it writes no run directory.',
+        ].join('\n')
+      : '',
     'engine.cli': ctx.cli,
     'engine.runs': ws.config.runs ?? RUNS_DIR,
   };

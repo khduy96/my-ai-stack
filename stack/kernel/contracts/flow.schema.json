@@ -53,6 +53,7 @@
         "id": { "$ref": "#/$defs/id" },
         "agent": { "type": "string", "description": "Role or role-variant id, without the prefix (e.g. verifier-security)." },
         "fanout": { "type": "array", "minItems": 2, "items": { "type": "string" }, "description": "Agents run in parallel on the same inputs." },
+        "isolation": { "enum": ["none", "worktree"], "description": "With foreach: worktree runs each item in its own git worktree and applies the changes back afterwards. Only used when no item depends on another (worktrees start from the last commit); otherwise items run without isolation." },
         "external": { "type": "boolean", "description": "The agent(s) are hand-written subagents, used by their exact name (no prefix) and not checked by the build; the orchestrator asks them for a handoff block." },
         "foreach": { "$ref": "#/$defs/ref", "description": "With `agent`: run it once per item of this list (e.g. $plan.output.units), in waves by the items' depends_on, in parallel when items share no files." },
         "goal": { "type": "string", "description": "The task goal handed to the agent(s)." },

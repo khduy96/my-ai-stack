@@ -14,6 +14,7 @@
     "modules": { "type": "array", "items": { "type": "string" }, "description": "Extra module directories, relative to the project root." },
     "runs": { "type": "string", "description": "Directory for flow run state, relative to the project root. Default: .ai-runs (outside .claude/, which Claude Code guards with permission prompts)." },
     "cli": { "type": "string", "description": "Command generated skills use to run this CLI. Default: node \"<absolute path to stack.mjs>\"." },
+    "engines": { "type": "array", "items": { "enum": ["skill", "workflow"] }, "description": "How flows run. skill (default): a skill the main session orchestrates. workflow: also a deterministic Claude Code workflow script, started with /<prefix><flow> --workflow." },
     "settings": { "enum": ["local", "shared", "none"], "description": "Where the build manages permissions and policy hooks: .claude/settings.local.json (local, default), .claude/settings.json (shared), or nowhere (none). Only entries the build added are ever changed or removed." },
     "scope": { "type": "array", "items": { "type": "string" }, "description": "Paths agents may edit, relative to the project root. Shorthand for enabling the policy 'scope' with these paths." },
     "permissions": { "type": "array", "items": { "type": "string" }, "description": "Extra permissions.allow entries the build manages, e.g. the project's check commands. Packs set them through defaults." },

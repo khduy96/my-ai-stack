@@ -5,6 +5,7 @@ import YAML from 'yaml';
 import { createDiagnostics } from './diag.mjs';
 import { applyEmit, checkDrift, planEmit, USER_LOCK_FILE } from './emit.mjs';
 import { defaultCli, renderFlow } from './flow.mjs';
+import { renderWorkflow } from './workflow.mjs';
 import { FLOW_PERMISSIONS, RUNS_DIR, SETTINGS_FILES } from './kernel.mjs';
 import { applyIntegrations } from './integration.mjs';
 import { applyPolicies } from './policy.mjs';
@@ -36,6 +37,10 @@ async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
     if (!all && !enabled) continue;
     const out = await renderFlow(flow, enabled ? agentsById : anyRole, ws, diags, stackRoot);
     if (out && enabled) flows.push(out);
+    if (out && enabled && applyListOps([], ws.config.engines ?? ['skill']).includes('workflow')) {
+      const script = await renderWorkflow(flow, agentsById, ws, diags, stackRoot);
+      if (script) flows.push(script);
+    }
   }
 
   // Each guard script reads its config from the JSON file next to it.
