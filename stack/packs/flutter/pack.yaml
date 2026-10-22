@@ -1,0 +1,44 @@
+id: flutter
+kind: pack
+version: 0.1.1
+kernel: ^1
+description: >-
+  Flutter and Dart: a Flutter review lens (lifecycle, rebuilds, state, platform), Flutter
+  practices for builders, flutter analyze / test / build_runner checks, and protection
+  for generated Dart files.
+
+defaults:
+  enable:
+    policies: ['+protect-generated']
+  # Checks the builders and verifiers run, pre-approved so they never stall on a prompt.
+  permissions:
+    - '+Bash(flutter analyze)'
+    - '+Bash(flutter analyze *)'
+    - '+Bash(flutter test)'
+    - '+Bash(flutter test *)'
+    - '+Bash(dart run build_runner build *)'
+
+roles:
+  builder:
+    traits: ['+flutter-practices', '+flutter-checks']
+  verifier:
+    variants:
+      flutter:
+        traits: ['+lens-flutter', '+flutter-checks']
+        description: >-
+          Verifier focused on Flutter: widget lifecycle and disposal, BuildContext across
+          async gaps, rebuild cost, state-management misuse, async error handling,
+          platform and layout pitfalls; runs flutter analyze and the affected tests. Use
+          on any change under lib/.
+
+flows:
+  review:
+    steps:
+      review:
+        fanout: [verifier-correctness, verifier-security, verifier-conventions, verifier-flutter]
+  feature:
+    steps:
+      review:
+        fanout: [verifier-correctness, verifier-security, verifier-conventions, verifier-flutter]
+      fix-review:
+        fanout: [verifier-correctness, verifier-security, verifier-conventions, verifier-flutter]

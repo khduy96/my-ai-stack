@@ -1,0 +1,20 @@
+description: /ai-bugfix fixes the reported bug with a minimal change and leaves pre-existing code alone
+flow: bugfix
+input: 'total() trả về 0 khi giỏ hàng chỉ có 1 sản phẩm, đáng lẽ phải bằng price * qty của sản phẩm đó'
+project: |
+  context: |
+    Tiny ES module library for a shopping cart. Money is integer cents. No test setup.
+  read_first: [CLAUDE.md]
+expect:
+  status: done
+  findings_from: ['retry/*/retry-verify.handoff.yaml', verify.handoff.yaml]
+  forbid:
+    - id: the pre-existing injection as critical or major
+      match: 'audit|execSync|inject'
+      severity: [critical, major]
+  diff:
+    files: [src/cart.js]
+    max_lines: 4
+    not_contains: [execSync, applyDiscount]
+  script: check.mjs
+  mcp_calls: 0

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/project.schema.json",
+  "title": "Project",
+  "description": "<project>/.claude/project.yaml (and project.local.yaml): what a project declares it needs.",
+  "type": "object",
+  "properties": {
+    "stack": { "type": "string", "description": "Compatible stack version range, e.g. ^0.1." },
+    "name": { "type": "string" },
+    "prefix": { "type": "string", "pattern": "^[a-z0-9-]*$", "description": "Prefix of generated agent names." },
+    "context": { "type": "string", "description": "Short project description injected into every role." },
+    "read_first": { "type": "array", "items": { "type": "string" }, "description": "Files every agent reads before starting." },
+    "packs": { "type": "array", "items": { "type": "string" } },
+    "modules": { "type": "array", "items": { "type": "string" }, "description": "Extra module directories, relative to the project root." },
+    "runs": { "type": "string", "description": "Directory for flow run state, relative to the project root. Default: .ai-runs (outside .claude/, which Claude Code guards with permission prompts)." },
+    "cli": { "type": "string", "description": "Command generated skills use to run this CLI. Default: node \"<absolute path to stack.mjs>\"." },
+    "engines": { "type": "array", "items": { "enum": ["skill", "workflow"] }, "description": "How flows run. skill (default): a skill the main session orchestrates. workflow: also a deterministic Claude Code workflow script, started with /<prefix><flow> --workflow." },
+    "settings": { "enum": ["local", "shared", "none"], "description": "Where the build manages permissions and policy hooks: .claude/settings.local.json (local, default), .claude/settings.json (shared), or nowhere (none). Only entries the build added are ever changed or removed." },
+    "scope": { "type": "array", "items": { "type": "string" }, "description": "Paths agents may edit, relative to the project root. Shorthand for enabling the policy 'scope' with these paths." },
+    "permissions": { "type": "array", "items": { "type": "string" }, "description": "Extra permissions.allow entries the build manages, e.g. the project's check commands. Packs set them through defaults." },
+    "knowledge": {
+      "description": "Durable project knowledge: a directory (relative to the project root, with an INDEX.md) that agents consult and the scribe writes to. A string is the directory with the grep retriever; an object picks the retriever.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["dir"],
+          "properties": {
+            "dir": { "type": "string" },
+            "retriever": { "enum": ["grep", "index"], "description": "grep: agents search the files themselves. index: agents run `<cli> search`, ranked by relevance (BM25, accent-insensitive)." }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "enable": {
+      "type": "object",
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "flows": { "type": "array", "items": { "type": "string" } },
+        "policies": { "type": "array", "items": { "type": "string" }, "description": "Policies are opt-in; default none." },
+        "integrations": { "type": "array", "items": { "type": "string" }, "description": "Integrations are opt-in; default none." }
+      },
+      "additionalProperties": false
+    },
+    "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Flow overrides; `steps` may be a map keyed by step id to change single steps, e.g. { plan: { gate: auto } }." },
+    "policies": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Policy overrides, typically { <id>: { config: {...} } }." },
+    "integrations": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" }, "description": "Integration overrides, typically { <id>: { grants: {...} } }." }
+  }
+}

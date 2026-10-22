@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/explanation.schema.json",
+  "title": "Explanation",
+  "description": "How something in the code works, for a person who will act on it, with evidence.",
+  "type": "object",
+  "required": ["answer", "walkthrough"],
+  "properties": {
+    "answer": { "type": "string", "description": "The direct answer in two to five sentences." },
+    "walkthrough": {
+      "type": "array",
+      "description": "The real path through the code, in order.",
+      "items": {
+        "type": "object",
+        "required": ["step", "evidence"],
+        "properties": {
+          "step": { "type": "string" },
+          "evidence": { "type": "string", "description": "path:line." }
+        }
+      }
+    },
+    "gotchas": { "type": "array", "items": { "type": "string" }, "description": "Things a reader is likely to trip on." },
+    "unverified": { "type": "array", "items": { "type": "string" }, "description": "Parts of the question you did not check in the code." },
+    "related": { "type": "array", "items": { "type": "string" }, "description": "Files or topics worth reading next." }
+  }
+}

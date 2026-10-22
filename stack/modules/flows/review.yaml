@@ -1,0 +1,45 @@
+id: review
+kind: flow
+version: 0.1.1
+kernel: ^1
+tags: [core]
+description: >-
+  Multi-agent code review: three focused verifiers (correctness, security,
+  conventions) review the target in parallel, then an adversarial verifier tries to
+  disprove every finding so only real problems are reported. Use to review
+  uncommitted changes, a branch, a commit range, a PR or a path before merging.
+argument_hint: "[target: branch, commit range, PR number or path; default: uncommitted changes]"
+
+input:
+  description: >-
+    The input names what to review. Agents resolve it themselves with read-only
+    git commands (git diff, git log, gh pr diff) or by reading the given paths.
+  default: all uncommitted changes in the working tree (staged, unstaged and untracked files).
+
+steps:
+  - id: review
+    fanout: [verifier-correctness, verifier-security, verifier-conventions]
+    goal: >-
+      Review the target from your focus. Report every real problem as a finding with
+      a path:line reference and a concrete failure scenario.
+    in:
+      target: $input
+    gate: auto
+
+  - id: confirm
+    agent: verifier-adversarial
+    goal: >-
+      Try to disprove each finding from the review step against the code. Keep the
+      ones that survive, with your own evidence; report the rest as rejected.
+    in:
+      target: $input
+      claims: $review.findings
+    when: { step: review, is: has-findings }
+    gate: auto
+
+report: >-
+  List the confirmed findings (from `confirm` when it ran, otherwise from `review`),
+  grouped by severity from critical to info, each with its path:line, a one-line
+  failure scenario and the lens that found it. Leave out findings rejected by
+  `confirm`, but say how many there were. Then list the checks the agents ran with
+  their results, and the run directory. If nothing was found, say so plainly.

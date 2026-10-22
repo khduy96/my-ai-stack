@@ -1,0 +1,56 @@
+# Kinds of external tools /stack asks the user about. Editable: add or change a
+# category here, then run `stack install` so the /stack skill picks it up.
+#
+#   ask        the question for the user
+#   examples   products to offer as options (the user can always name another)
+#   use        what agents do with it; becomes part of the context line and the rule
+#   read_roles roles that get the read tools when it is connected through MCP
+#   cli        read-only commands to pre-approve when it is used through a CLI instead
+#   note       anything /stack must tell the user or put in the integration rule
+
+categories:
+  - id: tracker
+    title: Issue tracker
+    ask: 'Where are bugs and tasks tracked for this project, and what does a ticket reference look like (for example SHOP-123 or #45)?'
+    examples: [Jira, GitHub Issues, GitLab Issues, Linear, Zentao, Redmine, Azure Boards]
+    use: Agents read a ticket (description, comments, attachments) when a request mentions it.
+    read_roles: [analyst, architect, investigator, researcher, explainer]
+    cli: ['gh issue view *', 'gh issue list *', 'glab issue view *']
+
+  - id: design
+    title: UI design
+    ask: Where do the UI designs live (tool and file or project)?
+    examples: [Figma, Penpot, Sketch, Adobe XD, Zeplin]
+    use: Analysts link the design in specs; builders and verifiers open the design of a screen they change.
+    read_roles: [analyst, builder, verifier]
+    note: Figma's MCP server wants its own skills (for example figma-design-to-code) loaded before its tools are used; say so in the integration rule.
+
+  - id: chat
+    title: Team chat
+    ask: Which chat and channels does the team use for this project?
+    examples: [Slack, Microsoft Teams, Discord, Google Chat, Zalo, Telegram, Mattermost]
+    use: Agents may read a thread linked in a request for context. Posting is never automatic.
+    read_roles: [analyst, investigator, researcher]
+    note: Never grant or pre-approve posting; the rule must say agents never send messages.
+
+  - id: docs
+    title: Documentation and specs
+    ask: Where are requirements, specs and technical documentation kept?
+    examples: [docs in this repository, Notion, Confluence, Google Drive, SharePoint, a wiki]
+    use: Docs in the repository go to read_first or knowledge; external docs are read through an integration.
+    read_roles: [analyst, architect, researcher, explainer]
+
+  - id: code-host
+    title: Code hosting and CI
+    ask: Where is the repository hosted, and where does CI run?
+    examples: [GitHub, GitLab, Bitbucket, Azure DevOps]
+    use: Verifiers read pull requests and their CI results; investigators read failing CI runs.
+    read_roles: [verifier, investigator]
+    cli: ['gh pr view *', 'gh pr diff *', 'gh pr checks *', 'gh run view *', 'gh run list *', 'glab mr view *', 'glab ci view *']
+
+  - id: monitoring
+    title: Error monitoring
+    ask: Where do production errors and crashes show up?
+    examples: [Sentry, Firebase Crashlytics, Datadog, Bugsnag, New Relic]
+    use: Investigators read the error event and stack trace behind a bug report.
+    read_roles: [investigator, researcher]

@@ -1,0 +1,30 @@
+description: /ai-review finds four bugs planted in an uncommitted change
+flow: review
+input: ''
+project: |
+  context: |
+    Tiny ES module library for a shopping cart. Money is integer cents.
+  read_first: [CLAUDE.md]
+expect:
+  status: done
+  findings_from: [confirm.handoff.yaml, 'review/*.handoff.yaml']
+  findings:
+    - id: off-by-one in total
+      file: src/cart.js
+      line: 6                       # whatever language the agents write in
+      severity: [critical, major]
+    - id: command injection in audit
+      file: src/cart.js
+      line: 19
+      severity: [critical, major]
+    - id: applyDiscount mutates its input
+      file: src/cart.js
+      line: 13
+      match: 'mutat'
+      severity: [critical, major, minor]
+    - id: discount produces non-integer cents
+      file: src/cart.js
+      line: 13
+      match: 'cent|integer|round|fraction|float|nguyên|làm tròn|lẻ'
+      severity: [critical, major, minor]
+  mcp_calls: 0

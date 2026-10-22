@@ -1,0 +1,26 @@
+id: protect-generated
+kind: policy
+version: 0.1.1
+kernel: ^1
+tags: [core, guard]
+description: >-
+  Refuses edits to generated files (code generation output); agents change the
+  source and rerun the generator instead. Patterns are configurable.
+config:
+  patterns:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+    - '**/*.gr.dart'
+    - '**/*.mocks.dart'
+    - '**/*.pb.dart'
+    - '**/*.pb.go'
+    - '**/*_pb2.py'
+    - '**/*.generated.*'
+    - '**/generated/**'
+rule: >-
+  Never edit generated files ({{config.patterns}}); change their source and run the
+  project's code generator.
+guard:
+  event: PreToolUse
+  matcher: Edit|Write|MultiEdit|NotebookEdit
+  script: protect-generated.mjs

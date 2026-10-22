@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/role.schema.json",
+  "title": "Role",
+  "description": "Who does the work. A role is technology-agnostic; traits, packs and the project profile specialise it.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "required": ["description", "permission"],
+  "properties": {
+    "kind": { "const": "role" },
+    "permission": { "enum": ["read", "write", "exec"], "description": "read = Read/Grep/Glob; write adds Edit/Write; exec adds Bash." },
+    "tools": { "type": "array", "items": { "type": "string" }, "description": "Plain list replaces the tools derived from permission; '+X' / '-X' adjust them." },
+    "traits": { "type": "array", "items": { "type": "string" } },
+    "slots": { "type": "array", "items": { "type": "string", "pattern": "^[+-]?[a-z][a-z0-9-]*$" }, "description": "Placeholders traits may fill. Defaults to ['traits']; '+x' adds to the default." },
+    "model": { "type": "string" },
+    "produces": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Contract name (kernel/contracts/<name>.schema.json) of the structured result this role puts under handoff.output." },
+    "abstract": { "type": "boolean", "description": "true = only the variants become agents, not the role itself." },
+    "variants": {
+      "type": "object",
+      "description": "Named specialisations, each built as its own agent <prefix><role>-<variant>. Values are overrides of this role.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "additionalProperties": { "$ref": "override.schema.json" }
+    },
+    "engines": { "type": "object", "description": "Engine-specific passthrough, e.g. { claude-code: { color: blue } }.", "additionalProperties": { "type": "object" } }
+  },
+  "unevaluatedProperties": false
+}
