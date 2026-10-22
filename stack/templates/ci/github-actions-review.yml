@@ -1,0 +1,56 @@
+# ai-stack review on every pull request.
+# Copy to <project>/.github/workflows/ai-review.yml and adjust the three marked values.
+#
+# Needs:
+#   - secret ANTHROPIC_API_KEY (repository settings → Secrets and variables → Actions)
+#   - the project's .claude/project.yaml committed (shared setup), with
+#       cli: node .ai-stack/kernel/cli/stack.mjs
+#     so the generated skills call the stack checked out below
+#   - the project's check commands allowed in project.yaml `permissions` if verifiers
+#     should run them (e.g. '+Bash(npm test)'); anything not allowed is refused, never prompted
+#
+# Exit code of `stack run`: 0 ok, 1 findings at --fail-on or above, 2 run failed,
+# 3 waiting for a human (a gate in the flow).
+
+name: ai-review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                     # the review needs the base branch
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Get ai-stack
+        run: |
+          git clone --depth 1 https://github.com/<owner>/<ai-stack-repo>.git .ai-stack   # ← where your stack lives
+          npm ci --prefix .ai-stack/kernel/cli
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build the project's agents
+        run: node .ai-stack/kernel/cli/stack.mjs build --project .
+
+      - name: Review the pull request
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: >-
+          node .ai-stack/kernel/cli/stack.mjs run review
+          "origin/${{ github.base_ref }}...HEAD"
+          --project .
+          --model sonnet
+          --fail-on major
+          --summary "$GITHUB_STEP_SUMMARY"

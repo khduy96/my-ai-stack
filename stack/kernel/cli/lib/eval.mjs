@@ -93,8 +93,8 @@ function quoteArg(a) {
   return `"${String(a).replace(/"/g, '\\"')}"`;
 }
 
-export function runClaude(repo, command, { model, claude = 'claude', timeoutMs = 1_800_000 }) {
-  const args = ['-p', command, '--model', model, '--permission-mode', 'bypassPermissions', '--output-format', 'stream-json', '--verbose'];
+export function runClaude(repo, command, { model, claude = 'claude', timeoutMs = 1_800_000, permissionMode = 'bypassPermissions' }) {
+  const args = ['-p', command, '--model', model, '--permission-mode', permissionMode, '--output-format', 'stream-json', '--verbose'];
   // claude is an npm shim (a .cmd on Windows), so go through the shell with quoted arguments.
   const line = [claude, ...args.map(quoteArg)].join(' ');
   const r = spawnSync(line, { cwd: repo, shell: true, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 256 * 1024 * 1024, env: { ...process.env, MSYS_NO_PATHCONV: '1' } });

@@ -6,6 +6,9 @@ import { build, check, doctor, install } from './lib/api.mjs';
 import { compareVersions, updateVersions } from './lib/versions.mjs';
 import { cleanup, compareResults, EVALS_DIR, loadCases, prepareCase, runClaude, scoreRun } from './lib/eval.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { runFlow } from './lib/run.mjs';
+import { loadWorkspace } from './lib/load.mjs';
+import { createDiagnostics } from './lib/diag.mjs';
 import { readFileSync } from 'node:fs';
 import { DEFAULT_STACK_ROOT } from './lib/kernel.mjs';
 
@@ -18,6 +21,8 @@ Commands:
   install         Install the /stack setup skill into ~/.claude/ (all projects)
   versions        Show module versions against modules.lock.json (--update records them)
   eval [ids...]   Run the eval cases in evals/ with Claude and score them (costs model usage)
+  run <flow> [input...]  Run a flow without a person (CI): exit 0 ok, 1 findings at --fail-on or above,
+                  2 run failed, 3 waiting for a human
   help            Show this message
 
 Options:
@@ -30,6 +35,9 @@ Options:
   --model <name>         eval: model for the run (default: sonnet)
   --keep                 eval: keep each case's temporary repository
   --baseline             eval: save this run as evals/baseline.json
+  --fail-on <level>      run: critical | major (default) | minor | none
+  --summary <file>       run: append a Markdown summary (e.g. $GITHUB_STEP_SUMMARY)
+  --permission-mode <m>  run: Claude Code permission mode (default: default, i.e. the project's settings)
 `;
 
 function printOps(ops, dryRun, label) {
@@ -67,6 +75,9 @@ async function main() {
         model: { type: 'string', default: 'sonnet' },
         keep: { type: 'boolean', default: false },
         baseline: { type: 'boolean', default: false },
+        'fail-on': { type: 'string', default: 'major' },
+        summary: { type: 'string' },
+        'permission-mode': { type: 'string', default: 'default' },
         help: { type: 'boolean', short: 'h', default: false },
       },
     });
@@ -123,6 +134,38 @@ async function main() {
     printDiagnostics(diags);
     console.log(diags.hasErrors() ? `check: ${diags.count('error')} error(s)` : 'check: ok');
     return diags.hasErrors() ? 1 : 0;
+  }
+
+  if (command === 'run') {
+    const flow = positionals[1];
+    if (!flow) {
+      console.error(`run needs a flow, e.g. stack run review
+
+${USAGE}`);
+      return 2;
+    }
+    if (!['critical', 'major', 'minor', 'none'].includes(values['fail-on'])) {
+      console.error('--fail-on must be critical, major, minor or none');
+      return 2;
+    }
+    const projectRoot = path.resolve(values.project ?? process.cwd());
+    const diags = createDiagnostics();
+    const ws = await loadWorkspace({ stackRoot: DEFAULT_STACK_ROOT, projectRoot }, diags);
+    printDiagnostics(diags);
+    if (diags.hasErrors()) return 2;
+    const { code, summary } = await runFlow({
+      projectRoot,
+      flow,
+      input: positionals.slice(2).join(' '),
+      prefix: ws.config.prefix ?? '',
+      model: values.model,
+      failOn: values['fail-on'],
+      permissionMode: values['permission-mode'],
+      summaryFile: values.summary,
+      runs: ws.config.runs ?? '.ai-runs',
+    });
+    console.log(summary);
+    return code;
   }
 
   if (command === 'eval') {
