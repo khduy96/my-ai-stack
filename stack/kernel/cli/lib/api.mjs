@@ -52,7 +52,8 @@ async function renderWorkspace(ws, modules, diags, stackRoot, { all }) {
   const mode = ws.config.settings ?? 'local';
   const cli = ws.config.cli ?? defaultCli();
   const flowAllow = [`Bash(${cli} check *)`, ...FLOW_PERMISSIONS, `Edit(${ws.config.runs ?? RUNS_DIR}/**)`];
-  const allow = [...(flows.length ? flowAllow : []), ...policies.permissions, ...integrations.permissions, ...applyListOps([], ws.config.permissions ?? [])];
+  const searchAllow = ws.config.knowledge && ws.config.knowledge_retriever === 'index' ? [`Bash(${cli} search *)`] : [];
+  const allow = [...(flows.length ? flowAllow : []), ...searchAllow, ...policies.permissions, ...integrations.permissions, ...applyListOps([], ws.config.permissions ?? [])];
   const settings =
     mode === 'none'
       ? null

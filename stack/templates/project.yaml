@@ -19,6 +19,7 @@ read_first:
 # settings: local            # where the build adds permissions and hooks: local | shared | none
 # scope: [src/my-area]       # only these paths may be edited (enables the policy "scope")
 # knowledge: docs/knowledge  # durable project knowledge: agents read it, /ai-learn writes it
+#   or { dir: docs/knowledge, retriever: index } for ranked search (stack search)
 # engines: [skill, workflow] # also build deterministic workflows (/ai-<flow> --workflow)
 packs: []                    # e.g. [flutter]
 modules: []                  # extra module directories, relative to the project root

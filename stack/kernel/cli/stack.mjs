@@ -7,6 +7,7 @@ import { compareVersions, updateVersions } from './lib/versions.mjs';
 import { cleanup, compareResults, EVALS_DIR, loadCases, prepareCase, runClaude, scoreRun } from './lib/eval.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { runFlow } from './lib/run.mjs';
+import { search } from './lib/search.mjs';
 import { loadWorkspace } from './lib/load.mjs';
 import { createDiagnostics } from './lib/diag.mjs';
 import { readFileSync } from 'node:fs';
@@ -23,6 +24,7 @@ Commands:
   eval [ids...]   Run the eval cases in evals/ with Claude and score them (costs model usage)
   run <flow> [input...]  Run a flow without a person (CI): exit 0 ok, 1 findings at --fail-on or above,
                   2 run failed, 3 waiting for a human
+  search <query>  Rank the project's knowledge files for a query (knowledge retriever: index)
   help            Show this message
 
 Options:
@@ -78,6 +80,7 @@ async function main() {
         'fail-on': { type: 'string', default: 'major' },
         summary: { type: 'string' },
         'permission-mode': { type: 'string', default: 'default' },
+        top: { type: 'string', default: '8' },
         help: { type: 'boolean', short: 'h', default: false },
       },
     });
@@ -134,6 +137,28 @@ async function main() {
     printDiagnostics(diags);
     console.log(diags.hasErrors() ? `check: ${diags.count('error')} error(s)` : 'check: ok');
     return diags.hasErrors() ? 1 : 0;
+  }
+
+  if (command === 'search') {
+    const query = positionals.slice(1).join(' ');
+    const projectRoot = path.resolve(values.project ?? process.cwd());
+    const diags = createDiagnostics();
+    const ws = await loadWorkspace({ stackRoot: DEFAULT_STACK_ROOT, projectRoot }, diags);
+    if (!ws.config.knowledge) {
+      console.error('this project has no knowledge directory (knowledge: in .claude/project.yaml)');
+      return 2;
+    }
+    if (!query) {
+      console.error('search needs a query');
+      return 2;
+    }
+    const hits = await search({ dir: path.join(projectRoot, ws.config.knowledge), query, top: Number(values.top) || 8, root: projectRoot });
+    if (!hits.length) console.log('no matches');
+    for (const h of hits) {
+      console.log(`${h.score.toFixed(2).padStart(6)}  ${h.file}  ${h.title}`);
+      for (const l of h.lines) console.log(`        ${l.n}: ${l.text.slice(0, 160)}`);
+    }
+    return 0;
   }
 
   if (command === 'run') {

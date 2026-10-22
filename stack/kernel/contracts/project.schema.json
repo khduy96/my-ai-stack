@@ -18,7 +18,21 @@
     "settings": { "enum": ["local", "shared", "none"], "description": "Where the build manages permissions and policy hooks: .claude/settings.local.json (local, default), .claude/settings.json (shared), or nowhere (none). Only entries the build added are ever changed or removed." },
     "scope": { "type": "array", "items": { "type": "string" }, "description": "Paths agents may edit, relative to the project root. Shorthand for enabling the policy 'scope' with these paths." },
     "permissions": { "type": "array", "items": { "type": "string" }, "description": "Extra permissions.allow entries the build manages, e.g. the project's check commands. Packs set them through defaults." },
-    "knowledge": { "type": "string", "description": "Directory of durable project knowledge, relative to the project root, with an INDEX.md. Agents consult it; the scribe writes to it." },
+    "knowledge": {
+      "description": "Durable project knowledge: a directory (relative to the project root, with an INDEX.md) that agents consult and the scribe writes to. A string is the directory with the grep retriever; an object picks the retriever.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["dir"],
+          "properties": {
+            "dir": { "type": "string" },
+            "retriever": { "enum": ["grep", "index"], "description": "grep: agents search the files themselves. index: agents run `<cli> search`, ranked by relevance (BM25, accent-insensitive)." }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "enable": {
       "type": "object",
       "properties": {

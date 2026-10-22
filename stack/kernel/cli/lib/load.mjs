@@ -174,6 +174,11 @@ export async function loadWorkspace({ stackRoot, projectRoot }, diags) {
   let config = configOf(stack.defaults);
   for (const defaults of packDefaults) config = mergeValue(config, configOf(defaults));
   config = mergeValue(mergeValue(config, configOf(project)), configOf(local));
+  // knowledge: "<dir>" or { dir, retriever }; the rest of the kernel reads the directory as a string.
+  if (config.knowledge && typeof config.knowledge === 'object') {
+    config.knowledge_retriever = config.knowledge.retriever ?? 'grep';
+    config.knowledge = config.knowledge.dir;
+  }
 
   if (projectRoot) {
     const modules = [];

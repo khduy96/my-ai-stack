@@ -14,6 +14,7 @@ import { GENERATOR, KERNEL_VERSION, PERMISSION_TOOLS } from './kernel.mjs';
 import { applyListOps, mergeModule } from './merge.mjs';
 import { sourceOf } from './resolve.mjs';
 import { getContract, validate } from './validate.mjs';
+import { defaultCli } from './flow.mjs';
 
 const PLACEHOLDER = /\{\{\s*([a-z][a-z0-9-]*)(?:\.([a-z][a-z0-9_-]*))?\s*\}\}/g;
 
@@ -24,8 +25,12 @@ function renderContext(ws) {
   const readFirst = applyListOps([], config.read_first ?? []);
   if (readFirst.length) parts.push(['Read these files before you start:', ...readFirst.map((f) => `- \`${f}\``)].join('\n'));
   if (config.knowledge) {
+    const find =
+      config.knowledge_retriever === 'index'
+        ? `then search it with \`${config.cli ?? defaultCli()} search "<terms of your task>" --project .\` (ranked by relevance) and open the files it returns`
+        : 'then search that directory for the terms of your task';
     parts.push(
-      `Durable project knowledge lives in \`${config.knowledge}/\`. Start from \`${config.knowledge}/INDEX.md\`, then search that directory for the terms of your task, and cite the knowledge files you rely on. If they contradict the code, trust the code and say so.`,
+      `Durable project knowledge lives in \`${config.knowledge}/\`. Start from \`${config.knowledge}/INDEX.md\`, ${find}, and cite the knowledge files you rely on. If they contradict the code, trust the code and say so.`,
     );
   }
   if (ws.rules?.length) parts.push(['Project rules:', ...ws.rules.map((rule) => `- ${rule}`)].join('\n'));
