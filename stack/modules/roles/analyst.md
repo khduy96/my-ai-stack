@@ -1,8 +1,8 @@
 ---
 id: analyst
 kind: role
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: >-
   Turns a request into a precise, testable spec: goal, acceptance criteria, scope
   boundaries, affected areas, assumptions and open questions. Reads code to ground

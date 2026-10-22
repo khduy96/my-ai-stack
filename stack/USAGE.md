@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 0.6. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 1.0. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
 - **5 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`.

@@ -1,8 +1,8 @@
 ---
 id: researcher
 kind: role
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: >-
   Answers questions from outside the codebase (library and API documentation,
   release notes, known issues, tickets in an enabled tracker, the web) with every

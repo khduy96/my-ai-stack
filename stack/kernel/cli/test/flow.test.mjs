@@ -24,7 +24,7 @@ async function flowFixture(steps, opts = {}) {
 
 test('the real review flow builds into a skill that drives the verifier agents', async () => {
   const projectRoot = await tempDir();
-  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^0.6\n' });
+  await writeTree(projectRoot, { '.claude/project.yaml': 'stack: ^1\n' });
   const { diags } = await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot });
   assert.deepEqual(codes(diags), []);
 

@@ -20,7 +20,7 @@ test('the shipped cases prepare and build (dry run)', async () => {
   const cases = await loadCases(DEFAULT_STACK_ROOT);
   assert.deepEqual(cases.map((c) => c.id), ['bugfix-total', 'review-planted', 'review-preexisting']);
   for (const c of cases) {
-    const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '0.6.1');
+    const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '1.0.0');
     assert.deepEqual(prep.errors, [], c.id);
     assert.match(prep.command, new RegExp(`^/ai-${c.flow}`));
     await cleanup(prep.repo);
@@ -33,7 +33,7 @@ test('scoring: findings, forbidden findings, invalid handoffs, run status', asyn
     { 'base/src/a.js': 'x\n' },
   );
   const c = { id: 't', dir, ...(await import('yaml')).default.parse(`flow: review\nexpect:\n  status: done\n  findings_from: [confirm.handoff.yaml, 'review/*.handoff.yaml']\n  findings:\n    - { id: bug, file: src/a.js, match: 'off.by.one', severity: [major, critical] }\n    - { id: missing, match: 'never there' }\n  forbid:\n    - { id: old, match: 'audit', severity: [major, critical] }\n`) };
-  const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '0.6.1');
+  const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '1.0.0');
   const run = path.join(prep.repo, '.ai-runs', '20261021-1200-review-x');
   await writeTree(run, {
     'run.yaml': 'flow: review\nstatus: done\n',
@@ -61,7 +61,7 @@ test('scoring: diff limits count only changed lines; check script runs outside t
     'check.mjs': "import { readFileSync } from 'node:fs';\nprocess.exit(readFileSync(process.argv[2] + '/src/a.js', 'utf8').includes('i = 0') ? 0 : 1);\n",
   });
   const c = { id: 'd', dir, ...(await import('yaml')).default.parse(yamlText) };
-  const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '0.6.1');
+  const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '1.0.0');
   await writeFile(path.join(prep.repo, 'src/a.js'), '// keep me\nlet i = 0;\n');
   const scored = await scoreRun(c, prep.repo, null);
   const byName = Object.fromEntries(scored.checks.map((x) => [x.name, x.ok]));

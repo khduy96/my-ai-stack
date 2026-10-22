@@ -15,7 +15,7 @@ const json = async (root, rel) => JSON.parse(await read(root, rel));
 
 async function project(yaml, files = {}) {
   const root = await tempDir();
-  await writeTree(root, { '.claude/project.yaml': `stack: ^0.6\n${yaml}`, ...files });
+  await writeTree(root, { '.claude/project.yaml': `stack: ^1\n${yaml}`, ...files });
   return root;
 }
 const run = (projectRoot, opts = {}) => build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot, ...opts });
@@ -43,7 +43,7 @@ test('flow permissions are managed in settings.local.json without touching user 
 
   // Rebuild: nothing changes. Disable every flow: our entries go, the user's stay.
   assert.ok((await run(root)).ops.every((o) => o.type === 'unchanged'));
-  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^0.6\nenable:\n  flows: []\n');
+  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^1\nenable:\n  flows: []\n');
   await run(root);
   assert.deepEqual((await json(root, '.claude/settings.local.json')).permissions.allow, ['Bash(npm test)', 'Bash(git diff *)']);
 });
@@ -51,13 +51,13 @@ test('flow permissions are managed in settings.local.json without touching user 
 test('settings: shared moves the managed entries to settings.json; none manages nothing', async () => {
   const root = await project('');
   await run(root);
-  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^0.6\nsettings: shared\n');
+  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^1\nsettings: shared\n');
   await run(root);
   assert.equal(await exists(path.join(root, '.claude/settings.local.json')), true);
   assert.deepEqual((await json(root, '.claude/settings.local.json')), {});
   assert.ok((await json(root, '.claude/settings.json')).permissions.allow.includes('Edit(.ai-runs/**)'));
 
-  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^0.6\nsettings: none\n');
+  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^1\nsettings: none\n');
   await run(root);
   assert.deepEqual(await json(root, '.claude/settings.json'), {});
   assert.equal((await json(root, '.claude/.stack-lock.json')).settings, undefined);
@@ -86,7 +86,7 @@ test('scope: rule, review default, hook files, hook registration', async () => {
   assert.equal(hook(root, 'ai-scope.mjs', { file_path: 'lib/features/orders2/z.dart' }).status, 2);
 
   // Removing scope removes the hook files and the registration.
-  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^0.6\n');
+  await writeFile(path.join(root, '.claude/project.yaml'), 'stack: ^1\n');
   await run(root);
   assert.equal(await exists(path.join(root, '.claude/hooks')), false);
   assert.equal((await json(root, '.claude/settings.local.json')).hooks, undefined);

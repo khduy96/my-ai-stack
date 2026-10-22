@@ -91,7 +91,7 @@ Tên `.ai` chỉ là gợi ý. Thư mục nào cũng được, miễn khai trong
 id: data-engineer
 kind: role
 version: 0.1.0
-kernel: ^0.4
+kernel: ^1
 description: >-
   Writes the data layer of this app (repositories, datasources, cache).
   Use for any change under lib/core/data.
@@ -118,7 +118,7 @@ Build ra `.claude/agents/ai-data-engineer.md`. Thêm hai trait `cite-evidence` v
 id: lens-flutter
 kind: trait
 version: 0.1.0
-kernel: ^0.4
+kernel: ^1
 description: Flutter lifecycle focus.
 applies_to: [verifier]
 slot: lens
@@ -144,7 +144,7 @@ Flow dùng được cả agent riêng lẫn agent của stack:
 id: data-review
 kind: flow
 version: 0.1.0
-kernel: ^0.4
+kernel: ^1
 description: Review data-layer changes with the project's own agent and a stack verifier.
 steps:
   - id: review
@@ -205,7 +205,7 @@ node <stack>/kernel/cli/stack.mjs build  --project <dự án>
 | Chỉ đọc nhưng cần Bash | `permission: read` + `tools: ['+Bash']` |
 | `model` | `model` |
 | Nội dung prompt | Body, thêm `{{project.context}}` và `{{traits}}` vào vị trí phù hợp |
-| (không có) | `kind: role`, `version`, `kernel: ^0.4` |
+| (không có) | `kind: role`, `version`, `kernel: ^1` |
 | (không có) | `traits: [cite-evidence, report-handoff]` nếu muốn dùng trong flow |
 | (không có) | `produces: spec \| plan \| diagnosis` nếu agent trả kết quả có cấu trúc |
 
@@ -224,7 +224,7 @@ Nếu skill cũ thực chất là một quy trình (gọi agent A, rồi B, rồ
 
 ---
 
-## Giới hạn hiện tại (kernel 0.6)
+## Giới hạn hiện tại (kernel 1.0)
 
 | Giới hạn | Cách xử lý tạm |
 |---|---|

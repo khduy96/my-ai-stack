@@ -12,7 +12,7 @@ const tools = async (root, agent) => YAML.parse(/^---\n([\s\S]*?)\n---/.exec(awa
 
 async function project(yaml) {
   const root = await tempDir();
-  await writeTree(root, { '.claude/project.yaml': `stack: ^0.6\n${yaml}` });
+  await writeTree(root, { '.claude/project.yaml': `stack: ^1\n${yaml}` });
   return root;
 }
 

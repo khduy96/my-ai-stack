@@ -47,7 +47,7 @@ cp <stack>/templates/project.yaml <dự án>/.claude/project.yaml
 Phần quan trọng nhất là `context` và `read_first`, vì agent dựa vào đó để hiểu dự án:
 
 ```yaml
-stack: ^0.6
+stack: ^1
 name: kho
 context: |
   App Flutter quản lý kho + đơn hàng (Android/iOS), backend Back4App (Parse),

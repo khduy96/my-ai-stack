@@ -119,7 +119,7 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 | **P1 – Bộ tối thiểu** ✔ | 5 role, 8 trait, variants, output contract · flow `review`, `feature`, `bugfix` + skill engine · skill `/stack` |
 | **P2 – Tri thức & chính sách** ✔ | policy + guard + `scope`, settings do build quản lý · knowledge, `scribe`, `explainer`, `/ai-learn`, `/ai-explain` · trait test và performance |
 | **P3 – Pack & integration** (phần lớn ✔) | pack `flutter` (đã chạy thật trên commit của `kho`), integration `zentao`, `researcher`, `external` · còn: ghi ngược lên Zentao, Figma, loại module `skill` |
-| P4 – Ổn định | evals, semver từng module, lên 1.0 |
+| **P4 – Ổn định** ✔ | `stack eval` + baseline, phiên bản từng module, run state có thời điểm, 1.0.0 |
 | P5 – Mở rộng | engine Workflow/Agent SDK, retriever vector |
 
 ## Phát triển stack

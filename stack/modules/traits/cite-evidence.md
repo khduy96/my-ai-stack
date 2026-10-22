@@ -1,8 +1,8 @@
 ---
 id: cite-evidence
 kind: trait
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: Every claim about the code is backed by a path:line reference the agent actually read.
 tags: [core]
 ---

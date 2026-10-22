@@ -23,7 +23,7 @@ test('install writes the /stack skill with the live catalog, idempotently', asyn
   assert.doesNotMatch(skill, /\\/, 'no Windows separators: the file must not depend on the machine beyond the stack path');
   assert.match(skill, /- `ai-verifier-security`: Verifier focused on security/);
   assert.match(skill, /- `\/ai-feature`: Builds a feature end to end/);
-  assert.match(skill, /^stack: \^0\.\d+$/m);
+  assert.match(skill, /^stack: \^1$/m);
   // The tools catalog: every category, untruncated, with its CLI fallbacks.
   for (const title of ['Issue tracker', 'UI design', 'Team chat', 'Documentation and specs', 'Code hosting and CI', 'Error monitoring']) {
     assert.match(skill, new RegExp(`- \\*\\*${title}\\*\\*`));

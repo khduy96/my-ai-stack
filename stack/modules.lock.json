@@ -1,132 +1,132 @@
 {
   "modules": {
     "flow:bugfix": {
-      "version": "0.1.2",
-      "hash": "089d6b2f752fa5839c36721c1ad95042a488ce076f183962780478e5ba4e3170"
+      "version": "0.1.3",
+      "hash": "945e25378931abba334874643e8e21614bfe833f85aa5215c270e99eed196a83"
     },
     "flow:explain": {
-      "version": "0.1.0",
-      "hash": "aabad51f6ae3a276418b3b8c2e8a1b6f898b77159cbee989f4fc90b7082d3ea4"
+      "version": "0.1.1",
+      "hash": "9d341aedb8a2c641419fd1eb025da8d389ac3e274232b13c57481415087e2c9c"
     },
     "flow:feature": {
-      "version": "0.1.1",
-      "hash": "2cf61cdb648000b2064bb5fc082ff4b179a44a6407067ea730a65519f5007d34"
+      "version": "0.1.2",
+      "hash": "8a469b87175d4236502c89213c5186661f882fe2c365e013649416730a878cdb"
     },
     "flow:learn": {
-      "version": "0.1.0",
-      "hash": "6b4a29e8c324fa855f5aaed0c90f81a972721197f20578fffb5e16c42d2c22c0"
+      "version": "0.1.1",
+      "hash": "edb87284382d4ccb96a38f08174642863b6e24430c044a12f884fe35e37f1239"
     },
     "flow:review": {
-      "version": "0.1.0",
-      "hash": "8b41de79d6750531f2755d99b1a40390c38b80cd630114f50948cd94a05d1a32"
+      "version": "0.1.1",
+      "hash": "0239c47d3a00b883712ac33790ac0c76b6aae958d6391c16c46cd648f8fbb58d"
     },
     "integration:zentao": {
-      "version": "0.1.0",
-      "hash": "57170b9cc723f0cc2bb2d74ee5917cec8f2b6096a9522270690766065637224e"
+      "version": "0.1.1",
+      "hash": "1ab5f2e70efe54de3e9b435ebae0aafe9ca2560c336f8e724b96465328231ccf"
     },
     "pack:flutter": {
-      "version": "0.1.0",
-      "hash": "48804e16d3f883c941cb82b0aa23e911fbd2ae45271bfe4e62ebb782411bb11f"
+      "version": "0.1.1",
+      "hash": "af401bc9b1a3280ef9151e590bf2c83b233670de781345de0dc6a14753a2248e"
     },
     "pack:flutter/trait:flutter-checks": {
-      "version": "0.1.0",
-      "hash": "1ff0464e74d5d6230b4cd4bec0fc4c1db29c2493789e679adf3491b6365257a5"
+      "version": "0.1.1",
+      "hash": "23fbda67d6a1987c17a36073881f1ae235c5e3b585876c8a3174cd81b2c7c474"
     },
     "pack:flutter/trait:flutter-practices": {
-      "version": "0.1.0",
-      "hash": "e1c245d93dcd21a1ae06861e86a25784f7d942ddf95826e0370dbe2f3d0cb5d2"
+      "version": "0.1.1",
+      "hash": "68cd370a04e25b7f68e48598aeb957d68495b2f86ea086de7e722cb6bcd0c4ea"
     },
     "pack:flutter/trait:lens-flutter": {
-      "version": "0.1.0",
-      "hash": "de4d7b1a715b6fe8b5660273ba27763a20b103ae5457c211acf469186869da9f"
+      "version": "0.1.1",
+      "hash": "ec411169a63fe7f3e64dc56efcbaf718e79d8b02fa92a8bc79fa43aec350d0d6"
     },
     "policy:no-secrets": {
-      "version": "0.1.0",
-      "hash": "6c5bcdbc4658e25b1b9e4696c2d60d23af16cbad400273085b38d816d4ff20f5"
+      "version": "0.1.1",
+      "hash": "d4ccfd1747a981f3e888ef6ea4503a2f035090af16b6e6e7d756b7b9aefc0b5b"
     },
     "policy:protect-generated": {
-      "version": "0.1.0",
-      "hash": "46625746cdd79a935a8c01139a4643fb0da9967ea6451e6fe283c0dffeb21780"
+      "version": "0.1.1",
+      "hash": "e5d9957e7af9695d1c691f92c098718761a563c4e9809e493e420e24119f2b36"
     },
     "policy:scope": {
-      "version": "0.1.0",
-      "hash": "9f93a28866d8a29e2cce06251b7121d096f3ccd69552f3b60a6c7b52acd2ce21"
+      "version": "0.1.1",
+      "hash": "b1944281c88746b41807f9f8842c114351625f857773cb2a892cbf42135e2a86"
     },
     "role:analyst": {
-      "version": "0.1.0",
-      "hash": "be7070468ab7db5b4c48a77c79297e885da7a1ebba4148164804a95892bf27f9"
+      "version": "0.1.1",
+      "hash": "af0d052196621b569e45733d556b318285a67a0924c1268a5860ed225a9bc482"
     },
     "role:architect": {
-      "version": "0.1.0",
-      "hash": "62ecfaeae57f773b42d77fd5065bf4e630aa8ac34d675974d70aa3cbc2ae43fb"
+      "version": "0.1.1",
+      "hash": "eb9e5db7f8daccb17567ad67c7f0bde539b796945895f104d15672de4c6b7502"
     },
     "role:builder": {
-      "version": "0.3.0",
-      "hash": "968d965062b6026294d4c01a7aff3c5177228dd884e112f9c3f4d178ccd77200"
+      "version": "0.3.1",
+      "hash": "73e430e948d742a4d9d8b3ff96ce0e7e43c8a8d5845cf6e634e414e4725ba38a"
     },
     "role:explainer": {
-      "version": "0.1.0",
-      "hash": "8fe1de6e85ad31fa741e1b970f8522b0ccb6db7e18d93bb3e6f3f86b1e1ea629"
+      "version": "0.1.1",
+      "hash": "be1badb9688c83611309ada550189402ead65b0e86581b7793d0309b248de4e8"
     },
     "role:investigator": {
-      "version": "0.1.0",
-      "hash": "aca957985c822c51bb9a30026d6a37df7d0e54a669b99020054bd15687d34a3d"
+      "version": "0.1.1",
+      "hash": "8f625580678423d2cdfc59a86c6ea4867d9312a64e6a76945da8a5d75dd36cd2"
     },
     "role:researcher": {
-      "version": "0.1.0",
-      "hash": "4c2a40a352d50f7e0cbbe8de5d8663b636ab00bd31c8cf612b8137b9248907da"
+      "version": "0.1.1",
+      "hash": "ee19e52e79699d7d80575e0c8658a7da434bdd81664815547dfdc2bd02b35460"
     },
     "role:scribe": {
-      "version": "0.1.0",
-      "hash": "b63c6a0d9430bff39d943e5aad75dd05fde23a979b37addecb9212774f7272bf"
+      "version": "0.1.1",
+      "hash": "1bd8b402ab9a4da4aaa4ccb29c7251a41f52d7d5895a56af3d5361b31f53f30c"
     },
     "role:verifier": {
-      "version": "0.3.0",
-      "hash": "0a52e952f45918367677f395140d7fb4f2f27a4ad40f177f01ce605586c3ffa7"
+      "version": "0.3.1",
+      "hash": "e8635ec34c94063f2aeb3a8d3588582404d4216f0659d4c28534d5299c9b317e"
     },
     "trait:adversarial": {
-      "version": "0.2.0",
-      "hash": "76f9b21a22a17341cddc13ad3c9b416b17e96be6f9f54ebbf4959d02a981f4cb"
+      "version": "0.2.1",
+      "hash": "9226e8bba3864fd009db2c99323cefc07f171c82888fcf1afe78dbb5f5794f74"
     },
     "trait:cite-evidence": {
-      "version": "0.1.0",
-      "hash": "52f318df8a5db337d2ddfc993dbd2596a3d8fd547216fbf7a759f940e20f71f0"
+      "version": "0.1.1",
+      "hash": "e63385ceef629fd953baed0b4a6e554f9ad61eac0a7971c2641676dcaa50860e"
     },
     "trait:clarify-first": {
-      "version": "0.1.0",
-      "hash": "b78e409e70e5617f2e45314752a29dfad10863c740e2c6a043cd6902e20a9639"
+      "version": "0.1.1",
+      "hash": "3dcefa6a602fdc85795b5e057aca62c832e8be57dc0d95f667de4ef641401473"
     },
     "trait:lens-conventions": {
-      "version": "0.1.0",
-      "hash": "069b49a481de93433b5c47290d18aa69b86af39a6122437fa1ea27d7442ea8d7"
+      "version": "0.1.1",
+      "hash": "d5d34b4898dffa335f3e58522f9051f1ee3a1460aac950cb2585576d2126d60d"
     },
     "trait:lens-correctness": {
-      "version": "0.1.0",
-      "hash": "b438be43015bf3cb94b04aec94e59a3eeefb354ccee79d934e67f8697fbf4c18"
+      "version": "0.1.1",
+      "hash": "fe16fdb8547fbb51705462bc5ee4938d9a51ad660a634a4bece85e9570d6eb83"
     },
     "trait:lens-performance": {
-      "version": "0.1.0",
-      "hash": "0d28d365e7980c1177f38932b3534ff8e3d872f31deaecc23a545006effa4a47"
+      "version": "0.1.1",
+      "hash": "2769eff458a7babffaf251ba5fadf0af090134426021861388f0e09a210d1717"
     },
     "trait:lens-security": {
-      "version": "0.1.0",
-      "hash": "004413c5b1b47d38e17f9f4b6d5b68a1f0e8e8ccfdf116b438d6501b832927aa"
+      "version": "0.1.1",
+      "hash": "decee4f35f3011032e47ecfea64cd0dd116f91cdfe8392f452100c67729bc05d"
     },
     "trait:options-tradeoffs": {
-      "version": "0.1.0",
-      "hash": "f051ad7fbaf24c20e5c025d8da6409ad428ea7b89ed9b1b5f416b4f8ad4b006b"
+      "version": "0.1.1",
+      "hash": "1d3e2354fcf8ef69cbe8b4fcff24af94a4a4d893423a7ac0b1fd2bf9f4c8ba3d"
     },
     "trait:report-handoff": {
-      "version": "0.2.0",
-      "hash": "0d7c5851564b03eb778f809917dbb24cd07dff4ed5256ce097d3bac21c692a00"
+      "version": "0.2.1",
+      "hash": "541360ea25d2fd52c1b8057501d6ef5eb2b2a0cca4d28297c6f66d10023fcc32"
     },
     "trait:test-author": {
-      "version": "0.1.0",
-      "hash": "b613cbf69c076cfac837a625571860152c5be762c073f9d863dd25396b500638"
+      "version": "0.1.1",
+      "hash": "31fea8c9cabbf22bcf8d34e4569cb4277f2de28bdb235b67e57569851068279f"
     },
     "trait:test-first": {
-      "version": "0.1.0",
-      "hash": "f94281c05832a044151e790a9e5822aa6d23f3b5be75ca5a4855b306df5b8a0c"
+      "version": "0.1.1",
+      "hash": "b485ba3da95da9c3d4b1751de52de8f8c1ad734254cbc8eb7fb5b738081b81e1"
     }
   }
 }

@@ -10,7 +10,7 @@ const read = (root, rel) => readFile(path.join(root, rel), 'utf8');
 
 async function built(yaml) {
   const root = await tempDir();
-  await writeTree(root, { '.claude/project.yaml': `stack: ^0.6\n${yaml}` });
+  await writeTree(root, { '.claude/project.yaml': `stack: ^1\n${yaml}` });
   assert.deepEqual(codes((await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot: root })).diags), []);
   return root;
 }

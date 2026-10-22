@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 0.6.1
+Cập nhật: 2026-10-21 · kernel 1.0.0
 
 ## Trạng thái
 
@@ -10,7 +10,7 @@ Cập nhật: 2026-10-21 · kernel 0.6.1
 | **P1 – Bộ tối thiểu** | ✔ xong | Không còn gì |
 | **P2 – Tri thức & chính sách** | ✔ xong | Không còn gì |
 | **P3 – Pack & integration** | Phần lớn xong | Ghi ngược lên Zentao, Figma, loại module `skill` |
-| **P4 – Ổn định** | Mới có test cho kernel | Eval cho agent và flow, lên 1.0 |
+| **P4 – Ổn định** | ✔ xong | Không còn gì |
 | **P5 – Mở rộng** | Chưa làm | Engine khác, vector RAG |
 
 ## Đã xong
@@ -37,6 +37,7 @@ Cập nhật: 2026-10-21 · kernel 0.6.1
   - Lần chạy đó lộ ra `git show`/`flutter test` bị từ chối → thêm vào quyền do build quản lý. Lần thử Zentao lộ ra tool MCP cần được cho phép trước → thêm `allow` cho integration (chỉ nhóm đọc).
 - **`/stack` hỏi công cụ team dùng (0.6.1):** bước 4 và mode `/stack tools`; danh mục 6 loại (tracker, thiết kế UI, chat, tài liệu, code/CI, theo dõi lỗi) trong `tools-catalog.yaml`. Không tự suy ra công cụ từ những gì đang kết nối, không gọi tool ngoài khi setup.
   - Đã chạy thật với một team giả định (GitHub Issues qua gh, Figma, Slack, docs trong repo, GitHub Actions): 0 lệnh gọi MCP; không bật Zentao dù đang kết nối; sinh `.ai/integrations/figma.yaml` (12 tool đọc, 8 tool ghi không cấp cho ai); `gh` chỉ đọc được cho phép sẵn; Slack ghi vào context kèm hướng dẫn kết nối.
+- **P4 – ổn định (1.0.0):** `stack eval` (3 tình huống, baseline với sonnet: 3/3 pass, khoảng US$1.14), phiên bản từng module (`modules.lock.json`, `doctor` chặn khi sửa mà không tăng phiên bản), run state ghi thời điểm từng agent, lên 1.0.
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
@@ -63,10 +64,10 @@ Cập nhật: 2026-10-21 · kernel 0.6.1
 - [x] **Mốc nghiệm thu:** `kho` (dự án thứ hai, Flutter) chạy được chỉ bằng `project.yaml` + pack, không sửa core cho riêng nó
 
 ### P4 – Ổn định
-- [ ] `stack eval`: bộ tình huống mẫu (kiểu repo demo có lỗi cài sẵn) để phát hiện khi prompt làm agent kém đi
-- [ ] Semver cho từng module
-- [ ] Run state ghi thời điểm bắt đầu và kết thúc của từng agent, để kiểm chứng được thứ tự và mức song song
-- [ ] Lên 1.0, để `^1` nhận được các bản thêm tính năng mà không phải sửa `kernel:` ở mọi module
+- [x] `stack eval`: bộ tình huống mẫu, chấm điểm, so với baseline
+- [x] Semver cho từng module (`modules.lock.json`, `stack versions`)
+- [x] Run state ghi thời điểm bắt đầu và kết thúc của từng bước và từng agent
+- [x] Lên 1.0
 
 ### P5 – Mở rộng
 - [ ] Engine Workflow (chạy tất định, không cần người) và engine Agent SDK (CI, cron)
@@ -81,9 +82,10 @@ Cập nhật: 2026-10-21 · kernel 0.6.1
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Áp ai-stack lên `kho/` thật (kế hoạch đã soạn, giờ thêm `packs: [flutter]`), chờ duyệt
-2. Quyết thiết kế ghi ngược lên Zentao; sau đó Figma, loại module `skill`
-3. P4: eval, semver từng module, lên 1.0
+1. Áp ai-stack lên `kho/` thật bằng `/stack` (giờ có bước hỏi công cụ team dùng), chờ duyệt
+2. Phần P3 còn lại: ghi ngược lên tracker (chờ quyết thiết kế), loại module `skill`
+3. P5: engine Workflow / Agent SDK (chạy không cần người, CI), `isolation: worktree`, retriever vector
+4. Thêm tình huống eval cho `feature` (foreach + loop) và cho pack `flutter`
 
 ## Các quyết định đã chốt
 

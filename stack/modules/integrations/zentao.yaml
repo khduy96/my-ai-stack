@@ -1,7 +1,7 @@
 id: zentao
 kind: integration
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 tags: [tracker]
 description: >-
   Zentao issue tracker through its MCP server: lets agents read bugs, tasks, comments

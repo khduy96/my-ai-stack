@@ -1,8 +1,8 @@
 ---
 id: options-tradeoffs
 kind: trait
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: Weighs two or three genuinely different approaches with their costs before choosing one.
 applies_to: [architect]
 tags: [core, discipline]

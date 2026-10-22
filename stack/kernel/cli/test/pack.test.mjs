@@ -11,7 +11,7 @@ const read = (root, rel) => readFile(path.join(root, rel), 'utf8');
 
 async function flutterProject(extra = '') {
   const root = await tempDir();
-  await writeTree(root, { '.claude/project.yaml': `stack: ^0.6\npacks: [flutter]\n${extra}` });
+  await writeTree(root, { '.claude/project.yaml': `stack: ^1\npacks: [flutter]\n${extra}` });
   const { diags } = await build({ stackRoot: DEFAULT_STACK_ROOT, projectRoot: root });
   assert.deepEqual(codes(diags), []);
   return root;

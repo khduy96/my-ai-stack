@@ -1,8 +1,8 @@
 ---
 id: flutter-checks
 kind: trait
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: The Flutter commands to verify a change, and code generation before them.
 applies_to: [builder, verifier]
 tags: [flutter, checks]

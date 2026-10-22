@@ -1,8 +1,8 @@
 ---
 id: flutter-practices
 kind: trait
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: Flutter habits that prevent the usual lifecycle, rebuild and state bugs while writing code.
 applies_to: [builder]
 tags: [flutter, discipline]

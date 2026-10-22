@@ -1,7 +1,7 @@
 id: learn
 kind: flow
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 tags: [core, knowledge]
 description: >-
   Records lasting project knowledge with the scribe, from a finished flow run

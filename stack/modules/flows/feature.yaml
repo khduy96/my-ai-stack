@@ -1,7 +1,7 @@
 id: feature
 kind: flow
-version: 0.1.1
-kernel: ^0.6
+version: 0.1.2
+kernel: ^1
 tags: [core]
 description: >-
   Builds a feature end to end: the analyst writes a spec, the architect plans it

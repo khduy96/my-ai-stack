@@ -1,8 +1,8 @@
 ---
 id: explainer
 kind: role
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: >-
   Explains how something in the codebase works (a flow, a feature, a class, an API,
   the architecture) for a person who will act on the answer: a direct answer, the

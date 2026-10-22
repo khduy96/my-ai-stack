@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0 — 2026-10-21 (P4, ổn định)
+
+- **1.0:** kernel, stack and every module target `^1`. From now on, additive kernel features are minor releases that existing modules and projects accept; only breaking contract changes bump the major version.
+- Per-module versions: `modules.lock.json` records each module's version and content hash (policies include their guard script). `stack versions [--update]`; `doctor` on the stack fails with `version-not-bumped` when a module changes without a version bump (or goes backwards) and warns `version-unrecorded`; `npm test` checks the stack itself. Every module got a patch bump for the new kernel range.
+- `stack eval`: runs flows with Claude on fixture repositories (`evals/<id>/`: case.yaml, base/, change/, optional check script outside the repo) in throwaway repositories, and scores run status, handoff validity, required and forbidden findings, diff limits, a check script and MCP calls; records cost, time and tool calls; results in `evals/results/`, compared with `evals/baseline.json` (REGRESSED / fixed / changed). `--dry-run` prepares and builds without a model.
+- Cases: `review-planted` (4 planted bugs), `review-preexisting` (no escalation of an older problem), `bugfix-total` (minimal fix, pre-existing code untouched). Baseline with sonnet: 3/3 passed, about US$1.14 in total.
+- Run state records `started` / `finished` for each step and agent (from the shell), so parallelism can be checked afterwards; loop iterations are recorded as `<step>#<n>`.
+- Docs: `evals/README.md`; conventions (per-module versions, eval, error codes); README (developing the stack).
+
 ## 0.6.1 — 2026-10-21 (/stack hỏi công cụ team dùng)
 
 - `/stack` gains step 4 and mode `tools`: asks which tools the team really uses (issue tracker, UI design, chat, docs, code hosting and CI, error monitoring, anything else), then, read-only and without calling any tool: enables an existing integration, drafts a project integration (`.ai/integrations/<id>.yaml`: read/write sets for the user to approve, delete tools left out, read-only grants) from a connected MCP server's tool names, or offers read-only CLI commands to pre-approve; writes a "Tools" paragraph into the context (chat: agents never post).

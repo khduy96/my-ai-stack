@@ -1,8 +1,8 @@
 ---
 id: lens-flutter
 kind: trait
-version: 0.1.0
-kernel: ^0.6
+version: 0.1.1
+kernel: ^1
 description: Review focus on Flutter-specific failure modes.
 applies_to: [verifier]
 slot: lens
