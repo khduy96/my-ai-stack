@@ -307,6 +307,22 @@ Khóa `permissions` trong project.yaml (hoặc trong `defaults` của pack) thê
 - Dải hỗ trợ: `*`, `x.y.z`, `^x.y`, `~x.y`, `>=x.y.z`.
 - Đổi contract theo kiểu phá vỡ tương thích thì tăng minor khi còn ở 0.x, tăng major từ 1.0 trở đi.
 
+### Phiên bản từng module
+
+Mỗi module của stack (trong `modules/` và `packs/`, kể cả `pack.yaml`) có `version` riêng. `modules.lock.json` ở gốc stack ghi phiên bản và hash nội dung của từng module; với policy, hash tính cả script guard.
+
+| Đổi gì | Tăng |
+|---|---|
+| Sửa câu chữ, không đổi hành vi | patch |
+| Thêm hoặc đổi hành vi, field, variant, bước | minor |
+| Bỏ hoặc đổi tên thứ dự án đang dùng (variant, slot, id bước, contract output) | major (minor khi còn 0.x) |
+
+Quy trình: sửa module → tăng `version` → `node kernel/cli/stack.mjs versions --update`. `doctor` chạy trên stack báo lỗi `version-not-bumped` khi một module đổi nội dung mà vẫn giữ phiên bản (hoặc phiên bản đi lùi), và cảnh báo `version-unrecorded` khi lock chưa được cập nhật. `npm test` cũng kiểm tra điều này trên chính stack.
+
+### Eval
+
+`stack eval` chạy flow thật trên các repo mẫu trong `evals/` rồi chấm điểm, để biết một thay đổi prompt, module hay kernel làm agent tốt lên hay kém đi. Xem `evals/README.md`.
+
 ## 9. Mã lỗi
 
 | Mã | Khi nào |
@@ -322,5 +338,7 @@ Khóa `permissions` trong project.yaml (hoặc trong `defaults` của pack) thê
 | `incompatible-version` | Phiên bản kernel hoặc stack không khớp |
 | `missing-file` | Thiếu `stack.yaml` hoặc `project.yaml` |
 | `unmanaged-file` / `generated-drift` | Xem mục 5 |
+| `version-not-bumped` | (doctor trên stack) Module đổi nội dung mà không tăng `version`, hoặc phiên bản đi lùi |
+| `version-unrecorded` *(warn)* | (doctor trên stack) Phiên bản module chưa được ghi vào `modules.lock.json`; chạy `stack versions --update` |
 | `unsupported-key` *(warn)* | Khóa trong project.yaml mà kernel hiện tại chưa hỗ trợ |
 | `generated-missing` *(warn)* | File có trong lock nhưng đã bị xóa, hoặc mục settings do build quản lý đã bị xóa tay |

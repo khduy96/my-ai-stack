@@ -23,9 +23,18 @@ Every run keeps its state in a directory, called `<run>` below.
    ```yaml
    flow: {{flow.id}}
    started: <ISO timestamp>
+   finished: <ISO timestamp, when the run ends>
    status: running        # running | waiting | done | failed
-   steps: {}              # <step id>: running | waiting | done | skipped | failed
+   steps:
+     <step id>:
+       status: running    # running | waiting | done | skipped | failed
+       started: <ISO timestamp>
+       finished: <ISO timestamp>
+       agents:            # one entry per agent started in this step
+         <agent name or item id>: { started: <ISO timestamp>, finished: <ISO timestamp>, status: <handoff status> }
    ```
+
+   Take every timestamp from the shell (for example `date -Iseconds`) at the moment it happens: `started` right before the Agent call, `finished` as soon as its result arrives. These times show afterwards which agents really ran in parallel.
 
 ## Starting an agent
 

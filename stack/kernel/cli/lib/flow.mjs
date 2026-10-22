@@ -219,7 +219,7 @@ function renderLoopStep(entry, label, pos, ctx) {
   const lines = [`### Step ${label}: \`${step.id}\` (loop)`, ''];
   if (step.when) lines.push(`**Run only if** ${condition(step.when)}. Otherwise mark this step \`skipped\` and go on.`, '');
   lines.push(
-    `Repeat steps ${label}.1–${label}.${steps.length} **at most ${max} time${max > 1 ? 's' : ''}**. \`<n>\` is the iteration number, starting at 1; record it in run.yaml as \`${step.id}: running (iteration <n>)\`.`,
+    `Repeat steps ${label}.1–${label}.${steps.length} **at most ${max} time${max > 1 ? 's' : ''}**. \`<n>\` is the iteration number, starting at 1; record it as \`iteration: <n>\` on the \`${step.id}\` entry in run.yaml, and record the steps of iteration <n> as \`<step id>#<n>\`.`,
     '',
     `- **Stop repeating** after an iteration in which ${condition(until)}.`,
     `- If iteration ${max} ends and that is still not true, tell the user what remains open and ask whether to continue with the next step.`,

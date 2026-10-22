@@ -13,6 +13,7 @@ import { applyListOps } from './merge.mjs';
 import { enabledIds, renderAgents } from './render.mjs';
 import { resolve } from './resolve.mjs';
 import { renderSetupSkill } from './setup.mjs';
+import { checkVersions } from './versions.mjs';
 import { getContract, validate } from './validate.mjs';
 
 // Renders everything; `all` = also disabled roles and flows (doctor checks them too).
@@ -82,6 +83,7 @@ export async function doctor({ stackRoot, projectRoot = null }) {
   const modules = resolve(ws, diags);
   await renderWorkspace(ws, modules, diags, stackRoot, { all: true });
   if (ws.claudeDir) await checkDrift(ws.claudeDir, diags);
+  else await checkVersions(stackRoot, diags); // the stack itself: modules must bump their version when they change
 
   const counts = {};
   for (const m of modules.values()) counts[m.kind] = (counts[m.kind] ?? 0) + 1;

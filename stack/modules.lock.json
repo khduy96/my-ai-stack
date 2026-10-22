@@ -1,0 +1,132 @@
+{
+  "modules": {
+    "flow:bugfix": {
+      "version": "0.1.2",
+      "hash": "089d6b2f752fa5839c36721c1ad95042a488ce076f183962780478e5ba4e3170"
+    },
+    "flow:explain": {
+      "version": "0.1.0",
+      "hash": "aabad51f6ae3a276418b3b8c2e8a1b6f898b77159cbee989f4fc90b7082d3ea4"
+    },
+    "flow:feature": {
+      "version": "0.1.1",
+      "hash": "2cf61cdb648000b2064bb5fc082ff4b179a44a6407067ea730a65519f5007d34"
+    },
+    "flow:learn": {
+      "version": "0.1.0",
+      "hash": "6b4a29e8c324fa855f5aaed0c90f81a972721197f20578fffb5e16c42d2c22c0"
+    },
+    "flow:review": {
+      "version": "0.1.0",
+      "hash": "8b41de79d6750531f2755d99b1a40390c38b80cd630114f50948cd94a05d1a32"
+    },
+    "integration:zentao": {
+      "version": "0.1.0",
+      "hash": "57170b9cc723f0cc2bb2d74ee5917cec8f2b6096a9522270690766065637224e"
+    },
+    "pack:flutter": {
+      "version": "0.1.0",
+      "hash": "48804e16d3f883c941cb82b0aa23e911fbd2ae45271bfe4e62ebb782411bb11f"
+    },
+    "pack:flutter/trait:flutter-checks": {
+      "version": "0.1.0",
+      "hash": "1ff0464e74d5d6230b4cd4bec0fc4c1db29c2493789e679adf3491b6365257a5"
+    },
+    "pack:flutter/trait:flutter-practices": {
+      "version": "0.1.0",
+      "hash": "e1c245d93dcd21a1ae06861e86a25784f7d942ddf95826e0370dbe2f3d0cb5d2"
+    },
+    "pack:flutter/trait:lens-flutter": {
+      "version": "0.1.0",
+      "hash": "de4d7b1a715b6fe8b5660273ba27763a20b103ae5457c211acf469186869da9f"
+    },
+    "policy:no-secrets": {
+      "version": "0.1.0",
+      "hash": "6c5bcdbc4658e25b1b9e4696c2d60d23af16cbad400273085b38d816d4ff20f5"
+    },
+    "policy:protect-generated": {
+      "version": "0.1.0",
+      "hash": "46625746cdd79a935a8c01139a4643fb0da9967ea6451e6fe283c0dffeb21780"
+    },
+    "policy:scope": {
+      "version": "0.1.0",
+      "hash": "9f93a28866d8a29e2cce06251b7121d096f3ccd69552f3b60a6c7b52acd2ce21"
+    },
+    "role:analyst": {
+      "version": "0.1.0",
+      "hash": "be7070468ab7db5b4c48a77c79297e885da7a1ebba4148164804a95892bf27f9"
+    },
+    "role:architect": {
+      "version": "0.1.0",
+      "hash": "62ecfaeae57f773b42d77fd5065bf4e630aa8ac34d675974d70aa3cbc2ae43fb"
+    },
+    "role:builder": {
+      "version": "0.3.0",
+      "hash": "968d965062b6026294d4c01a7aff3c5177228dd884e112f9c3f4d178ccd77200"
+    },
+    "role:explainer": {
+      "version": "0.1.0",
+      "hash": "8fe1de6e85ad31fa741e1b970f8522b0ccb6db7e18d93bb3e6f3f86b1e1ea629"
+    },
+    "role:investigator": {
+      "version": "0.1.0",
+      "hash": "aca957985c822c51bb9a30026d6a37df7d0e54a669b99020054bd15687d34a3d"
+    },
+    "role:researcher": {
+      "version": "0.1.0",
+      "hash": "4c2a40a352d50f7e0cbbe8de5d8663b636ab00bd31c8cf612b8137b9248907da"
+    },
+    "role:scribe": {
+      "version": "0.1.0",
+      "hash": "b63c6a0d9430bff39d943e5aad75dd05fde23a979b37addecb9212774f7272bf"
+    },
+    "role:verifier": {
+      "version": "0.3.0",
+      "hash": "0a52e952f45918367677f395140d7fb4f2f27a4ad40f177f01ce605586c3ffa7"
+    },
+    "trait:adversarial": {
+      "version": "0.2.0",
+      "hash": "76f9b21a22a17341cddc13ad3c9b416b17e96be6f9f54ebbf4959d02a981f4cb"
+    },
+    "trait:cite-evidence": {
+      "version": "0.1.0",
+      "hash": "52f318df8a5db337d2ddfc993dbd2596a3d8fd547216fbf7a759f940e20f71f0"
+    },
+    "trait:clarify-first": {
+      "version": "0.1.0",
+      "hash": "b78e409e70e5617f2e45314752a29dfad10863c740e2c6a043cd6902e20a9639"
+    },
+    "trait:lens-conventions": {
+      "version": "0.1.0",
+      "hash": "069b49a481de93433b5c47290d18aa69b86af39a6122437fa1ea27d7442ea8d7"
+    },
+    "trait:lens-correctness": {
+      "version": "0.1.0",
+      "hash": "b438be43015bf3cb94b04aec94e59a3eeefb354ccee79d934e67f8697fbf4c18"
+    },
+    "trait:lens-performance": {
+      "version": "0.1.0",
+      "hash": "0d28d365e7980c1177f38932b3534ff8e3d872f31deaecc23a545006effa4a47"
+    },
+    "trait:lens-security": {
+      "version": "0.1.0",
+      "hash": "004413c5b1b47d38e17f9f4b6d5b68a1f0e8e8ccfdf116b438d6501b832927aa"
+    },
+    "trait:options-tradeoffs": {
+      "version": "0.1.0",
+      "hash": "f051ad7fbaf24c20e5c025d8da6409ad428ea7b89ed9b1b5f416b4f8ad4b006b"
+    },
+    "trait:report-handoff": {
+      "version": "0.2.0",
+      "hash": "0d7c5851564b03eb778f809917dbb24cd07dff4ed5256ce097d3bac21c692a00"
+    },
+    "trait:test-author": {
+      "version": "0.1.0",
+      "hash": "b613cbf69c076cfac837a625571860152c5be762c073f9d863dd25396b500638"
+    },
+    "trait:test-first": {
+      "version": "0.1.0",
+      "hash": "f94281c05832a044151e790a9e5822aa6d23f3b5be75ca5a4855b306df5b8a0c"
+    }
+  }
+}

@@ -122,8 +122,14 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 | P4 – Ổn định | evals, semver từng module, lên 1.0 |
 | P5 – Mở rộng | engine Workflow/Agent SDK, retriever vector |
 
-## Phát triển kernel
+## Phát triển stack
 
 ```bash
-cd kernel/cli && npm test
+cd kernel/cli
+npm test                          # kernel + kiểm tra phiên bản module của chính stack
+node stack.mjs doctor             # module của stack hợp lệ, phiên bản đã được tăng khi đổi
+node stack.mjs versions --update  # sau khi tăng version của module đã sửa
+node stack.mjs eval               # chạy flow thật trên repo mẫu và chấm điểm (tốn chi phí model)
 ```
+
+Quy tắc phiên bản: [kernel/conventions.md](kernel/conventions.md), mục 8. Eval: [evals/README.md](evals/README.md).
