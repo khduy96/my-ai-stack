@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 1.0. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 1.1. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
 - **5 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`.
@@ -30,7 +30,8 @@ Hiện có:
 | Cho agent đọc ticket, thiết kế, tài liệu của team | `/stack tools`, rồi `/ai-feature SHOP-123` | G2 |
 | Dự án Flutter | `packs: [flutter]` | G3 |
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
-| Chạy review không cần người (script, CI) | `claude -p "/ai-review …"` | E3 |
+| Chạy review không cần người (script, CI) | `stack run review …` | E3 |
+| Chạy tất định, không hỏi giữa chừng | `/ai-<flow> --workflow` | E5 |
 
 ## Cách gọi chung
 
@@ -150,6 +151,17 @@ flows:
     steps:
       plan: { gate: auto }
 ```
+
+**Cho builder chạy trên worktree riêng** (các unit song song có thể sửa cùng file):
+
+```yaml
+flows:
+  feature:
+    steps:
+      build: { isolation: worktree }
+```
+
+Mỗi unit chạy trên một git worktree riêng; xong đợt thì các thay đổi được áp về cây làm việc (`git apply --3way`), **không commit**, và dừng lại báo bạn nếu có xung đột. Worktree tạo từ commit hiện tại, nên chỉ dùng được khi **không unit nào phụ thuộc unit khác**; có phụ thuộc thì tự chạy như bình thường.
 
 Chi phí: một lần chạy dùng khoảng 7–10 agent, nhiều hơn nếu có vòng sửa. Thay đổi nhỏ, rõ ràng thì gọi thẳng `ai-builder` sẽ rẻ hơn.
 
@@ -285,13 +297,46 @@ flows:
       confirm: { gate: human }
 ```
 
-### E3. Chạy không cần người (script, CI, trước khi push)
+### E3. Chạy không cần người (script, CI, trước khi push) với `stack run`
 
 ```bash
-claude -p "/ai-review main..HEAD" --allowedTools "Agent" "Read" "Grep" "Glob" "Write" "Bash(git *)" "Bash(node *)"
+node <stack>/kernel/cli/stack.mjs run review "origin/main...HEAD" --project . --fail-on major --summary review.md
 ```
 
-Trên Windows mà chạy từ Git Bash thì thêm `MSYS_NO_PATHCONV=1` ở đầu lệnh.
+| Exit code | Nghĩa |
+|---|---|
+| 0 | Xong, không có finding ở mức `--fail-on` trở lên |
+| 1 | Có finding ở mức `--fail-on` trở lên (`critical` · `major` mặc định · `minor` · `none`) |
+| 2 | Run không xong (lỗi, hoặc bị chặn quyền) |
+| 3 | Đang chờ người (flow có cổng duyệt) |
+
+- `stack run` chạy với **chỉ các quyền trong settings của dự án** (permission mode mặc định): những gì không được cho phép sẽ bị từ chối, không ai được hỏi. Lệnh kiểm tra của dự án mà verifier cần chạy thì khai trong `permissions` của `project.yaml`, ví dụ `['+Bash(npm test)']`.
+- `--summary` ghi thêm bản tóm tắt Markdown (bảng finding, chi phí, báo cáo), dùng thẳng được cho `$GITHUB_STEP_SUMMARY`.
+- **GitHub Actions:** copy `<stack>/templates/ci/github-actions-review.yml` vào `.github/workflows/`, sửa 3 chỗ đánh dấu, thêm secret `ANTHROPIC_API_KEY`.
+
+### E5. Chạy tất định với `--workflow`
+
+Bật engine Workflow trong `project.yaml`, rồi `build`:
+
+```yaml
+engines: [skill, workflow]
+```
+
+Từ đó mỗi flow có thêm một workflow (`.claude/workflows/ai-<flow>.js`). Gọi bằng:
+
+```
+/ai-review --workflow
+/ai-feature --workflow thêm lọc đơn hàng theo trạng thái
+```
+
+| | Engine skill (mặc định) | Engine Workflow (`--workflow`) |
+|---|---|---|
+| Ai điều phối | Phiên chính, làm theo hướng dẫn | Script, chạy tất định |
+| Dữ liệu giữa các bước | File trong `.ai-runs/` | Trong bộ nhớ; handoff kiểm tra bằng schema |
+| Cổng duyệt | Dừng giữa chừng, hỏi bạn | Kết thúc với `waiting`; trả lời rồi chạy lại (agent đã xong được dùng lại) |
+| Phù hợp | Làm việc hằng ngày, cần tương tác | Chạy dài, nhiều agent, ít cần hỏi |
+
+Trên tình huống `review-planted`, engine Workflow tìm đủ lỗi với chi phí khoảng US$0.30, so với khoảng US$0.42 của engine skill.
 
 ### E4. Dọn run cũ
 
@@ -331,6 +376,20 @@ Từ đó **mọi agent** được dặn đọc `docs/knowledge/INDEX.md` trư�
 - Chỉ sửa trong thư mục tri thức.
 
 Báo cáo của `/ai-feature`, `/ai-bugfix` và `/ai-explain` sẽ gợi ý `/ai-learn` khi có điều đáng ghi lại.
+
+**Tra cứu xếp hạng (`retriever: index`).** Khi thư mục tri thức lớn dần, khai:
+
+```yaml
+knowledge: { dir: docs/knowledge, retriever: index }
+```
+
+Agent sẽ tra bằng `stack search "<từ khóa>"`: xếp hạng BM25 trên tiêu đề, tag và nội dung, không phân biệt dấu (`đơn hàng` = `don hang`). Bạn cũng gọi được trực tiếp:
+
+```bash
+node <stack>/kernel/cli/stack.mjs search "cache đơn hàng" --project .
+```
+
+Đây là tìm theo từ khóa: câu hỏi phải **cùng ngôn ngữ** với tri thức (scribe ghi bằng tiếng Anh). Cần tìm theo ý nghĩa, xuyên ngôn ngữ, thì kết nối một MCP server tìm kiếm vector và khai integration cho nó (`/stack tools`).
 
 ### F3. Guard: chặn cứng những việc không được làm
 

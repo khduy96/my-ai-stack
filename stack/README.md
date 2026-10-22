@@ -38,8 +38,9 @@ stack/
 │   ├── contracts/          JSON Schema, nguồn sự thật cho cấu trúc
 │   └── cli/                stack build | doctor | check | install (Node ≥ 18.3, deps: yaml, ajv)
 ├── engines/
-│   └── claude-code/        flow-skill.md: protocol orchestrator cho flow
-│                           stack-skill.md: protocol hỏi đáp của skill /stack
+│   ├── claude-code/        flow-skill.md: protocol orchestrator cho flow
+│   │                       stack-skill.md: protocol hỏi đáp của skill /stack
+│   └── workflow/           runtime.js: runtime tất định cho engine Workflow
 ├── modules/
 │   ├── roles/              ai làm
 │   ├── traits/             làm theo phong cách nào
@@ -48,7 +49,7 @@ stack/
 │   └── integrations/       hệ thống ngoài qua MCP: tool nào cho role nào
 ├── packs/                  gói module + override + defaults theo công nghệ
 │   └── flutter/
-└── templates/project.yaml
+└── templates/            project.yaml, ci/github-actions-review.yml
 ```
 
 ## Có sẵn
@@ -107,7 +108,8 @@ Build mặc định sinh ra 14 agent và 5 skill `/ai-*`, đồng thời thêm c
 | Policy (rule, guard hook, override), `scope`, settings do build quản lý, knowledge (grep) | ✔ kernel 0.5 |
 | Pack (modules + override + defaults), pack `flutter` | ✔ kernel 0.6 |
 | Integration (MCP: grants, allow, rule), `zentao`; role `researcher`; flow gọi agent viết tay (`external`) | ✔ kernel 0.6 |
-| Workflow/SDK engine, retriever vector, loại module `skill` | lộ trình P4–P5 |
+| Engine Workflow (`--workflow`), `stack run` cho CI, `isolation: worktree`, retriever `index` (`stack search`) | ✔ kernel 1.1 |
+| Loại module `skill`, retriever vector có sẵn | chưa làm |
 
 ## Lộ trình
 
@@ -120,7 +122,7 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 | **P2 – Tri thức & chính sách** ✔ | policy + guard + `scope`, settings do build quản lý · knowledge, `scribe`, `explainer`, `/ai-learn`, `/ai-explain` · trait test và performance |
 | **P3 – Pack & integration** (phần lớn ✔) | pack `flutter` (đã chạy thật trên commit của `kho`), integration `zentao`, `researcher`, `external` · còn: ghi ngược lên Zentao, Figma, loại module `skill` |
 | **P4 – Ổn định** ✔ | `stack eval` + baseline, phiên bản từng module, run state có thời điểm, 1.0.0 |
-| P5 – Mở rộng | engine Workflow/Agent SDK, retriever vector |
+| **P5 – Mở rộng** ✔ | engine Workflow, `stack run` + template GitHub Actions, worktree, retriever `index` |
 
 ## Phát triển stack
 
@@ -130,6 +132,8 @@ npm test                          # kernel + kiểm tra phiên bản module củ
 node stack.mjs doctor             # module của stack hợp lệ, phiên bản đã được tăng khi đổi
 node stack.mjs versions --update  # sau khi tăng version của module đã sửa
 node stack.mjs eval               # chạy flow thật trên repo mẫu và chấm điểm (tốn chi phí model)
+node stack.mjs run review --project <p> --fail-on major   # chạy flow không cần người (CI)
+node stack.mjs search "<từ khóa>" --project <p>           # tra tri thức dự án (retriever index)
 ```
 
 Quy tắc phiên bản: [kernel/conventions.md](kernel/conventions.md), mục 8. Eval: [evals/README.md](evals/README.md).

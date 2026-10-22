@@ -58,6 +58,7 @@ expect:
   findings:                        # phải tìm ra (mỗi mục khớp ít nhất một finding)
     - id: off-by-one in total
       file: src/cart.js            # phải xuất hiện trong title/detail/evidence
+      line: 6                      # (tùy chọn) evidence trích dòng này của file (±1), không phụ thuộc ngôn ngữ
       match: 'first|i = 1|off.by.one'   # regex, không phân biệt hoa thường
       severity: [critical, major]  # các mức chấp nhận
   forbid:                          # không finding nào được khớp
@@ -75,5 +76,5 @@ expect:
 
 Nguyên tắc:
 - Mỗi tình huống chứng minh **một hành vi**, tốt nhất là một hành vi từng hỏng.
-- Kỳ vọng phải đủ rộng để không fail vì cách diễn đạt (dùng regex cho nhiều cách gọi tên), nhưng đủ hẹp để bắt được hồi quy thật.
+- Kỳ vọng phải đủ rộng để không fail vì cách diễn đạt, nhưng đủ hẹp để bắt được hồi quy thật. Agent có thể viết bằng ngôn ngữ của người dùng, nên ưu tiên `file` + `line` hơn là regex trên chữ; nếu dùng regex thì kèm từ tiếng Việt.
 - Giữ repo mẫu nhỏ, để chạy nhanh và rẻ.

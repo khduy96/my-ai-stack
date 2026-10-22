@@ -209,12 +209,15 @@ ${USAGE}`);
       else if (values['dry-run']) scored = { passed: true, checks: [{ name: 'project builds', ok: true, detail: prep.command }], findings: [], metrics: null };
       else {
         console.log(`running ${prep.command} (${values.model}) in ${prep.repo}`);
+        const started = Date.now();
         const transcript = runClaude(prep.repo, prep.command, { model: values.model });
+        const wallMs = Date.now() - started;
         await writeFile(path.join(resultsDir, `${stamp}-${c.id}.jsonl`), transcript, 'utf8');
         scored = await scoreRun(c, prep.repo, transcript);
+        if (scored.metrics) scored.metrics.wallMs = wallMs;
       }
       for (const x of scored.checks) console.log(`${x.ok ? 'ok  ' : 'FAIL'}  ${x.name}${x.detail ? `  (${x.detail})` : ''}`);
-      if (scored.metrics) console.log(`cost US$${scored.metrics.costUsd?.toFixed(2) ?? '?'}, ${Math.round((scored.metrics.durationMs ?? 0) / 1000)}s, ${scored.metrics.toolCalls} tool calls`);
+      if (scored.metrics) console.log(`cost US$${scored.metrics.costUsd?.toFixed(2) ?? '?'}, ${Math.round((scored.metrics.wallMs ?? scored.metrics.durationMs ?? 0) / 1000)}s, ${scored.metrics.toolCalls} tool calls`);
       results.cases.push({ id: c.id, ...scored });
       if (values.keep) console.log(`kept ${prep.repo}`);
       else await cleanup(prep.repo);

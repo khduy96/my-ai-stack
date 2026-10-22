@@ -38,6 +38,8 @@ Every run keeps its state in a directory, called `<run>` below.
 
    Take every timestamp from the shell (for example `date -Iseconds`) at the moment it happens: `started` right before the Agent call, `finished` as soon as its result arrives. These times show afterwards which agents really ran in parallel.
 
+   **Rewrite the whole file each time** with the Write tool, keeping everything recorded so far; never append to it. Each step and each agent appears exactly once, so the file stays valid YAML.
+
 ## Starting an agent
 
 Call the Agent tool with `subagent_type` set to the agent's name and a prompt containing only a task in this form. Pass inputs as file paths for the agent to read itself; never paste file contents into the prompt.

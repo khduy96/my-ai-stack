@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 1.0.0
+Cập nhật: 2026-10-21 · kernel 1.1.0
 
 ## Trạng thái
 
@@ -11,7 +11,7 @@ Cập nhật: 2026-10-21 · kernel 1.0.0
 | **P2 – Tri thức & chính sách** | ✔ xong | Không còn gì |
 | **P3 – Pack & integration** | Phần lớn xong | Ghi ngược lên Zentao, Figma, loại module `skill` |
 | **P4 – Ổn định** | ✔ xong | Không còn gì |
-| **P5 – Mở rộng** | Chưa làm | Engine khác, vector RAG |
+| **P5 – Mở rộng** | ✔ xong | Retriever vector có sẵn (hiện đi qua MCP) |
 
 ## Đã xong
 
@@ -38,6 +38,10 @@ Cập nhật: 2026-10-21 · kernel 1.0.0
 - **`/stack` hỏi công cụ team dùng (0.6.1):** bước 4 và mode `/stack tools`; danh mục 6 loại (tracker, thiết kế UI, chat, tài liệu, code/CI, theo dõi lỗi) trong `tools-catalog.yaml`. Không tự suy ra công cụ từ những gì đang kết nối, không gọi tool ngoài khi setup.
   - Đã chạy thật với một team giả định (GitHub Issues qua gh, Figma, Slack, docs trong repo, GitHub Actions): 0 lệnh gọi MCP; không bật Zentao dù đang kết nối; sinh `.ai/integrations/figma.yaml` (12 tool đọc, 8 tool ghi không cấp cho ai); `gh` chỉ đọc được cho phép sẵn; Slack ghi vào context kèm hướng dẫn kết nối.
 - **P4 – ổn định (1.0.0):** `stack eval` (3 tình huống, baseline với sonnet: 3/3 pass, khoảng US$1.14), phiên bản từng module (`modules.lock.json`, `doctor` chặn khi sửa mà không tăng phiên bản), run state ghi thời điểm từng agent, lên 1.0.
+- **P5 – mở rộng (1.1.0):** engine Workflow (`--workflow`), `stack run` + template GitHub Actions, `isolation: worktree`, retriever `index` (`stack search`).
+  - Đã chạy thật: `/ai-review --workflow` headless (đủ lỗi, rẻ hơn engine skill); `stack run review` với quyền mặc định trả exit 1 kèm bảng finding.
+  - Eval chạy lại sau P5 bắt được 2 vấn đề: `run.yaml` nhiều cấp bị ghi sai YAML (đã sửa protocol, trình chấm không crash nữa), và kỳ vọng regex chỉ tiếng Anh bỏ sót một finding đúng viết bằng tiếng Việt (thêm kỳ vọng `line:`). Chạy lại: 3/3 pass, ghi làm baseline mới.
+  - Chạy thật lộ ra: đường dẫn 8.3 trên Windows làm Claude Code chặn mọi lệnh ghi (đã dùng đường dẫn đầy đủ); `date` bị từ chối nên timestamp bị đoán (đã cho phép).
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
 ## Còn lại
@@ -70,9 +74,9 @@ Cập nhật: 2026-10-21 · kernel 1.0.0
 - [x] Lên 1.0
 
 ### P5 – Mở rộng
-- [ ] Engine Workflow (chạy tất định, không cần người) và engine Agent SDK (CI, cron)
-- [ ] `isolation: worktree` cho builder chạy song song
-- [ ] Retriever vector (MCP)
+- [x] Engine Workflow (`--workflow`) và `stack run` cho CI (Agent SDK không cần: `claude -p` đã đủ cho chạy không người)
+- [x] `isolation: worktree` cho builder chạy song song (giới hạn: chỉ khi các unit không phụ thuộc nhau)
+- [x] Retriever `index` (BM25, `stack search`); [ ] retriever vector có sẵn (hiện dùng MCP server qua integration)
 
 ## Nợ kỹ thuật
 

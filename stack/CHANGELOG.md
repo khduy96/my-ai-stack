@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 — 2026-10-21 (P5, mở rộng)
+
+- Workflow engine (`engines: [skill, workflow]`): each flow also builds into `.claude/workflows/<prefix><flow>.js` = the flow's data + the shared runtime `engines/workflow/runtime.js`; deterministic orchestration (fan-out, foreach waves, loops, conditions, gates), inputs in memory, handoffs validated by `agent()` schemas (output contracts included), agents run as the built `ai-*` subagents. Human gates end the run with `status: waiting`; rerun with `args.approved` / `args.answers` and `resumeFromRunId`. Started by `/<prefix><flow> --workflow`. Verified in Claude Code (headless): `/ai-review --workflow` found all planted bugs, about US$0.30 against US$0.42 for the skill engine.
+- `stack run <flow> [input]`: unattended run for CI through the project's own permissions; exit 0 / 1 (findings at `--fail-on` or above) / 2 (did not finish) / 3 (waiting for a human); `--summary` appends Markdown (e.g. `$GITHUB_STEP_SUMMARY`). Template `templates/ci/github-actions-review.yml`. Verified: exit 1 with a findings table on the planted repository.
+- `isolation: worktree` for foreach steps (both engines): items without dependencies run in their own git worktrees; changes are applied back with `git apply --3way`, never committed; falls back to no isolation when items depend on each other.
+- Knowledge retriever `index`: `knowledge: { dir, retriever: index }`; `stack search "<query>"` ranks knowledge files with BM25 (title and tags weighted, accent-insensitive); agents are pointed at it and the command is pre-approved.
+- Flow permissions now include `git show` and `date` (found in real runs: refused `git show`, and timestamps guessed when `date` was refused).
+- `stack run` and `stack eval` use the long form of the project path: Claude Code asks before writing under Windows 8.3 short names (`ADMINI~1`), which stalled an unattended run.
+- Found by re-running the evals after these changes: `run.yaml` with per-agent timestamps was once written as invalid YAML (a duplicated key), so the protocol now says to rewrite the whole file each time; the scorer reports an invalid `run.yaml` as a failed check instead of crashing; expectations can match `line:` (the cited line of a file, ±1), since agents may write findings in the user's language and an English-only regex missed a correct Vietnamese finding; eval times are wall-clock. Re-run: 3/3 passed, recorded as the new baseline.
+- Additive release: modules keep `kernel: ^1`.
+
 ## 1.0.0 — 2026-10-21 (P4, ổn định)
 
 - **1.0:** kernel, stack and every module target `^1`. From now on, additive kernel features are minor releases that existing modules and projects accept; only breaking contract changes bump the major version.

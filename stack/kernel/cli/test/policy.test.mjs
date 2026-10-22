@@ -36,7 +36,7 @@ test('flow permissions are managed in settings.local.json without touching user 
   assert.deepEqual(codes((await run(root)).diags), []);
   const s = await json(root, '.claude/settings.local.json');
   assert.equal(s.model, 'opus');
-  assert.deepEqual(s.permissions.allow, ['Bash(npm test)', 'Bash(git diff *)', `Bash(${defaultCli()} check *)`, 'Bash(git status *)', 'Bash(git log *)', 'Bash(git show *)', 'Edit(.ai-runs/**)']);
+  assert.deepEqual(s.permissions.allow, ['Bash(npm test)', 'Bash(git diff *)', `Bash(${defaultCli()} check *)`, 'Bash(git status *)', 'Bash(git log *)', 'Bash(git show *)', 'Bash(date)', 'Bash(date *)', 'Edit(.ai-runs/**)']);
   assert.ok(s.permissions.allow.every((rule) => !/^Bash\([^ ]*\*/.test(rule)), 'no wildcard before the subcommand');
   const lock = await json(root, '.claude/.stack-lock.json');
   assert.ok(!lock.settings.allow.includes('Bash(git diff *)'), 'an entry the user already had is not ours');

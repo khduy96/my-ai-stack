@@ -9,6 +9,8 @@
 // `claude -p "/<prefix><flow> <input>" --permission-mode bypassPermissions`, which is
 // why the repository is throwaway. Scoring is separate (scoreRun) and needs no model.
 import { spawnSync } from 'node:child_process';
+import { realpath as realpathCb } from 'node:fs';
+import { promisify } from 'node:util';
 import { cp, mkdir, mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -40,7 +42,8 @@ export async function loadCases(stackRoot, ids = []) {
 
 // Builds the case's repository: base committed, change laid over it, project built.
 export async function prepareCase(stackRoot, c, version, prefix = 'ai-') {
-  const repo = await mkdtemp(path.join(tmpdir(), `ai-stack-eval-${c.id}-`));
+  // The long form of the path: Claude Code asks before writing under Windows 8.3 short names (ADMINI~1).
+  const repo = await promisify(realpathCb.native)(await mkdtemp(path.join(tmpdir(), `ai-stack-eval-${c.id}-`)));
   await cp(path.join(c.dir, 'base'), repo, { recursive: true });
   git(repo, 'init', '-q');
   git(repo, 'config', 'user.email', 'eval@ai-stack.local');
@@ -126,9 +129,25 @@ async function walk(dir) {
 const globToRegExp = (glob) => new RegExp(`^${glob.split('*').map((s) => s.replace(/[.+^${}()|[\]\\?]/g, '\\$&')).join('[^/]*')}$`);
 const allowed = (severity, levels) => levels.includes(severity);
 
+// Line numbers cited for `file` in a text: "src/a.js:6", "src/a.js:5-7", "src/a.js:2,17-20".
+function citedLines(text, file) {
+  const lines = [];
+  const esc = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const m of text.matchAll(new RegExp(`${esc}:([\\d,\\s-]+)`, 'g'))) {
+    for (const part of m[1].split(',')) {
+      const [a, b] = part.trim().split('-').map(Number);
+      if (Number.isFinite(a)) for (let n = a; n <= (Number.isFinite(b) ? b : a); n++) lines.push(n);
+    }
+  }
+  return lines;
+}
+
+// `line` matches a finding that cites that line of `file` (±1) and works whatever language the
+// agents write in; `match` is a regex over title, detail and evidence.
 function matches(finding, expected) {
   const text = [finding.title, finding.detail, finding.evidence].filter(Boolean).join('\n');
   if (expected.file && !text.includes(expected.file)) return false;
+  if (expected.line && !citedLines(text, expected.file ?? '').some((n) => Math.abs(n - expected.line) <= 1)) return false;
   if (expected.match && !new RegExp(expected.match, 'i').test(text)) return false;
   if (expected.severity && !allowed(finding.severity, expected.severity)) return false;
   return true;
@@ -145,7 +164,15 @@ export async function scoreRun(c, repo, transcript) {
   const runDir = runs.length ? path.join(runsRoot, runs.at(-1)) : null;
   add('run directory created', Boolean(runDir), runDir ? runs.at(-1) : 'no .ai-runs/<run>/');
 
-  const runState = runDir ? YAML.parse((await readText(path.join(runDir, 'run.yaml'))) ?? '{}') ?? {} : {};
+  let runState = {};
+  if (runDir) {
+    try {
+      runState = YAML.parse((await readText(path.join(runDir, 'run.yaml'))) ?? '{}') ?? {};
+      add('run.yaml is valid', true);
+    } catch (e) {
+      add('run.yaml is valid', false, String(e.message).split('\n')[0]);
+    }
+  }
   if (expect.status) add(`run status is ${expect.status}`, runState.status === expect.status, `run.yaml status: ${runState.status ?? 'missing'}`);
 
   const files = runDir ? (await walk(runDir)).filter((f) => f.endsWith('.handoff.yaml')) : [];

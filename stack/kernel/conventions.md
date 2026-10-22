@@ -93,7 +93,10 @@ Nội dung đã thay vào thì không được quét lại, nên trait có thể
 
 ## 3. Flow
 
-**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel 0.6 có một engine: **skill engine** của Claude Code, dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng lệnh `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator.
+**Flow** trả lời câu hỏi *nhiều agent phối hợp ra sao*. Flow được khai báo độc lập với engine. Kernel có hai engine, chọn bằng `engines` trong project.yaml (mặc định `[skill]`):
+
+- **skill** (luôn có): dịch mỗi flow thành `skills/<prefix><flow>/SKILL.md`, gọi bằng `/<prefix><flow>`. Phiên chính đọc skill đó và đóng vai orchestrator; run state nằm trong `.ai-runs/`.
+- **workflow** (`engines: [skill, workflow]`): sinh thêm `workflows/<prefix><flow>.js`, gồm dữ liệu của flow cộng runtime dùng chung `engines/workflow/runtime.js`, chạy tất định bằng Workflow của Claude Code. Gọi bằng `/<prefix><flow> --workflow`. Input truyền trong bộ nhớ, handoff được kiểm tra bằng `schema` của `agent()`. Bước cần người (`gate: human`, có câu hỏi, `partial`/`blocked`, hết `max` của loop) kết thúc workflow với `status: waiting`; chạy lại kèm `args.approved` / `args.answers` và `resumeFromRunId` để tiếp tục, agent đã xong được lấy từ cache.
 
 ```yaml
 steps:
@@ -115,6 +118,7 @@ steps:
 | `foreach` | Đi kèm `agent`: chạy agent đó cho **mỗi phần tử** của một list, ví dụ `$plan.output.units` |
 | `goal` | Mục tiêu giao cho agent |
 | `in` | Input: `$input`, `$<step>`, `$<step>.<output[.field]\|findings\|artifacts\|questions\|summary\|checks>`, hoặc **list tham chiếu** nghĩa là "cái mới nhất đang có". Giá trị không bắt đầu bằng `$` là chữ thường |
+| `isolation` | Đi kèm `foreach`: `worktree` cho mỗi phần tử chạy trên một git worktree riêng, rồi áp diff về cây làm việc (không commit, dừng khi xung đột). Chỉ dùng khi không phần tử nào có `depends_on`, vì worktree tạo từ commit hiện tại; ngược lại thì chạy như `none` |
 | `external` | `true` khi agent là agent viết tay (không do stack build): dùng đúng tên, không thêm prefix, build không kiểm tra; orchestrator dặn agent trả về khối `handoff` |
 | `when` | Chỉ chạy nếu handoff của một bước trước thỏa điều kiện: `has-findings` · `has-major-findings` · `no-findings` · `no-major-findings` · `has-questions` |
 | `gate` | `auto` (mặc định) · `human` (luôn chờ duyệt) · `on-questions` (chỉ chờ khi có câu hỏi hoặc bị chặn) |
@@ -234,14 +238,14 @@ Override không được đổi `id`/`kind`. Kết quả sau khi gộp được 
 
 Build ghi vào **một** file settings, chọn bằng khóa `settings` trong project.yaml: `local` (mặc định) là `settings.local.json`, `shared` là `settings.json`, còn `none` thì build không đụng tới settings. Build ghi hai loại mục:
 
-- `permissions.allow`: những gì flow cần, gồm đúng lệnh `<cli> check *`, các lệnh git chỉ đọc (`diff`, `status`, `log`) và `Edit(<runs>/**)`, cùng `permissions` của các policy đang bật. Claude Code chỉ áp quy tắc `Edit(…)` khi kiểm tra việc ghi file, và yêu cầu dấu `*` đặt sau lệnh con, nên build không bao giờ sinh `Write(…)` hay `Bash(node *…)`.
+- `permissions.allow`: những gì flow cần, gồm đúng lệnh `<cli> check *`, các lệnh git chỉ đọc (`diff`, `status`, `log`, `show`), `date` và `Edit(<runs>/**)`; `<cli> search *` khi dùng retriever `index`, cùng `permissions` của các policy đang bật. Claude Code chỉ áp quy tắc `Edit(…)` khi kiểm tra việc ghi file, và yêu cầu dấu `*` đặt sau lệnh con, nên build không bao giờ sinh `Write(…)` hay `Bash(node *…)`.
 - `hooks.PreToolUse`: một mục cho mỗi guard đang bật, chạy `node .claude/hooks/<prefix><policy>.mjs`.
 
 Lock ghi lại **đúng những mục build đã thêm** (`settings` trong `.stack-lock.json`). Một mục bạn đã có sẵn từ trước thì vẫn là của bạn, kể cả khi giống hệt mục build cần. Build sau chỉ gỡ hoặc thay những mục của chính nó. Đổi `settings` từ `local` sang `shared` thì các mục được chuyển từ file này sang file kia. `doctor` cảnh báo khi một mục do build quản lý bị xóa tay.
 
 ### Knowledge
 
-`knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). Kernel 0.6 tra cứu bằng grep; retriever dạng vector để sau.
+`knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). `knowledge: { dir, retriever: index }` cho agent tra bằng `stack search "<từ khóa>"`: BM25 trên tiêu đề, tag và nội dung, không phân biệt dấu, tính lại mỗi lần gọi nên không có chỉ mục cũ; quyền chạy lệnh được build thêm vào settings. Tìm theo ý nghĩa (vector) thì dùng một MCP server qua integration.
 
 ## 6. Policy
 

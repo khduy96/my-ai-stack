@@ -1,7 +1,9 @@
 // `stack run`: runs a flow without a person, e.g. in CI, and turns the outcome into an
 // exit code and a Markdown summary. It drives the same skill as an interactive run, through
 // `claude -p`, with the permissions the project's settings allow (default permission mode).
+import { realpath } from 'node:fs';
 import { readdir, writeFile } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import path from 'node:path';
 import YAML from 'yaml';
 import { parseTranscript, runClaude } from './eval.mjs';
@@ -73,11 +75,14 @@ export function summaryMarkdown({ flow, input, runDir, outcome, transcript, fail
 }
 
 // -> { code, outcome, summary }
-export async function runFlow({ projectRoot, flow, input = '', prefix = 'ai-', model = 'sonnet', failOn = 'major', permissionMode = 'default', claude, summaryFile, runs = '.ai-runs' }) {
+export async function runFlow({ projectRoot: given, flow, input = '', prefix = 'ai-', model = 'sonnet', failOn = 'major', permissionMode = 'default', claude, summaryFile, runs = '.ai-runs' }) {
+  // The long form of the path: Claude Code asks before writing under Windows 8.3 short names (ADMINI~1).
+  const projectRoot = await promisify(realpath.native)(given);
   const runsRoot = path.join(projectRoot, runs);
   const before = new Set(await readdir(runsRoot).catch(() => []));
+  const started = Date.now();
   const raw = runClaude(projectRoot, `/${prefix}${flow}${input ? ` ${input}` : ''}`, { model, claude, permissionMode });
-  const transcript = parseTranscript(raw);
+  const transcript = { ...parseTranscript(raw), durationMs: Date.now() - started };
   const fresh = (await readdir(runsRoot).catch(() => [])).filter((d) => !before.has(d) && d !== '.gitignore').sort();
   const runDir = fresh.length ? path.join(runsRoot, fresh.at(-1)) : null;
   const outcome = runDir ? await finalFindings(runDir) : { step: null, status: null, findings: [] };

@@ -73,6 +73,25 @@ test('scoring: diff limits count only changed lines; check script runs outside t
   await cleanup(prep.repo);
 });
 
+test('line expectations match cited lines whatever the language; a broken run.yaml is a failed check', async () => {
+  const yamlText = `flow: review\nexpect:\n  status: done\n  findings_from: [confirm.handoff.yaml]\n  findings:\n    - { id: single, file: src/a.js, line: 6 }\n    - { id: range, file: src/a.js, line: 19 }\n    - { id: list, file: src/a.js, line: 3 }\n    - { id: elsewhere, file: src/a.js, line: 40 }\n`;
+  const dir = await caseDir(yamlText, { 'base/src/a.js': 'x\n' });
+  const c = { id: 'l', dir, ...(await import('yaml')).default.parse(yamlText) };
+  const prep = await prepareCase(DEFAULT_STACK_ROOT, c, '1.0.0');
+  const run = path.join(prep.repo, '.ai-runs', 'r');
+  await writeTree(run, {
+    'run.yaml': 'flow: review\nstatus: done\n',
+    'confirm.handoff.yaml': HANDOFF('done', [['major', 'total() bỏ qua item đầu tiên', 'src/a.js:6'], ['critical', 'chèn lệnh shell', 'src/a.js:18-20'], ['minor', 'import', 'src/a.js:2,4']]),
+  });
+  const byName = Object.fromEntries((await scoreRun(c, prep.repo, null)).checks.map((x) => [x.name, x.ok]));
+  assert.deepEqual([byName['finds single'], byName['finds range'], byName['finds list'], byName['finds elsewhere']], [true, true, true, false]);
+
+  await writeFile(path.join(run, 'run.yaml'), 'steps:\n  review: 1\n  review: 2\n');
+  const broken = await scoreRun(c, prep.repo, null);
+  assert.equal(broken.checks.find((x) => x.name === 'run.yaml is valid').ok, false);
+  await cleanup(prep.repo);
+});
+
 test('transcripts and baseline comparison', () => {
   const t = parseTranscript([
     JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Agent' }, { type: 'tool_use', name: 'mcp__x__y' }] } }),

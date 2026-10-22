@@ -1,7 +1,8 @@
 {
-  "stack": "0.6.1",
+  "stack": "1.1.0",
   "model": "sonnet",
-  "date": "2026-10-21T10:46:27.141Z",
+  "date": "2026-10-21T11:09:28.768Z",
+  "dryRun": false,
   "cases": [
     {
       "id": "bugfix-total",
@@ -9,7 +10,12 @@
         {
           "name": "run directory created",
           "ok": true,
-          "detail": "20261021-1746-bugfix-total-single-item"
+          "detail": "20261021-1809-bugfix-total-single-item"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
         },
         {
           "name": "run status is done",
@@ -61,23 +67,24 @@
       "findings": [
         {
           "severity": "info",
-          "title": "Pre-existing: applyDiscount mutate input và tạo giá không phải số nguyên cent"
+          "title": "Pre-existing: applyDiscount mutates input and yields non-integer cents"
         },
         {
           "severity": "info",
-          "title": "Pre-existing: audit có nguy cơ command injection"
+          "title": "Pre-existing: audit shell command injection via orderId"
         },
         {
           "severity": "info",
-          "title": "Chưa có test hồi quy"
+          "title": "Missing space after semicolon in fixed line"
         }
       ],
       "metrics": {
-        "costUsd": 0.38465900000000003,
-        "durationMs": 88935,
-        "turns": 8,
-        "toolCalls": 20,
-        "mcpCalls": 0
+        "costUsd": 0.39771770000000006,
+        "durationMs": 94306,
+        "turns": 9,
+        "toolCalls": 21,
+        "mcpCalls": 0,
+        "wallMs": 98754
       }
     },
     {
@@ -86,7 +93,12 @@
         {
           "name": "run directory created",
           "ok": true,
-          "detail": "20261021-1746-review-uncommitted-changes"
+          "detail": "20261021-1811-review-uncommitted-changes"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
         },
         {
           "name": "run status is done",
@@ -101,7 +113,7 @@
         {
           "name": "finds off-by-one in total",
           "ok": true,
-          "detail": "major: total() bỏ qua item đầu tiên"
+          "detail": "major: total() bỏ qua phần tử đầu tiên (hồi quy)"
         },
         {
           "name": "finds command injection in audit",
@@ -116,7 +128,7 @@
         {
           "name": "finds discount produces non-integer cents",
           "ok": true,
-          "detail": "major: applyDiscount tạo giá không nguyên cent"
+          "detail": "major: applyDiscount tạo giá không phải số nguyên cent"
         },
         {
           "name": "at most 0 MCP calls",
@@ -132,7 +144,7 @@
         },
         {
           "severity": "major",
-          "title": "total() bỏ qua item đầu tiên"
+          "title": "total() bỏ qua phần tử đầu tiên (hồi quy)"
         },
         {
           "severity": "major",
@@ -140,27 +152,32 @@
         },
         {
           "severity": "major",
-          "title": "applyDiscount tạo giá không nguyên cent"
+          "title": "applyDiscount tạo giá không phải số nguyên cent"
         },
         {
           "severity": "minor",
-          "title": "Mã giảm giá không được validate"
+          "title": "applyDiscount không validate mã giảm giá"
+        },
+        {
+          "severity": "minor",
+          "title": "Import child_process ở cấp module làm thư viện phụ thuộc vào Node"
         },
         {
           "severity": "info",
-          "title": "Pre-existing: total không validate price và qty"
+          "title": "Rejected: SAVE100 làm hàng miễn phí là lỗi"
         },
         {
           "severity": "info",
-          "title": "Rejected: Không có test cho code mới và code đã sửa"
+          "title": "Rejected (hạ mức): thiếu test là lỗi minor"
         }
       ],
       "metrics": {
-        "costUsd": 0.4172906999999999,
-        "durationMs": 50807,
-        "turns": 5,
-        "toolCalls": 13,
-        "mcpCalls": 0
+        "costUsd": 0.5526248,
+        "durationMs": 18380,
+        "turns": 2,
+        "toolCalls": 18,
+        "mcpCalls": 0,
+        "wallMs": 118325
       }
     },
     {
@@ -169,7 +186,12 @@
         {
           "name": "run directory created",
           "ok": true,
-          "detail": "20261021-1746-review-uncommitted-changes"
+          "detail": "20261021-1813-review-uncommitted-changes"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
         },
         {
           "name": "run status is done",
@@ -201,15 +223,20 @@
       "findings": [
         {
           "severity": "info",
-          "title": "Pre-existing: audit() nối orderId vào lệnh shell của execSync (command injection)"
+          "title": "Pre-existing: audit() nội suy orderId vào lệnh shell (command injection)"
+        },
+        {
+          "severity": "info",
+          "title": "Rejected: itemCount không validate qty"
         }
       ],
       "metrics": {
-        "costUsd": 0.3401084,
-        "durationMs": 43117,
-        "turns": 5,
-        "toolCalls": 19,
-        "mcpCalls": 0
+        "costUsd": 0.3500434,
+        "durationMs": 43378,
+        "turns": 6,
+        "toolCalls": 17,
+        "mcpCalls": 0,
+        "wallMs": 66995
       }
     }
   ]
