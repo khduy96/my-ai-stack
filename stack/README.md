@@ -1,56 +1,79 @@
 # ai-stack
 
-Bộ agent, skill, rule… dùng chung cho mọi dự án. Thiết kế theo kiểu **lõi nhỏ + module**: mọi thứ được khai báo, ghép theo tầng, rồi build ra cấu hình Claude Code cho từng dự án.
+Bộ agent, skill, rule… cho Claude Code, viết một lần và dùng chung cho nhiều dự án. Thiết kế theo kiểu **lõi nhỏ + module**: mọi thứ được khai báo, ghép theo tầng, rồi build ra cấu hình Claude Code cho từng dự án.
 
-## Bắt đầu nhanh
+Trong tài liệu này, `<stack>` là đường dẫn tới thư mục `stack/` này trên máy bạn, còn `<dự án>` là thư mục gốc của dự án muốn dùng. Stack đặt ở đâu cũng được: clone cả repo hay chỉ copy thư mục `stack/` đều chạy, vì CLI tự tính đường dẫn từ vị trí của chính nó.
 
-- Cài trên máy mới, cấp quyền và xử lý lỗi thường gặp: [INSTALL.md](INSTALL.md).
-- Đưa vào một dự án có sẵn, điều chỉnh riêng, commit gì và gỡ ra: [INTEGRATE.md](INTEGRATE.md).
-- Dùng theo từng tình huống (review, làm tính năng, sửa lỗi…): [USAGE.md](USAGE.md).
-- Dự án đã có bộ agent, skill riêng: [EXTEND.md](EXTEND.md).
-- Chỉ phụ trách một phần của repo dùng chung: [PARTIAL.md](PARTIAL.md).
+## Cách hoạt động
+
+```
+  <stack>/                                      <dự án>/
+  ├── modules/  role, trait, flow,      ─┐      ├── .claude/project.yaml   bạn khai báo
+  │             policy, integration      │      └── .claude/
+  └── packs/    gói theo công nghệ       ├──►       ├── agents/ai-*.md     build sinh ra
+                                         │          ├── skills/ai-*/
+              stack build ───────────────┘          └── settings.local.json (quyền cần thiết)
+```
+
+| Khái niệm | Là gì |
+|---|---|
+| **Role** | Ai làm: analyst, architect, builder, verifier… Mỗi role có quyền và output cố định |
+| **Trait** | Làm theo phong cách nào: trích dẫn bằng chứng, hỏi trước khi làm, viết test trước… |
+| **Variant** | Một role với bộ trait riêng, ví dụ `verifier-security` |
+| **Flow** | Nhiều agent phối hợp ra sao, sinh ra một skill `/ai-*` |
+| **Policy** | Được làm gì: rule, guard (hook) chặn sửa ngoài vùng, file generated, secret |
+| **Integration** | Hệ thống ngoài qua MCP: tool nào cho role nào, đọc hay ghi |
+| **Pack** | Gói module + override + giá trị mặc định theo công nghệ, ví dụ `flutter` |
+
+Dự án chỉ cần một file `.claude/project.yaml`: dự án là gì, file nào cần đọc trước, bật những gì. `stack build` ghép module của stack với khai báo đó thành agent, skill và quyền trong `.claude/` của dự án. Mọi thứ build tạo ra đều có prefix `ai-` và được ghi vào lock file, nên không đụng tới agent, skill có sẵn của dự án.
+
+## Bắt đầu
+
+Cần **Node.js ≥ 18.3**, **Git** và **Claude Code** đã đăng nhập. Chi tiết và lỗi thường gặp: [INSTALL.md](INSTALL.md).
+
+**1. Cài CLI và skill `/stack`** (một lần mỗi máy, và chạy lại mỗi khi chuyển stack sang chỗ khác hoặc cập nhật stack):
 
 ```bash
-# 1. cài CLI và skill /stack (một lần mỗi máy)
-cd .claude/stack/kernel/cli && npm ci && node stack.mjs install
+cd <stack>/kernel/cli
+npm ci
+node stack.mjs install    # ghi skill /stack vào ~/.claude/skills/stack/
+```
 
-# 2. trong Claude Code, ở dự án muốn dùng:
+**2. Gắn stack vào từng dự án.** Mở Claude Code trong `<dự án>` và gõ:
+
+```
 /stack
 ```
+
+Skill khảo sát repo, hỏi những gì chưa rõ (dùng chung hay cá nhân, toàn repo hay một phần, lệnh test, công cụ team dùng…), cho bạn xem trước `project.yaml` cùng các file sẽ tạo, chờ bạn duyệt rồi mới build.
 
 Hoặc làm tay:
 
 ```bash
-cp .claude/stack/templates/project.yaml <project>/.claude/project.yaml   # rồi sửa
-node .claude/stack/kernel/cli/stack.mjs build  --project <project>
-node .claude/stack/kernel/cli/stack.mjs doctor --project <project>
+cp <stack>/templates/project.yaml <dự án>/.claude/project.yaml   # rồi sửa
+node <stack>/kernel/cli/stack.mjs build  --project <dự án> --dry-run   # xem trước, không ghi gì
+node <stack>/kernel/cli/stack.mjs build  --project <dự án>
+node <stack>/kernel/cli/stack.mjs doctor --project <dự án>             # phải là 0 error(s)
 ```
 
-`build --dry-run` cho xem trước, không ghi gì. Chạy `doctor` mà không có `--project` (và thư mục hiện tại không có `project.yaml`) thì chỉ kiểm tra bản thân stack.
+Chạy `doctor` mà không có `--project` (và thư mục hiện tại không có `project.yaml`) thì chỉ kiểm tra bản thân stack. Cách sửa `project.yaml`, commit gì và gỡ ra: [INTEGRATE.md](INTEGRATE.md).
 
-## Cấu trúc
+## Dùng hằng ngày
 
-```
-stack/
-├── stack.yaml              manifest gốc + giá trị mặc định
-├── kernel/
-│   ├── conventions.md      luật chung: module, cascade, placeholder, build, settings, policy, mã lỗi
-│   ├── contracts/          JSON Schema, nguồn sự thật cho cấu trúc
-│   └── cli/                stack build | doctor | check | install (Node ≥ 18.3, deps: yaml, ajv)
-├── engines/
-│   ├── claude-code/        flow-skill.md: protocol orchestrator cho flow
-│   │                       stack-skill.md: protocol hỏi đáp của skill /stack
-│   └── workflow/           runtime.js: runtime tất định cho engine Workflow
-├── modules/
-│   ├── roles/              ai làm
-│   ├── traits/             làm theo phong cách nào
-│   ├── flows/              nhiều agent phối hợp ra sao
-│   ├── policies/           được làm gì: rule, guard (hook), override
-│   └── integrations/       hệ thống ngoài qua MCP: tool nào cho role nào
-├── packs/                  gói module + override + defaults theo công nghệ
-│   └── flutter/
-└── templates/            project.yaml, ci/github-actions-review.yml
-```
+| Lệnh | Dùng khi |
+|---|---|
+| `/ai-review [target]` | Review thay đổi chưa commit, một branch, một PR hoặc một thư mục |
+| `/ai-feature <yêu cầu>` | Làm tính năng từ đầu đến cuối: spec → plan (bạn duyệt) → code → review |
+| `/ai-bugfix <triệu chứng>` | Tìm nguyên nhân, sửa và kiểm chứng một lỗi |
+| `/ai-explain <câu hỏi>` | Hiểu một đoạn code hoạt động thế nào |
+| `/ai-learn <run \| ghi chú>` | Ghi tri thức dự án để các lần sau dùng lại |
+
+Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigator` để tìm nguyên nhân…"*. Danh sách đầy đủ theo tình huống: [USAGE.md](USAGE.md).
+
+## Cập nhật
+
+- **Đổi cấu hình dự án:** gọi lại `/stack`, hoặc sửa `project.yaml` rồi chạy `build`.
+- **Cập nhật stack:** lấy bản mới, chạy lại `node stack.mjs install`, rồi `build` và `doctor` lại **từng dự án** đang dùng. Bước build lại là bước dễ quên nhất.
 
 ## Có sẵn
 
@@ -79,7 +102,7 @@ stack/
 | `feature` | `/ai-feature <yêu cầu>` | spec → plan (bạn duyệt) → builder theo từng unit, chia đợt → review ×3 → confirm → tối đa 2 vòng sửa |
 | `bugfix` | `/ai-bugfix <triệu chứng>` | investigate (hỏi khi chưa chắc) → fix → verifier-correctness → tối đa 1 vòng sửa |
 | `explain` | `/ai-explain <câu hỏi>` | explainer trả lời, kèm đường đi trong code |
-| `learn` | `/ai-learn <run | ghi chú>` | scribe ghi tri thức lâu dài vào thư mục knowledge |
+| `learn` | `/ai-learn <run \| ghi chú>` | scribe ghi tri thức lâu dài vào thư mục knowledge |
 
 | Policy (opt-in) | Bật bằng | Chặn |
 |---|---|---|
@@ -96,6 +119,31 @@ stack/
 | `zentao` | `zentao` | analyst, architect, investigator, researcher, explainer **đọc** được ticket (cho phép sẵn); nhóm **ghi** (comment, đổi trạng thái) chỉ có khi dự án tự cấp, và luôn phải có người duyệt |
 
 Build mặc định sinh ra 14 agent và 5 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
+
+## Cấu trúc
+
+```
+stack/
+├── stack.yaml              manifest gốc + giá trị mặc định
+├── kernel/
+│   ├── conventions.md      luật chung: module, cascade, placeholder, build, settings, policy, mã lỗi
+│   ├── contracts/          JSON Schema, nguồn sự thật cho cấu trúc
+│   └── cli/                stack build | doctor | check | install (Node ≥ 18.3, deps: yaml, ajv)
+├── engines/
+│   ├── claude-code/        flow-skill.md: protocol orchestrator cho flow
+│   │                       stack-skill.md: protocol hỏi đáp của skill /stack
+│   └── workflow/           runtime.js: runtime tất định cho engine Workflow
+├── modules/
+│   ├── roles/              ai làm
+│   ├── traits/             làm theo phong cách nào
+│   ├── flows/              nhiều agent phối hợp ra sao
+│   ├── policies/           được làm gì: rule, guard (hook), override
+│   └── integrations/       hệ thống ngoài qua MCP: tool nào cho role nào
+├── packs/                  gói module + override + defaults theo công nghệ
+│   └── flutter/
+├── evals/                  repo mẫu + baseline cho stack eval
+└── templates/              project.yaml, ci/github-actions-review.yml
+```
 
 ## Mô hình
 
@@ -127,13 +175,25 @@ Chi tiết, việc còn lại và các quyết định đã chốt: [ROADMAP.md]
 ## Phát triển stack
 
 ```bash
-cd kernel/cli
+cd <stack>/kernel/cli
 npm test                          # kernel + kiểm tra phiên bản module của chính stack
 node stack.mjs doctor             # module của stack hợp lệ, phiên bản đã được tăng khi đổi
 node stack.mjs versions --update  # sau khi tăng version của module đã sửa
 node stack.mjs eval               # chạy flow thật trên repo mẫu và chấm điểm (tốn chi phí model)
-node stack.mjs run review --project <p> --fail-on major   # chạy flow không cần người (CI)
-node stack.mjs search "<từ khóa>" --project <p>           # tra tri thức dự án (retriever index)
+node stack.mjs run review --project <dự án> --fail-on major   # chạy flow không cần người (CI)
+node stack.mjs search "<từ khóa>" --project <dự án>           # tra tri thức dự án (retriever index)
 ```
 
 Quy tắc phiên bản: [kernel/conventions.md](kernel/conventions.md), mục 8. Eval: [evals/README.md](evals/README.md).
+
+## Tài liệu
+
+| File | Nội dung |
+|---|---|
+| [INSTALL.md](INSTALL.md) | Cài trên máy mới, cấp quyền, lỗi thường gặp |
+| [INTEGRATE.md](INTEGRATE.md) | Đưa vào dự án có sẵn, điều chỉnh riêng, commit gì, gỡ ra |
+| [USAGE.md](USAGE.md) | Dùng theo tình huống: review, làm tính năng, sửa lỗi… |
+| [EXTEND.md](EXTEND.md) | Dự án đã có bộ agent, skill riêng |
+| [PARTIAL.md](PARTIAL.md) | Chỉ phụ trách một phần của repo dùng chung |
+| [ROADMAP.md](ROADMAP.md) | Trạng thái và kế hoạch |
+| [CHANGELOG.md](CHANGELOG.md) | Lịch sử phiên bản |
