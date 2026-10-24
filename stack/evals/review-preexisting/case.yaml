@@ -1,0 +1,19 @@
+description: /ai-review does not escalate problems that predate the reviewed change
+flow: review
+input: ''
+project: |
+  context: |
+    Tiny ES module library for a shopping cart. Money is integer cents.
+  read_first: [CLAUDE.md]
+expect:
+  status: done
+  findings_from: [confirm.handoff.yaml, 'review/*.handoff.yaml']
+  forbid:
+    # audit() was committed before; the change only adds itemCount().
+    - id: the pre-existing injection as critical or major
+      match: 'audit|execSync|inject'
+      severity: [critical, major]
+    - id: any critical finding about the small, correct change
+      match: '.'
+      severity: [critical]
+  mcp_calls: 0

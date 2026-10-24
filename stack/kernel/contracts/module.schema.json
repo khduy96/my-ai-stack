@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/module.schema.json",
+  "title": "Module",
+  "description": "Fields shared by every module, whatever its kind.",
+  "type": "object",
+  "required": ["id", "kind", "version"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "kebab-case, unique within its kind, equal to the file name." },
+    "kind": { "enum": ["role", "trait", "skill", "flow", "policy", "retriever", "pack", "integration"] },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "description": { "type": "string" },
+    "requires": { "type": "array", "items": { "type": "string" }, "description": "Other modules this one depends on, as 'id' or 'kind:id'." },
+    "kernel": { "type": "string", "description": "Compatible kernel version range, e.g. ^0.1." },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "body_mode": { "enum": ["replace", "append", "prepend"], "description": "How this module's body combines with the same module from an earlier layer." }
+  },
+  "patternProperties": {
+    "^x-": { "description": "Extension keys, ignored by the kernel." }
+  }
+}

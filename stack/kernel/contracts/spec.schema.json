@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/spec.schema.json",
+  "title": "Spec",
+  "description": "What has to be true when the work is done, independent of how it is built.",
+  "type": "object",
+  "required": ["goal", "acceptance"],
+  "properties": {
+    "goal": { "type": "string", "description": "The outcome in one or two sentences, from the user's point of view." },
+    "acceptance": { "type": "array", "items": { "type": "string" }, "description": "Testable criteria; each one can be checked as met or not met." },
+    "out_of_scope": { "type": "array", "items": { "type": "string" }, "description": "Things a reader might expect that this work deliberately excludes." },
+    "constraints": { "type": "array", "items": { "type": "string" }, "description": "Limits the solution must respect (compatibility, performance, platforms, deadlines)." },
+    "affected_areas": {
+      "type": "array",
+      "description": "Parts of the codebase the work will likely touch.",
+      "items": {
+        "type": "object",
+        "required": ["area"],
+        "properties": {
+          "area": { "type": "string", "description": "Module, feature or path." },
+          "evidence": { "type": "string", "description": "path:line showing why it is affected." }
+        }
+      }
+    },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "description": "Gaps you filled in yourself; each one is a question someone may want to overrule." },
+    "open_questions": { "type": "array", "items": { "type": "string" }, "description": "Decisions that block a correct spec and need an answer." }
+  }
+}

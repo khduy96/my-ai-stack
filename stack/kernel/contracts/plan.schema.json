@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/plan.schema.json",
+  "title": "Plan",
+  "description": "How a spec gets built, split into units that can be handed to agents independently.",
+  "type": "object",
+  "required": ["approach", "units"],
+  "properties": {
+    "approach": { "type": "string", "description": "The chosen design in a short paragraph." },
+    "options": {
+      "type": "array",
+      "description": "Alternatives that were considered, including the chosen one.",
+      "items": {
+        "type": "object",
+        "required": ["option", "tradeoffs"],
+        "properties": {
+          "option": { "type": "string" },
+          "tradeoffs": { "type": "string" },
+          "chosen": { "type": "boolean" }
+        }
+      }
+    },
+    "units": {
+      "type": "array",
+      "description": "Work units. Units without a dependency path between them must not share files, so they can run in parallel.",
+      "items": {
+        "type": "object",
+        "required": ["id", "goal", "files"],
+        "properties": {
+          "id": { "type": "string", "description": "Short kebab-case id." },
+          "goal": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" }, "description": "Paths or globs this unit owns: created or edited only by it." },
+          "depends_on": { "type": "array", "items": { "type": "string" }, "description": "Unit ids that must finish first." },
+          "acceptance": { "type": "array", "items": { "type": "string" } },
+          "agent": { "type": "string", "description": "Suggested role or role-variant, e.g. builder." }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["risk"],
+        "properties": {
+          "risk": { "type": "string" },
+          "mitigation": { "type": "string" }
+        }
+      }
+    },
+    "verification": { "type": "array", "items": { "type": "string" }, "description": "How to verify the whole change once all units are done." }
+  }
+}

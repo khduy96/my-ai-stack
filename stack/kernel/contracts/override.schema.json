@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/override.schema.json",
+  "title": "Override",
+  "description": "Partial module applied on top of an existing one, from pack.yaml, project.yaml or project.local.yaml: any module field except id/kind, plus body and body_mode. The merged result is validated against the module's own schema.",
+  "type": "object",
+  "properties": {
+    "id": false,
+    "kind": false,
+    "body": { "type": "string" },
+    "body_mode": { "enum": ["replace", "append", "prepend"] }
+  }
+}

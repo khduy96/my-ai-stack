@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/diagnosis.schema.json",
+  "title": "Diagnosis",
+  "description": "Why something misbehaves, backed by evidence, and the smallest fix.",
+  "type": "object",
+  "required": ["symptom", "hypotheses"],
+  "properties": {
+    "symptom": { "type": "string", "description": "Observed versus expected behaviour." },
+    "reproduction": { "type": "array", "items": { "type": "string" }, "description": "Steps or a command that reproduce it; empty if you could not reproduce." },
+    "hypotheses": {
+      "type": "array",
+      "description": "Every explanation considered, including the ones ruled out.",
+      "items": {
+        "type": "object",
+        "required": ["hypothesis", "status"],
+        "properties": {
+          "hypothesis": { "type": "string" },
+          "status": { "enum": ["confirmed", "ruled-out", "open"] },
+          "evidence": { "type": "string", "description": "path:line, command output or log line that decided it." }
+        }
+      }
+    },
+    "root_cause": {
+      "type": "object",
+      "description": "Present only when one hypothesis is confirmed.",
+      "required": ["summary", "evidence"],
+      "properties": {
+        "summary": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" }, "description": "path:line references along the failing path." }
+      }
+    },
+    "fix": {
+      "type": "object",
+      "description": "The smallest change that removes the root cause.",
+      "required": ["proposal"],
+      "properties": {
+        "proposal": { "type": "string" },
+        "files": { "type": "array", "items": { "type": "string" } },
+        "risk": { "type": "string", "description": "What else the fix could affect." }
+      }
+    }
+  }
+}

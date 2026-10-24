@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/pack.schema.json",
+  "title": "Pack",
+  "description": "packs/<id>/pack.yaml: a bundle of modules (in packs/<id>/modules/) plus overrides of existing ones.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "properties": {
+    "kind": { "const": "pack" },
+    "defaults": { "$ref": "project.schema.json", "description": "Project settings this pack sets by default, between the stack's defaults and the project's own config (e.g. enable.policies: ['+protect-generated']). A project can override any of them." },
+    "roles": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "traits": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "flows": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "policies": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } },
+    "integrations": { "type": "object", "additionalProperties": { "$ref": "override.schema.json" } }
+  },
+  "unevaluatedProperties": false
+}

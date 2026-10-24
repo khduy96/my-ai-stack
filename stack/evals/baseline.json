@@ -1,0 +1,243 @@
+{
+  "stack": "1.1.0",
+  "model": "sonnet",
+  "date": "2026-10-21T11:09:28.768Z",
+  "dryRun": false,
+  "cases": [
+    {
+      "id": "bugfix-total",
+      "checks": [
+        {
+          "name": "run directory created",
+          "ok": true,
+          "detail": "20261021-1809-bugfix-total-single-item"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "run status is done",
+          "ok": true,
+          "detail": "run.yaml status: done"
+        },
+        {
+          "name": "every handoff is valid",
+          "ok": true,
+          "detail": "3 handoffs"
+        },
+        {
+          "name": "does not report the pre-existing injection as critical or major",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "changes only src/cart.js",
+          "ok": true,
+          "detail": "changed: src/cart.js"
+        },
+        {
+          "name": "diff does not contain \"execSync\"",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "diff does not contain \"applyDiscount\"",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "changes at most 4 lines",
+          "ok": true,
+          "detail": "2 lines"
+        },
+        {
+          "name": "check.mjs passes",
+          "ok": true,
+          "detail": "total() correct for 0, 1 and 2 items"
+        },
+        {
+          "name": "at most 0 MCP calls",
+          "ok": true,
+          "detail": "0"
+        }
+      ],
+      "passed": true,
+      "findings": [
+        {
+          "severity": "info",
+          "title": "Pre-existing: applyDiscount mutates input and yields non-integer cents"
+        },
+        {
+          "severity": "info",
+          "title": "Pre-existing: audit shell command injection via orderId"
+        },
+        {
+          "severity": "info",
+          "title": "Missing space after semicolon in fixed line"
+        }
+      ],
+      "metrics": {
+        "costUsd": 0.39771770000000006,
+        "durationMs": 94306,
+        "turns": 9,
+        "toolCalls": 21,
+        "mcpCalls": 0,
+        "wallMs": 98754
+      }
+    },
+    {
+      "id": "review-planted",
+      "checks": [
+        {
+          "name": "run directory created",
+          "ok": true,
+          "detail": "20261021-1811-review-uncommitted-changes"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "run status is done",
+          "ok": true,
+          "detail": "run.yaml status: done"
+        },
+        {
+          "name": "every handoff is valid",
+          "ok": true,
+          "detail": "4 handoffs"
+        },
+        {
+          "name": "finds off-by-one in total",
+          "ok": true,
+          "detail": "major: total() bỏ qua phần tử đầu tiên (hồi quy)"
+        },
+        {
+          "name": "finds command injection in audit",
+          "ok": true,
+          "detail": "critical: Command injection trong audit() qua execSync"
+        },
+        {
+          "name": "finds applyDiscount mutates its input",
+          "ok": true,
+          "detail": "major: applyDiscount mutate input, vi phạm CLAUDE.md"
+        },
+        {
+          "name": "finds discount produces non-integer cents",
+          "ok": true,
+          "detail": "major: applyDiscount tạo giá không phải số nguyên cent"
+        },
+        {
+          "name": "at most 0 MCP calls",
+          "ok": true,
+          "detail": "0"
+        }
+      ],
+      "passed": true,
+      "findings": [
+        {
+          "severity": "critical",
+          "title": "Command injection trong audit() qua execSync"
+        },
+        {
+          "severity": "major",
+          "title": "total() bỏ qua phần tử đầu tiên (hồi quy)"
+        },
+        {
+          "severity": "major",
+          "title": "applyDiscount mutate input, vi phạm CLAUDE.md"
+        },
+        {
+          "severity": "major",
+          "title": "applyDiscount tạo giá không phải số nguyên cent"
+        },
+        {
+          "severity": "minor",
+          "title": "applyDiscount không validate mã giảm giá"
+        },
+        {
+          "severity": "minor",
+          "title": "Import child_process ở cấp module làm thư viện phụ thuộc vào Node"
+        },
+        {
+          "severity": "info",
+          "title": "Rejected: SAVE100 làm hàng miễn phí là lỗi"
+        },
+        {
+          "severity": "info",
+          "title": "Rejected (hạ mức): thiếu test là lỗi minor"
+        }
+      ],
+      "metrics": {
+        "costUsd": 0.5526248,
+        "durationMs": 18380,
+        "turns": 2,
+        "toolCalls": 18,
+        "mcpCalls": 0,
+        "wallMs": 118325
+      }
+    },
+    {
+      "id": "review-preexisting",
+      "checks": [
+        {
+          "name": "run directory created",
+          "ok": true,
+          "detail": "20261021-1813-review-uncommitted-changes"
+        },
+        {
+          "name": "run.yaml is valid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "run status is done",
+          "ok": true,
+          "detail": "run.yaml status: done"
+        },
+        {
+          "name": "every handoff is valid",
+          "ok": true,
+          "detail": "4 handoffs"
+        },
+        {
+          "name": "does not report the pre-existing injection as critical or major",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "does not report any critical finding about the small, correct change",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "at most 0 MCP calls",
+          "ok": true,
+          "detail": "0"
+        }
+      ],
+      "passed": true,
+      "findings": [
+        {
+          "severity": "info",
+          "title": "Pre-existing: audit() nội suy orderId vào lệnh shell (command injection)"
+        },
+        {
+          "severity": "info",
+          "title": "Rejected: itemCount không validate qty"
+        }
+      ],
+      "metrics": {
+        "costUsd": 0.3500434,
+        "durationMs": 43378,
+        "turns": 6,
+        "toolCalls": 17,
+        "mcpCalls": 0,
+        "wallMs": 66995
+      }
+    }
+  ]
+}

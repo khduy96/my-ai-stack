@@ -1,0 +1,91 @@
+id: feature
+kind: flow
+version: 0.1.2
+kernel: ^1
+tags: [core]
+description: >-
+  Builds a feature end to end: the analyst writes a spec, the architect plans it
+  (you approve the plan), builders implement the plan's units in waves, three
+  verifiers review the result and an adversarial verifier confirms the findings;
+  confirmed critical or major findings go through up to two fix rounds. Use for a
+  new feature or a change that spans several files.
+argument_hint: "<what to build>"
+
+input:
+  description: The feature request, in the user's words.
+
+steps:
+  - id: spec
+    agent: analyst
+    goal: Turn the request into a spec with testable acceptance criteria.
+    in:
+      request: $input
+    gate: on-questions
+
+  - id: plan
+    agent: architect
+    goal: Plan how to build the spec, split into units that can be built and verified alone.
+    in:
+      spec: $spec.output
+    gate: human
+
+  - id: build
+    agent: builder
+    foreach: $plan.output.units
+    goal: Implement your unit of the plan. Its files are your scope; its acceptance criteria are your definition of done.
+    in:
+      spec: $spec.output
+      plan: $plan.output
+
+  - id: review
+    fanout: [verifier-correctness, verifier-security, verifier-conventions]
+    goal: Review the changes made by the build step against the spec, from your focus.
+    in:
+      spec: $spec.output
+      changes: $build.artifacts
+
+  - id: confirm
+    agent: verifier-adversarial
+    goal: Try to disprove each finding from the review step against the code; keep only those that survive.
+    in:
+      claims: $review.findings
+    when: { step: review, is: has-findings }
+
+  - id: fix
+    when: { step: confirm, is: has-major-findings }
+    loop:
+      max: 2
+      until: { step: fix-confirm, is: no-major-findings }
+      steps:
+        - id: fix-build
+          agent: builder
+          goal: >-
+            Fix the confirmed critical and major findings. Keep each fix minimal and
+            stay within the files of the plan unless a finding requires otherwise.
+          in:
+            findings: [$fix-confirm.findings, $confirm.findings]
+            spec: $spec.output
+            plan: $plan.output
+
+        - id: fix-review
+          fanout: [verifier-correctness, verifier-security, verifier-conventions]
+          goal: Review the fixes against the findings they address and the spec, from your focus.
+          in:
+            spec: $spec.output
+            fixed: [$fix-confirm.findings, $confirm.findings]
+            changes: $fix-build.artifacts
+
+        - id: fix-confirm
+          agent: verifier-adversarial
+          goal: Try to disprove each finding from the fix review; keep only those that survive.
+          in:
+            claims: $fix-review.findings
+          when: { step: fix-review, is: has-findings }
+
+report: >-
+  Summarize what was built: the spec's goal, each plan unit with its status and the
+  files it changed, and the checks the builders ran. Then list the confirmed findings
+  still open, by severity, with path:line (from the last fix round when it ran,
+  otherwise from confirm). End with the open questions, if any, and the run directory.
+  If the run taught something lasting about the project (a decision, a convention, a
+  pitfall), suggest recording it with the learn command and this run directory.

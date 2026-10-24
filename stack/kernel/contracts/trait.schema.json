@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/trait.schema.json",
+  "title": "Trait",
+  "description": "A prompt fragment that changes how a role behaves.",
+  "type": "object",
+  "allOf": [{ "$ref": "module.schema.json" }],
+  "required": ["description"],
+  "properties": {
+    "kind": { "const": "trait" },
+    "applies_to": { "type": "array", "items": { "type": "string" }, "description": "Role ids this trait may be used with. Empty or absent = any role." },
+    "conflicts": { "type": "array", "items": { "type": "string" }, "description": "Trait ids that cannot be combined with this one." },
+    "slot": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Role placeholder this trait is inserted into. Defaults to 'traits'." }
+  },
+  "unevaluatedProperties": false
+}
