@@ -33,6 +33,14 @@
         }
       ]
     },
+    "memory_bank": {
+      "type": "string",
+      "description": "Memory bank: a directory (relative to the project root) of six fixed files that carry the project's brief, current state and decisions from one session to the next (projectbrief, activeContext, systemPatterns, techContext, decisions, progress). Every agent reads it; only the archivist writes it, through the flows memory-init and memory-update."
+    },
+    "maps": {
+      "type": "string",
+      "description": "Code maps: a directory (relative to the project root) with a project map (PROJECT_MAP.md + <module>.MAP.md: by feature and keyword) and a repo map (REPO_MAP.md + <module>.REPO.MAP.md: symbols, contact points, generated files). Every agent reads them before searching the code; only the cartographer writes them, through the flows map-init and map-update."
+    },
     "enable": {
       "type": "object",
       "properties": {

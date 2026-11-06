@@ -1,0 +1,55 @@
+id: memory-init
+kind: flow
+version: 0.1.0
+kernel: ^1
+tags: [core, knowledge]
+description: >-
+  Creates the project's memory bank with the archivist. For a new project, from
+  your description of it; for an existing project, from a survey of the repository
+  and git history. Use once per project, after setting memory_bank in project.yaml.
+argument_hint: "[description of a new project | focus for an existing one]"
+
+input:
+  description: >-
+    For a new project: what it is, who it is for, the goals and the planned stack, in
+    the user's words. For an existing project: nothing, or the area to centre on (for
+    example the module this person owns).
+  default: Existing project; survey the repository and centre on the scope in the project context, if any.
+
+steps:
+  - id: create
+    agent: archivist
+    goal: >-
+      Mode init. Decide whether this is a new or an existing project, then create the
+      six memory bank files: from the input for a new project, from a survey of the
+      repository and git for an existing one.
+    in:
+      source: $input
+    gate: on-questions
+
+report: >-
+  Say whether the project was treated as new or existing, then list the memory bank
+  files created, each with a one-line summary, then the [?] items the user should
+  confirm. Then check that plain sessions load the memory bank too: if CLAUDE.md
+  (at the project root) does not mention the memory bank directory, show this block
+  with the directory filled in and offer to add it to CLAUDE.md (create the file if
+  it is missing); add it only on approval.
+
+  ```
+  # Memory Bank
+  Always loaded:
+  - @<dir>/projectbrief.md
+  - @<dir>/activeContext.md
+
+  Read on demand (only when the task touches it):
+  - `<dir>/systemPatterns.md`: architecture, patterns, module boundaries
+  - `<dir>/techContext.md`: stack, commands, build and environment
+  - `<dir>/decisions.md`: before proposing an alternative approach
+  - `<dir>/progress.md`: planning, status questions
+
+  After a significant change, run the memory-update command. Never record what the
+  code already shows. Trust the code when the memory bank disagrees with it.
+  ```
+
+  Finally, ask whether the memory bank should be shared with the team (committed) or
+  kept on this machine (add `<dir>/` to `.git/info/exclude`, never to `.gitignore`).

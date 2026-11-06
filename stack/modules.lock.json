@@ -12,9 +12,29 @@
       "version": "0.1.2",
       "hash": "8a469b87175d4236502c89213c5186661f882fe2c365e013649416730a878cdb"
     },
+    "flow:knowledge-audit": {
+      "version": "0.1.0",
+      "hash": "47841d506291fb1cf8dabcfb474b9e8f69bc2012d3f0f4ad7e4720340e0f96c7"
+    },
     "flow:learn": {
       "version": "0.1.1",
       "hash": "edb87284382d4ccb96a38f08174642863b6e24430c044a12f884fe35e37f1239"
+    },
+    "flow:map-init": {
+      "version": "0.1.0",
+      "hash": "b4d9d165856e6da16d219cda4bdb9419a93add4d5ea6b6b089adf0d8a3b07cb1"
+    },
+    "flow:map-update": {
+      "version": "0.1.0",
+      "hash": "a9bb93966c729409f4fb7ad425dbcb3dfa70e2ed5a61bba27e4c86cea93c2afa"
+    },
+    "flow:memory-init": {
+      "version": "0.1.0",
+      "hash": "246aab0d770299661e32f12817fe0cf196d2ec38c8d68b4f2178e5580053e298"
+    },
+    "flow:memory-update": {
+      "version": "0.1.0",
+      "hash": "9a60da70858b5fddfc00009531d88472c0d8b0f60d99bada7322ec60244a8cac"
     },
     "flow:review": {
       "version": "0.1.1",
@@ -60,9 +80,17 @@
       "version": "0.1.1",
       "hash": "eb9e5db7f8daccb17567ad67c7f0bde539b796945895f104d15672de4c6b7502"
     },
+    "role:archivist": {
+      "version": "0.1.0",
+      "hash": "b8dfa71592b82d065b5693eb7f5213530cd77a3bd5a2fd31259e6d6459db539c"
+    },
     "role:builder": {
       "version": "0.3.1",
       "hash": "73e430e948d742a4d9d8b3ff96ce0e7e43c8a8d5845cf6e634e414e4725ba38a"
+    },
+    "role:cartographer": {
+      "version": "0.1.0",
+      "hash": "cceeed81f108c690a79ea8fb0580ce02a3b06a66faa4b9280dfd7629b0c1c928"
     },
     "role:explainer": {
       "version": "0.1.1",

@@ -66,7 +66,12 @@ Chạy `doctor` mà không có `--project` (và thư mục hiện tại không c
 | `/ai-feature <yêu cầu>` | Làm tính năng từ đầu đến cuối: spec → plan (bạn duyệt) → code → review |
 | `/ai-bugfix <triệu chứng>` | Tìm nguyên nhân, sửa và kiểm chứng một lỗi |
 | `/ai-explain <câu hỏi>` | Hiểu một đoạn code hoạt động thế nào |
+| `/ai-memory-init [mô tả dự án mới]` | Tạo memory bank: dự án mới (từ mô tả) hoặc dự án có sẵn (khảo sát repo và git) |
+| `/ai-memory-update [run \| ghi chú]` | Cập nhật memory bank sau một thay đổi đáng kể |
+| `/ai-map-init [module \| mô tả dự án mới]` | Tạo project map + repo map cho dự án mới hoặc dự án có sẵn |
+| `/ai-map-update [module \| run]` | Map thêm một module, hoặc làm mới map sau khi code đổi |
 | `/ai-learn <run \| ghi chú>` | Ghi tri thức dự án để các lần sau dùng lại |
+| `/ai-knowledge-audit [vùng]` | Rà tri thức dự án với code hiện tại, sửa phần sai hoặc lỗi thời |
 
 Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigator` để tìm nguyên nhân…"*. Danh sách đầy đủ theo tình huống: [USAGE.md](USAGE.md).
 
@@ -86,6 +91,8 @@ Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigat
 | `verifier` | read + Bash | findings | `correctness`, `security`, `conventions`, `performance`, `adversarial` |
 | `explainer` | read | explanation | |
 | `scribe` | write (chỉ thư mục knowledge) | notes | |
+| `archivist` | exec (chỉ ghi thư mục memory bank) | notes | |
+| `cartographer` | exec (chỉ ghi thư mục maps) | notes | |
 | `researcher` | read + WebSearch/WebFetch | research | |
 
 | Trait | Dùng cho |
@@ -102,7 +109,12 @@ Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigat
 | `feature` | `/ai-feature <yêu cầu>` | spec → plan (bạn duyệt) → builder theo từng unit, chia đợt → review ×3 → confirm → tối đa 2 vòng sửa |
 | `bugfix` | `/ai-bugfix <triệu chứng>` | investigate (hỏi khi chưa chắc) → fix → verifier-correctness → tối đa 1 vòng sửa |
 | `explain` | `/ai-explain <câu hỏi>` | explainer trả lời, kèm đường đi trong code |
+| `memory-init` | `/ai-memory-init [mô tả]` | archivist tạo 6 file memory bank: dự án mới từ mô tả, dự án có sẵn từ khảo sát repo và git |
+| `memory-update` | `/ai-memory-update [run \| ghi chú]` | archivist làm mới activeContext, progress (và decisions khi có quyết định kiến trúc) từ git |
+| `map-init` | `/ai-map-init [module \| mô tả dự án mới]` | cartographer tạo project map + repo map: dự án mới chỉ có index và module dự kiến, dự án có sẵn thì khảo sát, liệt kê mọi module và map chi tiết module được chọn |
+| `map-update` | `/ai-map-update [module \| run \| ghi chú]` | cartographer map thêm một module, map lại một module, hoặc làm mới mọi map từ `git diff` kể từ commit ghi trong map |
 | `learn` | `/ai-learn <run \| ghi chú>` | scribe ghi tri thức lâu dài vào thư mục knowledge |
+| `knowledge-audit` | `/ai-knowledge-audit [vùng]` | verifier đối chiếu tri thức với code → bạn duyệt → scribe sửa |
 
 | Policy (opt-in) | Bật bằng | Chặn |
 |---|---|---|
@@ -118,7 +130,7 @@ Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigat
 |---|---|---|
 | `zentao` | `zentao` | analyst, architect, investigator, researcher, explainer **đọc** được ticket (cho phép sẵn); nhóm **ghi** (comment, đổi trạng thái) chỉ có khi dự án tự cấp, và luôn phải có người duyệt |
 
-Build mặc định sinh ra 14 agent và 5 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
+Build mặc định sinh ra 16 agent và 9 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
 
 ## Cấu trúc
 
@@ -195,5 +207,6 @@ Quy tắc phiên bản: [kernel/conventions.md](kernel/conventions.md), mục 8.
 | [USAGE.md](USAGE.md) | Dùng theo tình huống: review, làm tính năng, sửa lỗi… |
 | [EXTEND.md](EXTEND.md) | Dự án đã có bộ agent, skill riêng |
 | [PARTIAL.md](PARTIAL.md) | Chỉ phụ trách một phần của repo dùng chung |
+| [MAPS.md](MAPS.md) | Code maps (project map + repo map): thiết lập, dùng và duy trì |
 | [ROADMAP.md](ROADMAP.md) | Trạng thái và kế hoạch |
 | [CHANGELOG.md](CHANGELOG.md) | Lịch sử phiên bản |

@@ -25,6 +25,20 @@ test('knowledge: every agent is pointed at the index, the scribe at its director
   assert.match(await read(root, '.claude/skills/ai-explain/SKILL.md'), /--produces explanation/);
 });
 
+test('knowledge-audit: the verifier checks read-only behind a human gate, then the scribe applies', async () => {
+  const root = await built('knowledge: docs/knowledge\n');
+  const skill = await read(root, '.claude/skills/ai-knowledge-audit/SKILL.md');
+  const check = skill.indexOf('### Step 1: `check`');
+  const apply = skill.indexOf('### Step 2: `apply`');
+  assert.ok(check >= 0 && apply > check);
+  assert.match(skill.slice(check, apply), /Start the agent `ai-verifier`\./);
+  assert.match(skill.slice(check, apply), /without editing anything/);
+  assert.match(skill.slice(check, apply), /\*\*Gate\*\* `human`/);
+  assert.match(skill.slice(apply), /\*\*Run only if\*\* the handoffs of step `check` contain at least one finding/);
+  assert.match(skill.slice(apply), /Start the agent `ai-scribe`\./);
+  assert.match(skill.slice(apply), /--produces notes/);
+});
+
 test('without knowledge, agents get no pointer and the scribe knows to stop', async () => {
   const root = await built('');
   assert.doesNotMatch(await read(root, '.claude/agents/ai-builder.md'), /INDEX\.md/);

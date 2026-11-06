@@ -57,7 +57,12 @@ Sau khi build, dự án có các lệnh sau trong Claude Code:
 | `/ai-feature <yêu cầu>` | Làm tính năng từ đầu đến cuối: spec → plan (bạn duyệt) → code → review |
 | `/ai-bugfix <triệu chứng>` | Tìm nguyên nhân, sửa và kiểm chứng một lỗi |
 | `/ai-explain <câu hỏi>` | Hiểu một đoạn code hoạt động thế nào |
+| `/ai-memory-init [mô tả dự án mới]` | Tạo memory bank: dự án mới (từ mô tả) hoặc dự án có sẵn (khảo sát repo và git) |
+| `/ai-memory-update [run \| ghi chú]` | Cập nhật memory bank sau một thay đổi đáng kể |
+| `/ai-map-init [module \| mô tả dự án mới]` | Tạo project map + repo map cho dự án mới hoặc dự án có sẵn |
+| `/ai-map-update [module \| run]` | Map thêm một module, hoặc làm mới map sau khi code đổi |
 | `/ai-learn <run \| ghi chú>` | Ghi tri thức dự án để các lần sau dùng lại |
+| `/ai-knowledge-audit [vùng]` | Rà tri thức dự án với code hiện tại, sửa phần sai hoặc lỗi thời |
 
 Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigator` để tìm nguyên nhân…"*. Danh sách đầy đủ theo tình huống: [stack/USAGE.md](stack/USAGE.md).
 
@@ -79,7 +84,10 @@ node <stack>/kernel/cli/stack.mjs doctor --project <dự án>   # phải là 0 e
 | [stack/INSTALL.md](stack/INSTALL.md) | Cài trên máy mới, cấp quyền, lỗi thường gặp |
 | [stack/INTEGRATE.md](stack/INTEGRATE.md) | Đưa vào dự án có sẵn, commit gì, gỡ ra |
 | [stack/USAGE.md](stack/USAGE.md) | Dùng theo tình huống |
+| [stack/KNOWLEDGE.md](stack/KNOWLEDGE.md) | Tri thức dự án: ghi, tra, rà soát và duy trì |
+| [stack/MEMORY-BANK.md](stack/MEMORY-BANK.md) | Memory bank: tạo cho dự án mới hoặc có sẵn, cập nhật và duy trì |
 | [stack/EXTEND.md](stack/EXTEND.md) | Dự án đã có agent, skill riêng |
 | [stack/PARTIAL.md](stack/PARTIAL.md) | Chỉ phụ trách một phần của repo dùng chung |
+| [stack/MAPS.md](stack/MAPS.md) | Code maps (project map + repo map): thiết lập, dùng và duy trì |
 | [stack/ROADMAP.md](stack/ROADMAP.md) | Trạng thái và kế hoạch |
 | [stack/CHANGELOG.md](stack/CHANGELOG.md) | Lịch sử phiên bản |

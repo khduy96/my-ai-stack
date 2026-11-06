@@ -57,10 +57,13 @@ export async function applyPolicies(modules, ws, diags) {
     const where = sourceOf(policy);
     let config = policy.data.config ?? {};
     if (id === 'scope') {
-      // The project's `scope` wins; flow run state and the knowledge directory stay writable.
+      // The project's `scope` wins; flow run state, the knowledge directory, the memory bank and the maps stay writable.
       const paths = ws.config.scope?.length ? ws.config.scope : config.paths ?? [];
       if (!paths.length) diags.error('schema-invalid', 'policy "scope" is enabled without paths; set scope: [paths] in project.yaml', ws.projectFile ?? where);
-      const extra = [`${ws.config.runs ?? RUNS_DIR}/`, ...(ws.config.knowledge ? [`${ws.config.knowledge}/`] : [])];
+      const extra = [
+        `${ws.config.runs ?? RUNS_DIR}/`,
+        ...[ws.config.knowledge, ws.config.memory_bank, ws.config.maps].filter(Boolean).map((dir) => `${dir}/`),
+      ];
       config = { ...config, paths, always_allowed: [...new Set([...(config.always_allowed ?? []), ...extra])] };
     }
 

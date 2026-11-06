@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "$id": "https://ai-stack.local/contracts/notes.schema.json",
   "title": "Notes",
-  "description": "Knowledge the scribe recorded, and the candidates it chose to leave out.",
+  "description": "Knowledge the scribe, the archivist or the cartographer recorded, and the candidates it chose to leave out.",
   "type": "object",
   "required": ["written"],
   "properties": {
     "written": {
       "type": "array",
-      "description": "Knowledge files created or updated.",
+      "description": "Knowledge, memory bank or map files created or updated.",
       "items": {
         "type": "object",
         "required": ["file", "change", "title"],

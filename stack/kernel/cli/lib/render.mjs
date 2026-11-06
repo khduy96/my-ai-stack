@@ -5,6 +5,8 @@
 //   {{project.context}} project context, read_first list, knowledge pointer, policy rules
 //   {{project.name}}    project name
 //   {{project.knowledge}} knowledge directory (empty when the project has none)
+//   {{project.memory_bank}} memory bank directory (empty when the project has none)
+//   {{project.maps}}    code maps directory (empty when the project has none)
 //   {{role.name}}       generated agent name, e.g. ai-verifier-security
 //   {{role.output}}     field list of the contract the role `produces` (empty if none)
 //   {{contract.<name>}} field list of kernel/contracts/<name>.schema.json
@@ -31,6 +33,30 @@ function renderContext(ws) {
         : 'then search that directory for the terms of your task';
     parts.push(
       `Durable project knowledge lives in \`${config.knowledge}/\`. Start from \`${config.knowledge}/INDEX.md\`, ${find}, and cite the knowledge files you rely on. If they contradict the code, trust the code and say so.`,
+    );
+  }
+  if (config.memory_bank) {
+    const mb = config.memory_bank;
+    parts.push(
+      [
+        `The project memory bank lives in \`${mb}/\`. Before you start, read \`${mb}/projectbrief.md\` (what the project is, scope, domain terms) and \`${mb}/activeContext.md\` (current focus, recent changes, gotchas). Read the others only when the task touches them:`,
+        `- \`${mb}/systemPatterns.md\`: architecture, module boundaries, patterns to follow`,
+        `- \`${mb}/techContext.md\`: stack, commands, build and environment`,
+        `- \`${mb}/decisions.md\`: before proposing an approach the project may already have rejected`,
+        `- \`${mb}/progress.md\`: planning, status, open work`,
+        'A missing file is fine. Facts marked [?] are unconfirmed. The memory bank can lag behind the code: when they disagree, trust the code and git, and say so. Only the archivist edits it.',
+      ].join('\n'),
+    );
+  }
+  if (config.maps) {
+    const dir = config.maps;
+    const update = `/${config.prefix ?? ''}map-update`;
+    parts.push(
+      [
+        `Code maps live in \`${dir}/\`. Before you search the code, read \`${dir}/PROJECT_MAP.md\`: it lists the mapped modules with their keywords and points to each module's project map \`${dir}/<module>.MAP.md\` (feature → files, callers, dependencies, pitfalls, symptoms). Search the code only to confirm or to go beyond what the map gives you.`,
+        `Before you change a signature, a public or bridge API, a shared model, or anything another module calls, read \`${dir}/REPO_MAP.md\` and the module's \`${dir}/<module>.REPO.MAP.md\` (symbols, call flows, inbound and outbound contact points with their risk, generated files and how to regenerate them).`,
+        `A module listed under "Not mapped", or not listed at all, has no map: search normally. Facts marked [?] are unconfirmed. Maps can lag behind the code: when they disagree, trust the code and say so. Only the cartographer edits maps; when your change adds, moves or removes a feature's files or changes what other modules call, say in your summary that the maps need \`${update}\`.`,
+      ].join('\n'),
     );
   }
   if (ws.rules?.length) parts.push(['Project rules:', ...ws.rules.map((rule) => `- ${rule}`)].join('\n'));
@@ -72,6 +98,8 @@ function expand(text, ctx, where, diags, onSlot = null) {
     if (ns === 'project' && key === 'context') return renderContext(ctx.ws);
     if (ns === 'project' && key === 'name') return ctx.ws.config.name ?? '';
     if (ns === 'project' && key === 'knowledge') return ctx.ws.config.knowledge ?? '';
+    if (ns === 'project' && key === 'memory_bank') return ctx.ws.config.memory_bank ?? '';
+    if (ns === 'project' && key === 'maps') return ctx.ws.config.maps ?? '';
     if (ns === 'role' && key === 'name') return ctx.agentName;
     if (ns === 'role' && key === 'output') return renderOutput(ctx.data.produces);
     if (ns === 'contract' && key) {
