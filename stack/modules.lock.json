@@ -12,6 +12,10 @@
       "version": "0.1.2",
       "hash": "8a469b87175d4236502c89213c5186661f882fe2c365e013649416730a878cdb"
     },
+    "flow:fix": {
+      "version": "0.1.0",
+      "hash": "c296d7d76f5fc6fcfc50ff81b776af4d75d91eea8b3498628ace92d1ccf49490"
+    },
     "flow:knowledge-audit": {
       "version": "0.1.0",
       "hash": "47841d506291fb1cf8dabcfb474b9e8f69bc2012d3f0f4ad7e4720340e0f96c7"
@@ -77,8 +81,8 @@
       "hash": "af0d052196621b569e45733d556b318285a67a0924c1268a5860ed225a9bc482"
     },
     "role:architect": {
-      "version": "0.1.1",
-      "hash": "eb9e5db7f8daccb17567ad67c7f0bde539b796945895f104d15672de4c6b7502"
+      "version": "0.2.0",
+      "hash": "2637fe17a3a570abff926777758e36ea9cebf7758c2c566a01f0df673f4b6e2b"
     },
     "role:archivist": {
       "version": "0.1.0",

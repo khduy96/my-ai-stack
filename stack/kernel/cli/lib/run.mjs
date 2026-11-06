@@ -11,7 +11,7 @@ import { readText } from './load.mjs';
 
 const RANK = { info: 0, minor: 1, major: 2, critical: 3 };
 
-async function handoffsIn(dir) {
+export async function handoffsIn(dir) {
   const out = [];
   for (const e of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
     const p = path.join(dir, e.name);
@@ -21,7 +21,7 @@ async function handoffsIn(dir) {
   return out;
 }
 
-async function readHandoff(file) {
+export async function readHandoff(file) {
   try {
     const data = YAML.parse((await readText(file)) ?? '');
     return data?.handoff ?? data;

@@ -37,6 +37,7 @@ test('the real stack builds valid agents and rebuilding changes nothing', async 
     'skills/ai-bugfix/SKILL.md',
     'skills/ai-explain/SKILL.md',
     'skills/ai-feature/SKILL.md',
+    'skills/ai-fix/SKILL.md',
     'skills/ai-knowledge-audit/SKILL.md',
     'skills/ai-learn/SKILL.md',
     'skills/ai-map-init/SKILL.md',

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://ai-stack.local/contracts/feedback.schema.json",
+  "title": "Feedback",
+  "description": "The user's verdict on a finished flow run, saved as <run>/feedback.yaml under the root key \"feedback\". Read by `stack stats`.",
+  "type": "object",
+  "required": ["verdict"],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": { "enum": ["useful", "partial", "not-useful"], "description": "useful = used as is; partial = used after changes or only in part; not-useful = not used." },
+    "wrong": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" }, "description": "Findings in report.md the user judged wrong or not worth acting on, by number (F1, F2…)." },
+    "note": { "type": "string", "description": "The user's own words, when they gave any." },
+    "at": { "type": "string", "description": "ISO timestamp, taken from the shell." }
+  }
+}

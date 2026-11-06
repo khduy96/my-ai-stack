@@ -117,6 +117,7 @@ export async function install({ stackRoot, target = homedir(), force = false, dr
 
 // Validates one saved handoff: the handoff contract, plus handoff.output against the
 // contract the agent's role produces. Accepts a bare YAML file or text with a ```yaml fence.
+// A file with the root key "feedback" (a run's feedback.yaml) is validated as feedback instead.
 export async function check({ file, produces = null }) {
   const diags = createDiagnostics();
   const text = await readText(file);
@@ -131,6 +132,11 @@ export async function check({ file, produces = null }) {
     data = YAML.parse(fences.length ? fences.at(-1)[1] : text);
   } catch (e) {
     diags.error('parse-error', String(e.message).split('\n')[0], file);
+    return { diags };
+  }
+  // A run's feedback.yaml is checked against its own contract.
+  if (data && typeof data === 'object' && !Array.isArray(data) && 'feedback' in data) {
+    validate('feedback', data.feedback ?? {}, file, diags);
     return { diags };
   }
   const handoff = data && typeof data === 'object' && 'handoff' in data ? data.handoff : data;

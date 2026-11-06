@@ -1,6 +1,6 @@
 # Lộ trình ai-stack
 
-Cập nhật: 2026-10-21 · kernel 1.1.0
+Cập nhật: 2026-11-06 · kernel 1.3.0
 
 ## Trạng thái
 
@@ -44,6 +44,14 @@ Cập nhật: 2026-10-21 · kernel 1.1.0
   - Chạy thật lộ ra: đường dẫn 8.3 trên Windows làm Claude Code chặn mọi lệnh ghi (đã dùng đường dẫn đầy đủ); `date` bị từ chối nên timestamp bị đoán (đã cho phép).
 - **Tài liệu:** INSTALL (máy mới), INTEGRATE (dự án có sẵn), USAGE (theo tình huống), EXTEND (bộ agent/skill riêng), PARTIAL (chỉ phụ trách một phần repo, kèm hook mẫu `templates/hooks/scope-guard.mjs`, đã chạy thử trong Claude Code).
 
+- **Dùng thật và đo (1.3.0):** `stack stats` trên 5 dự án (`anhDung`, `event_notice`, `git_tools`, `assistant`, `tbchat_CS_Fav`), 32 run từ 2026-10-20 đến 2026-11-05:
+  - Dùng: `feature` 13 run, `explain` 10, `bugfix` 4, `learn` 1, `review` riêng chỉ 1 (review chủ yếu chạy bên trong `feature`), memory bank và maps chưa dùng. 3 run "adhoc-builders" tự dựng để sửa nốt minor → thêm flow `fix`.
+  - Tin cậy: 259 handoff, 0 handoff hỏng. 4 run treo ở `waiting`: một plan 98 unit có unit `agent: human` (UAT) giữa các giai đoạn (→ architect 0.2.0 chia theo giai đoạn), một run mở khi agent chưa được nạp vào phiên (→ protocol), hai run không có ghi chú (→ bắt buộc `note`).
+  - Review (14 run): 226 finding thô, chỉ 6 critical/major (4 critical bắt được ở `tbchat … select-folder-sheet-ui`, vòng sửa xử lý hết); adversarial bác 14; 25 giữ ở `Pre-existing`. Phần lớn còn lại là minor/info.
+  - Chi phí (mọi run chạy Opus vì `model: inherit`): builder chiếm 56% output token của subagent, investigator 15%, architect 8%; mỗi verifier chỉ 2–4%. `feature` khoảng 550k output token mỗi run, `explain` khoảng 14k. Investigator được gọi thẳng 28/33 lần, ngoài flow.
+  - Code: run có sửa file thì file đều đã được commit (17 run, tính cả submodule) hoặc còn chưa commit (2 run của `assistant`), không run nào bị bỏ.
+  - Còn thiếu: chưa có feedback của người dùng (0/32 run được chấm) → từ 1.3.0 flow tự hỏi cuối báo cáo.
+
 ## Còn lại
 
 ### P1 – Bộ tối thiểu
@@ -81,15 +89,18 @@ Cập nhật: 2026-10-21 · kernel 1.1.0
 ## Nợ kỹ thuật
 
 - [ ] Đường dẫn CLI trong skill sinh ra là đường dẫn tuyệt đối, nên mỗi máy build ra file khác nhau. Có khóa `cli` để ghi đè; nếu team dùng chung thì cần phân phối CLI qua npm hoặc plugin.
-- [ ] Chưa áp dụng vào dự án thật nào.
-- [ ] Chưa commit.
+- [x] ~~Chưa áp dụng vào dự án thật nào.~~ Đã dùng trên 5 dự án, đo bằng `stack stats` (1.3.0).
+- [x] ~~Chưa commit.~~
+- [ ] Chưa có feedback của người dùng: cần vài tuần trả lời câu hỏi cuối báo cáo để biết tỉ lệ run dùng được và finding sai.
+- [ ] `stack stats` chưa tính token của phiên điều phối (chỉ subagent) và chưa quy ra tiền.
 
 ## Thứ tự đề xuất tiếp theo
 
-1. Áp ai-stack lên `kho/` thật bằng `/stack` (giờ có bước hỏi công cụ team dùng), chờ duyệt
-2. Phần P3 còn lại: ghi ngược lên tracker (chờ quyết thiết kế), loại module `skill`
-3. P5: engine Workflow / Agent SDK (chạy không cần người, CI), `isolation: worktree`, retriever vector
-4. Thêm tình huống eval cho `feature` (foreach + loop) và cho pack `flutter`
+1. Thu feedback 2–4 tuần trên các dự án đang dùng, rồi chạy `stack stats` để quyết: flow nào giữ, flow nào bỏ, finding loại nào nhiễu
+2. Thử `model` riêng cho builder (ví dụ `sonnet` cho unit đơn giản) và so token/chất lượng bằng `stack stats` + feedback
+3. Áp ai-stack lên `kho/` thật bằng `/stack` (giờ có bước hỏi công cụ team dùng), chờ duyệt
+4. Phần P3 còn lại: ghi ngược lên tracker (chờ quyết thiết kế), loại module `skill`
+5. Thêm tình huống eval cho `feature` (foreach + loop), pack `flutter` và `fix`
 
 ## Các quyết định đã chốt
 

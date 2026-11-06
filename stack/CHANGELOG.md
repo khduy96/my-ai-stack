@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-11-06 (đo trên dự án thật)
+
+- `stack stats [projects...] [--since <date>] [--json] [--transcripts <dir|none>] [--no-git]`: read-only measurement of flow runs on real projects. Per flow: runs, done / waiting / failed, median agent minutes, subagents, output tokens per run. Findings before and after the adversarial pass (only runs whose last findings come from a review step). Whether the files the agents changed were committed, are still uncommitted or were discarded, asked per repository so submodules count. Users' feedback. Subagent tokens per agent type from Claude Code transcripts, joined to runs through the run directory named in each task, split into "in runs" and "direct" calls (the orchestrating session is not counted). Waiting runs with their age, note and `--resume` command.
+- Every flow run now saves its report as `<run>/report.md` with findings numbered `F1`, `F2`…, and ends by asking the user for a one-line rating; an answer is saved as `<run>/feedback.yaml` (contract `feedback`: `verdict` useful | partial | not-useful, `wrong` [F…], `note`, `at`). `stack check` validates feedback files.
+- Waiting runs carry a `note` saying what they wait for; when the Agent tool does not know an agent type (agents built after the session started) the run waits with the note `agents not loaded in this session` instead of the orchestrator doing the work itself. Runs with `--workflow` also write a run directory (`run.yaml`, report, feedback) so they are counted.
+- Flow `fix` (`/ai-fix <run> [F2 F3 | major | minor | all] | <findings>`): one builder fixes the selected findings of a run (default: its confirmed critical, major and minor findings; Rejected and Pre-existing only when named), then verifier-correctness checks them. Replaces the ad-hoc builder runs seen in real use.
+- Role `architect` 0.2.0: steps only a person can do (deploy, live configuration, real data migration, device testing) are not units; work split by such steps is planned one phase at a time, later phases under `next`. Found in real use: a 98-unit plan with human UAT units has waited at its first gate for 10 days.
+- Measured on 5 real projects (32 runs, 2026-10-20 to 2026-11-05): see ROADMAP.md.
+- Additive release: modules keep `kernel: ^1`.
+
 ## 1.2.0 — 2026-11-06 (memory bank)
 
 - Memory bank: `memory_bank: <dir>` in project.yaml declares six fixed files (`projectbrief`, `activeContext`, `systemPatterns`, `techContext`, `decisions`, `progress`) that carry the project's brief, current state and decisions across sessions. Every agent is told to read the brief and the active context first and the rest on demand, and to trust the code when they disagree. Placeholder `{{project.memory_bank}}`; the scope policy keeps the directory writable.
