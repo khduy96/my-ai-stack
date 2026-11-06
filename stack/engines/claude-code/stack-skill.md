@@ -26,6 +26,8 @@ Collect, without changing anything:
 - **Existing Claude setup:** `.claude/agents/`, `.claude/skills/`, `.claude/settings*.json`; whether `.claude/` is tracked by git (`git ls-files .claude`); whether any file there starts with `{{stack.prefix}}`.
 - **Hints about tools:** the git remote (GitHub, GitLab…), CI files (`.github/workflows/`, `.gitlab-ci.yml`…), ticket references in recent commit messages, links in the README. These are hints to propose, not answers.
 - **Git state:** uncommitted changes (`git status --short`), so you can warn before writing.
+- **Memory bank:** an existing `memory-bank/` (or similar) directory with `projectbrief.md` / `activeContext.md`, and whether `CLAUDE.md` already imports it. Whether the repository has source code and history yet (a new or an existing project).
+- **Code maps:** an existing `maps/` (or similar) directory with `PROJECT_MAP.md` / `REPO_MAP.md`, and how the code splits into modules (feature folders, packages, apps, submodules) with a rough size of each.
 
 Summarize what you found in a few lines before asking anything.
 
@@ -41,11 +43,13 @@ Ask only what the survey did not settle. Prefer multiple choice with a recommend
 6. **Guards (optional, recommended):** refuse edits to generated files (`protect-generated`; propose patterns from the survey, e.g. `**/*.g.dart`), and refuse writing secrets into files (`no-secrets`).
 7. **Packs:** propose the packs that match the survey (available: {{stack.packs}}; for example `flutter` when there is a `pubspec.yaml` with the Flutter SDK).
 8. **Knowledge (optional):** a directory for durable project knowledge (e.g. `docs/knowledge`) that agents consult and `/{{stack.prefix}}learn` writes to. Propose one only if the user wants it; it is created on first use.
-9. **What to enable:** everything (recommended), or a subset of:
+9. **Memory bank (optional, recommended for long-running work):** a directory (default `memory-bank`) of six fixed files carrying the project brief, current state and decisions across sessions; every agent reads it, `/{{stack.prefix}}memory-init` creates it and `/{{stack.prefix}}memory-update` refreshes it. If the survey found one, propose pointing `memory_bank:` at it instead of creating another. Ask whether it is shared (committed) or personal (excluded).
+10. **Code maps (optional, recommended for large codebases):** a directory (default `maps`) holding a project map (by feature and keyword) and a repo map (symbols and contact points between modules), one pair per module; every agent reads them before searching, `/{{stack.prefix}}map-init` creates them and `/{{stack.prefix}}map-update <module>` maps one more module or refreshes them. If the survey found maps, propose pointing `maps:` at them instead of creating another set. Ask which modules to map first (default: the scope, if any) and whether the maps are shared (committed) or personal (excluded).
+11. **What to enable:** everything (recommended), or a subset of:
 
 {{stack.catalog}}
 
-10. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
+12. **Prefix:** keep `{{stack.prefix}}` unless the survey found files that would clash.
 
 ## 4. The tools the team uses
 
@@ -103,6 +107,8 @@ read_first:
 # settings: shared                              <shared setup that commits settings.json>
 # scope: [<path>, ...]                          <when scoped>
 # knowledge: <dir>                              <when wanted>
+# memory_bank: memory-bank                      <when wanted>
+# maps: maps                                    <when wanted>
 # packs: [<pack>, ...]                          <when chosen>
 # modules: [.ai]                                <when the project has its own integrations>
 # permissions: ['+Bash(<read-only command> *)'] <CLI fallbacks the user approved>
@@ -144,7 +150,7 @@ roles:                                          <when there are checks>
   .ai-runs/
   .ai/
   ```
-  Add the knowledge directory too when the user wants it kept private.
+  Add the knowledge directory too when the user wants it kept private, and the memory bank and maps directories when they are personal.
 - **Shared:** add `.ai-runs/` to `.gitignore`, and `settings: shared` to `project.yaml` if the team should get the permissions and hooks through `settings.json`. Mention that generated skills contain the absolute CLI path of this machine; if the stack is inside this repository, propose `cli: node <relative path to stack.mjs>` in `project.yaml` so every machine builds the same files.
 - **Integrations of the project:** `.ai/integrations/<id>.yaml` as approved in step 4.
 - **Permissions and hooks:** do not edit settings files yourself. The build adds the flow permissions, the pre-approved read tools of enabled integrations, the `permissions` of `project.yaml` and the hooks of enabled guards to `.claude/settings.local.json` (or `settings.json` with `settings: shared`), and later builds change or remove only the entries they added. Mention this in the plan.
@@ -163,6 +169,6 @@ roles:                                          <when there are checks>
    - the files written or changed;
    - the agents and commands now available (from the build output);
    - for each tool the team uses: how agents reach it now (integration, CLI, or pasted content) and what is still to connect;
-   - what to try first, for example `/{{stack.prefix}}review` on a small change;
+   - what to try first, for example `/{{stack.prefix}}review` on a small change; with a memory bank that does not exist yet, `/{{stack.prefix}}memory-init` first (with a description of the project when it is new); with maps that do not exist yet, `/{{stack.prefix}}map-init` (with the modules to map first, or the planned modules of a new project);
    - that a new session may be needed before the new agents and commands show up;
    - where to read more: `{{stack.root}}/USAGE.md`.

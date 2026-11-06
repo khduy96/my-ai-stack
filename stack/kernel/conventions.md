@@ -82,9 +82,11 @@ roles:
 | Placeholder | Dùng ở | Thay bằng |
 |---|---|---|
 | `{{<slot>}}` | body role | body của các trait có `slot` tương ứng |
-| `{{project.context}}` | role, trait | `context`, danh sách `read_first`, chỉ dẫn tới thư mục `knowledge`, và mục "Project rules" từ các policy đang bật |
+| `{{project.context}}` | role, trait | `context`, danh sách `read_first`, chỉ dẫn tới thư mục `knowledge`, memory bank và maps, và mục "Project rules" từ các policy đang bật |
 | `{{project.name}}` | role, trait | `name` của dự án |
 | `{{project.knowledge}}` | role, trait | thư mục `knowledge` của dự án; để trống nếu không khai |
+| `{{project.memory_bank}}` | role, trait | thư mục `memory_bank` của dự án; để trống nếu không khai |
+| `{{project.maps}}` | role, trait | thư mục `maps` của dự án; để trống nếu không khai |
 | `{{role.name}}` | role, trait | tên agent sinh ra, ví dụ `ai-verifier-security` |
 | `{{role.output}}` | role, trait | mô tả contract mà role `produces`; để trống nếu role không khai |
 | `{{contract.<name>}}` | role, trait | danh sách field của `contracts/<name>.schema.json` |
@@ -247,6 +249,25 @@ Lock ghi lại **đúng những mục build đã thêm** (`settings` trong `.sta
 
 `knowledge: <dir>` trong project.yaml khai thư mục tri thức của dự án, trong đó có `INDEX.md`. Mọi agent được dặn đọc `INDEX.md` trước, tìm trong thư mục theo từ khóa của task, và tin code khi tri thức mâu thuẫn với code. Role `scribe` là role duy nhất ghi vào thư mục này (qua flow `learn`). `knowledge: { dir, retriever: index }` cho agent tra bằng `stack search "<từ khóa>"`: BM25 trên tiêu đề, tag và nội dung, không phân biệt dấu, tính lại mỗi lần gọi nên không có chỉ mục cũ; quyền chạy lệnh được build thêm vào settings. Tìm theo ý nghĩa (vector) thì dùng một MCP server qua integration.
 
+### Memory bank
+
+`memory_bank: <dir>` khai thư mục memory bank: 6 file cố định mang trạng thái dự án từ phiên này sang phiên sau — `projectbrief.md` (dự án là gì, phạm vi, thuật ngữ), `activeContext.md` (đang làm gì, thay đổi gần đây, cạm bẫy), `systemPatterns.md` (kiến trúc, pattern), `techContext.md` (stack, lệnh, môi trường), `decisions.md` (quyết định và phương án đã loại), `progress.md` (xong, đang làm, còn lại). Mọi agent được dặn đọc `projectbrief.md` và `activeContext.md` trước, các file còn lại khi task chạm tới, và tin code khi memory bank lạc hậu. Role `archivist` là role duy nhất ghi vào thư mục này, qua flow `memory-init` (dự án mới: từ mô tả của người dùng; dự án có sẵn: khảo sát repo và git) và `memory-update` (làm mới từ git sau mỗi việc).
+
+Khác với knowledge: knowledge là tri thức **lâu dài theo chủ đề** (một file mỗi chủ đề, có INDEX), không ghi trạng thái công việc; memory bank là **ảnh chụp dự án** với cấu trúc cố định, gồm cả trạng thái hiện tại. Dùng một trong hai hoặc cả hai.
+
+### Maps
+
+`maps: <dir>` khai thư mục code map, gồm hai loại, mỗi loại một file index và một file cho mỗi module đã map:
+
+| | Project map | Repo map |
+|---|---|---|
+| Trả lời | "Tính năng X nằm đâu, ai gọi nó?" | "Đổi X thì vỡ gì?" |
+| Index | `PROJECT_MAP.md`: mỗi module một mục (đường dẫn, entry point, từ khóa) + mục "Not mapped" | `REPO_MAP.md`: mỗi module một mục (entry point, số lời gọi từ module khác) |
+| Theo module | `<module>.MAP.md`: theo tính năng: UI, state, các layer, text, được gọi từ, phụ thuộc, bẫy; bảng public API; bảng triệu chứng | `<module>.REPO.MAP.md`: tổng quan, luồng và symbol theo tính năng, INBOUND / OUTBOUND kèm rủi ro, shared/global, file generated và lệnh sinh, bẫy |
+| Đường dẫn | ngắn, tính từ module | đầy đủ, tính từ gốc repo |
+
+Mọi agent được dặn đọc `PROJECT_MAP.md` trước khi tìm code, đọc repo map trước khi đổi thứ module khác gọi tới, tìm bình thường với module "Not mapped", tin code khi map lạc hậu, và báo trong summary khi thay đổi của nó cần `map-update`. Role `cartographer` là role duy nhất ghi vào thư mục này, qua flow `map-init` (dự án mới: chỉ index và module dự kiến; dự án có sẵn: khảo sát, liệt kê mọi module, map chi tiết module được chọn) và `map-update` (map thêm một module, hoặc làm mới từ `git diff` kể từ commit ghi ở đầu mỗi map).
+
 ## 6. Policy
 
 **Policy** trả lời câu hỏi *agent được làm gì trong dự án này*. Policy là **opt-in**: `enable.policies` mặc định để trống.
@@ -271,7 +292,7 @@ permissions: [ … ]                               # tùy chọn
 
 - Chuỗi trong `rule`, `overrides`, `permissions` dùng được `{{config.<key>}}`; list được nối bằng dấu `, `.
 - Dự án đổi config bằng `policies: { <id>: { config: {...} } }`. Config được gộp sâu, list thì thay hẳn.
-- **`scope: [paths]`** trong project.yaml là cách viết tắt để bật policy `scope` với các đường dẫn đó. Thư mục run và thư mục knowledge luôn được thêm vào danh sách được phép.
+- **`scope: [paths]`** trong project.yaml là cách viết tắt để bật policy `scope` với các đường dẫn đó. Thư mục run, thư mục knowledge, memory bank và maps luôn được thêm vào danh sách được phép.
 - Có sẵn 3 policy: `scope`, `protect-generated`, `no-secrets`. Dự án viết policy riêng trong thư mục module của mình (`policies/<id>.yaml` cùng script đặt cạnh).
 - Guard chỉ bắt các công cụ sửa file; lệnh shell không đi qua guard.
 

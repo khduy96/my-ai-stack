@@ -1,0 +1,53 @@
+id: map-init
+kind: flow
+version: 0.1.0
+kernel: ^1
+tags: [core, knowledge, maps]
+description: >-
+  Creates the project's code maps with the cartographer: the project map (by
+  feature and keyword) and the repo map (by structure and contact points). For a new
+  project, from your description of the planned modules; for an existing project,
+  from a survey of the code, with detailed maps of the modules you name. Use once per
+  project, after setting maps in project.yaml.
+argument_hint: "[modules to map first | description of a new project]"
+
+input:
+  description: >-
+    For a new project: what it is and the modules it will have (names, paths,
+    purpose), in the user's words. For an existing project: nothing, or the modules to
+    map first (for example the module this person owns).
+  default: Existing project; survey the repository, list every module, and map the modules in the scope of the project context, if any.
+
+steps:
+  - id: create
+    agent: cartographer
+    goal: >-
+      Mode init. Decide whether this is a new or an existing project, then create
+      PROJECT_MAP.md and REPO_MAP.md, and for an existing project the project map and
+      repo map of each module to map first.
+    in:
+      source: $input
+    gate: on-questions
+
+report: >-
+  Say whether the project was treated as new or existing, then list the maps
+  created, each with a one-line summary, then the modules still under "Not mapped"
+  and the [?] items the user should confirm. Explain that each further module is
+  mapped with the map-update command and the module's name. Then check that plain
+  sessions use the maps too: if CLAUDE.md (at the project root) does not mention the
+  maps directory, show this block with the directory filled in and offer to add it to
+  CLAUDE.md (create the file if it is missing); add it only on approval.
+
+  ```
+  # Code maps
+  Before searching the code, read @<dir>/PROJECT_MAP.md and open the module map it
+  points to (`<module>.MAP.md`: feature → files, callers, dependencies, symptoms).
+  Before changing a signature or anything another module calls, read
+  `<dir>/REPO_MAP.md` and the module's `<module>.REPO.MAP.md` (symbols, inbound and
+  outbound contact points, generated files).
+  Modules under "Not mapped": search normally. Trust the code when a map disagrees
+  with it, and refresh the maps with the map-update command after a significant change.
+  ```
+
+  Finally, ask whether the maps should be shared with the team (committed) or kept
+  on this machine (add `<dir>/` to `.git/info/exclude`, never to `.gitignore`).

@@ -1,0 +1,73 @@
+id: knowledge-audit
+kind: flow
+version: 0.1.0
+kernel: ^1
+tags: [core, knowledge]
+description: >-
+  Audits the knowledge directory against the current code: a verifier checks every
+  statement and citation and reports what is wrong, stale, unverifiable, duplicated
+  or missing from INDEX.md; after your approval the scribe corrects, merges or
+  removes it. Use periodically, after a refactor, or when agents report knowledge
+  that contradicts the code.
+argument_hint: "[file | tag | area | older than N days]"
+
+input:
+  description: >-
+    What to audit: nothing for the whole knowledge directory, or a knowledge file, a
+    tag, an area of the code (for example lib/features/payment, to audit every
+    knowledge file whose sources point there), or an age (files whose `updated` is
+    older than N days).
+  default: Every file in the knowledge directory, oldest `updated` first.
+
+steps:
+  - id: check
+    agent: verifier
+    goal: >-
+      Audit the project's knowledge directory (named in the project context) against
+      the current code, without editing anything. If the project context names no
+      knowledge directory, report blocked and say to set `knowledge: <dir>` in
+      .claude/project.yaml. Select the files the input asks for; with more than about
+      30, take the 30 with the oldest `updated` and list the rest as not audited in
+      your summary. For each selected file, read it, open every path in its `sources`
+      and every path:line it cites, and check each statement against the code and
+      `git log` since its `updated` date. Report one finding per problem, located at
+      the knowledge file and line, with the code evidence and the exact correction:
+      major = the code now contradicts the statement (wrong behaviour, removed or
+      renamed thing, decision reversed); minor = a citation moved or broke but the
+      statement still holds, the statement cannot be confirmed from the code any
+      more, or two files cover the same topic (name the one to keep); info =
+      frontmatter missing or incomplete, INDEX.md lists a file that does not exist or
+      misses one that does, or a hook in INDEX.md no longer matches its file. Do not
+      report style or wording. In the summary, list the files checked and found
+      sound.
+    in:
+      scope: $input
+    gate: human
+
+  - id: apply
+    agent: scribe
+    when: { step: check, is: has-findings }
+    goal: >-
+      Apply the audit findings to the knowledge directory: correct wrong statements
+      from the cited code evidence, fix moved citations, remove statements that can
+      no longer be confirmed (or mark them [?] when the finding says they may still
+      hold), merge duplicated topics into the file the finding names, complete
+      frontmatter, and bring INDEX.md in line with the files (drop the entry of a
+      merged-away file). Set `updated` on every file you change to today's date
+      as YYYY-MM-DD, taken from the run directory name (<YYYYMMDD-HHMM>-…). Check each correction against the code
+      yourself before writing it; skip a finding you cannot confirm and say why. You
+      cannot delete files: once a merged-away file's content is in the kept one,
+      list it in your summary as `delete: <path>`.
+    in:
+      findings: $check.findings
+      scope: $input
+
+report: >-
+  Give the number of knowledge files audited, sound and changed, and any files left
+  out of this run. Then list the changes by file: corrected, citation fixed, removed,
+  merged, with one line each, then the findings the scribe skipped and why. If the
+  scribe listed files as `delete: <path>`, show them and delete them only on the
+  user's approval.
+  Show the changes with `git diff -- <knowledge dir>` when the directory is tracked;
+  never stage or commit them. If many files were left out, suggest running the
+  command again on them.

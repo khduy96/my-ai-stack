@@ -19,8 +19,10 @@ test('the real stack builds valid agents and rebuilding changes nothing', async 
   assert.deepEqual(first.ops.map((o) => o.rel).sort(), [
     'agents/ai-analyst.md',
     'agents/ai-architect.md',
+    'agents/ai-archivist.md',
     'agents/ai-builder-tests.md',
     'agents/ai-builder.md',
+    'agents/ai-cartographer.md',
     'agents/ai-explainer.md',
     'agents/ai-investigator.md',
     'agents/ai-researcher.md',
@@ -35,7 +37,12 @@ test('the real stack builds valid agents and rebuilding changes nothing', async 
     'skills/ai-bugfix/SKILL.md',
     'skills/ai-explain/SKILL.md',
     'skills/ai-feature/SKILL.md',
+    'skills/ai-knowledge-audit/SKILL.md',
     'skills/ai-learn/SKILL.md',
+    'skills/ai-map-init/SKILL.md',
+    'skills/ai-map-update/SKILL.md',
+    'skills/ai-memory-init/SKILL.md',
+    'skills/ai-memory-update/SKILL.md',
     'skills/ai-review/SKILL.md',
   ]);
 

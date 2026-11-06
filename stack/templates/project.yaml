@@ -20,6 +20,8 @@ read_first:
 # scope: [src/my-area]       # only these paths may be edited (enables the policy "scope")
 # knowledge: docs/knowledge  # durable project knowledge: agents read it, /ai-learn writes it
 #   or { dir: docs/knowledge, retriever: index } for ranked search (stack search)
+# memory_bank: memory-bank   # project brief + current state: agents read it, /ai-memory-init and /ai-memory-update write it
+# maps: maps                 # project map + repo map: agents read them before searching, /ai-map-init and /ai-map-update write them
 # engines: [skill, workflow] # also build deterministic workflows (/ai-<flow> --workflow)
 packs: []                    # e.g. [flutter]
 modules: []                  # extra module directories, relative to the project root

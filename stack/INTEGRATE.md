@@ -146,6 +146,8 @@ roles:
 packs: [flutter]                                     # bộ thêm theo công nghệ (USAGE.md, mục G3)
 scope: [lib/features/orders]                         # chỉ được sửa trong vùng này (xem PARTIAL.md)
 knowledge: docs/knowledge                            # agent tra cứu; /ai-learn ghi vào
+memory_bank: memory-bank                             # agent đọc đầu phiên; /ai-memory-init, /ai-memory-update ghi vào
+maps: maps                                           # agent đọc trước khi tìm code; /ai-map-init, /ai-map-update ghi vào
 enable:
   policies: [protect-generated, no-secrets]
   integrations: [zentao]                             # đọc ticket Zentao (USAGE.md, mục G2)
@@ -177,6 +179,8 @@ Sửa `project.yaml` xong thì chạy lại `build`.
 | `.claude/settings.json` (khi `settings: shared`) | ✔ |
 | `.claude/project.local.yaml`, `.claude/settings.local.json` | ✘, chỉ là chỉnh sửa cá nhân |
 | Thư mục knowledge | ✔ nếu muốn cả team dùng chung tri thức |
+| Thư mục memory bank | ✔ nếu cả team dùng chung; ✘ (đưa vào `.git/info/exclude`) nếu nó ghi trạng thái công việc của riêng bạn |
+| Thư mục maps | ✔ nên commit để cả team dùng chung (map chỉ mô tả code); ✘ (`.git/info/exclude`) nếu bạn chỉ map vùng của riêng mình |
 | `.ai-runs/` | ✘ |
 
 **Lưu ý khi dùng chung trong team:** skill sinh ra chứa đường dẫn tuyệt đối tới CLI của máy đã build nó. Để mọi máy build ra cùng một kết quả, đặt khóa `cli` trong `project.yaml` thành một lệnh chạy được trên mọi máy. Ví dụ, nếu stack nằm trong repo của dự án:

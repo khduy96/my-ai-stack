@@ -1,0 +1,34 @@
+id: map-update
+kind: flow
+version: 0.1.0
+kernel: ^1
+tags: [core, knowledge, maps]
+description: >-
+  Maps one more module, or refreshes the project's code maps with the cartographer:
+  a named module is mapped (or re-mapped) in full; with no input, every map is brought
+  up to date with the code changed since the commit in its header. Use to extend the
+  maps module by module, and after a significant change or a flow run.
+argument_hint: "[module to map or refresh | run directory | note]"
+
+input:
+  description: >-
+    A module to map for the first time or to refresh in full (its name or path), a
+    finished run directory (for example .ai-runs/20261021-1520-feature-x) whose
+    changes to bring into the maps, a note in the user's words, or nothing.
+  default: Refresh every map from git since the commit in its header.
+
+steps:
+  - id: update
+    agent: cartographer
+    goal: >-
+      Mode update. Map the module named in the input, or bring the maps up to date
+      with what changed in the code since each map's commit, using git and the input.
+    in:
+      source: $input
+    gate: on-questions
+
+report: >-
+  List the maps created or updated, each with what changed in one line, then the
+  modules still under "Not mapped", then the [?] items the user should confirm. Show
+  the changes for review: `git diff -- <dir>` when the directory is tracked, otherwise
+  the edited sections before and after. Never stage or commit them.

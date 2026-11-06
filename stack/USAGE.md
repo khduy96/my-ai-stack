@@ -1,10 +1,10 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 1.1. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 1.2. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
-- **5 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`.
-- **14 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-researcher`, `ai-verifier` và 5 `ai-verifier-*`. Pack có thể thêm, ví dụ `ai-verifier-flutter`.
+- **8 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`, `/ai-knowledge-audit`, `/ai-memory-init`, `/ai-memory-update`.
+- **15 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-archivist`, `ai-researcher`, `ai-verifier` và 5 `ai-verifier-*`. Pack có thể thêm, ví dụ `ai-verifier-flutter`.
 - **3 guard tùy chọn:** `scope`, `protect-generated`, `no-secrets`.
 
 ## Tra nhanh
@@ -25,6 +25,11 @@ Hiện có:
 | Chỉ viết test, không sửa code chính | `ai-builder-tests` | D3 |
 | Hiểu một đoạn code hoạt động thế nào | `/ai-explain <câu hỏi>` | F1 |
 | Ghi lại tri thức dự án sau một lần chạy | `/ai-learn <thư mục run>` | F2 |
+| Rà tri thức dự án với code hiện tại | `/ai-knowledge-audit [vùng]` | F2 |
+| Tạo memory bank cho dự án mới hoặc dự án có sẵn | `/ai-memory-init` | F4 |
+| Cập nhật memory bank sau khi làm xong việc | `/ai-memory-update` | F4 |
+| Tạo code map (project map + repo map) | `/ai-map-init [module]` | F5 |
+| Map thêm một module, hoặc làm mới map sau khi code đổi | `/ai-map-update [module]` | F5 |
 | Chặn sửa ngoài vùng, file generated, lộ secret | `scope`, `enable.policies` | F3 |
 | Tra tài liệu thư viện, changelog, lỗi đã biết | `ai-researcher` | G1 |
 | Cho agent đọc ticket, thiết kế, tài liệu của team | `/stack tools`, rồi `/ai-feature SHOP-123` | G2 |
@@ -391,6 +396,24 @@ node <stack>/kernel/cli/stack.mjs search "cache đơn hàng" --project .
 
 Đây là tìm theo từ khóa: câu hỏi phải **cùng ngôn ngữ** với tri thức (scribe ghi bằng tiếng Anh). Cần tìm theo ý nghĩa, xuyên ngôn ngữ, thì kết nối một MCP server tìm kiếm vector và khai integration cho nó (`/stack tools`).
 
+**Rà soát định kỳ với `/ai-knowledge-audit`.** Code đổi thì tri thức cũ dần. Lệnh này đối chiếu thư mục tri thức với code hiện tại:
+
+```
+/ai-knowledge-audit                          # toàn bộ, file có `updated` cũ nhất trước (tối đa ~30 file mỗi lần)
+/ai-knowledge-audit lib/features/payment     # chỉ các file có sources trỏ vào vùng này, ví dụ sau refactor
+/ai-knowledge-audit docs/knowledge/upload-flow.md
+/ai-knowledge-audit older than 90 days
+```
+
+1. `ai-verifier` (chỉ đọc) mở từng file, đi theo `sources` và các `path:line` được trích, so với code và `git log`, rồi báo findings tại đúng dòng trong file tri thức:
+   - **major:** code giờ nói khác (hành vi đổi, thứ được nhắc đã bị xóa hoặc đổi tên, quyết định bị đảo).
+   - **minor:** trích dẫn lệch dòng nhưng nội dung vẫn đúng; không còn xác nhận được từ code; hai file trùng chủ đề.
+   - **info:** thiếu frontmatter; `INDEX.md` lệch với các file.
+2. **Bạn duyệt.** Muốn bỏ finding nào thì nói, bước này chạy lại với ý kiến của bạn.
+3. `ai-scribe` sửa theo findings đã duyệt: chỉnh câu sai, sửa trích dẫn, xóa hoặc đánh dấu `[?]` điều không còn xác nhận được, gộp chủ đề trùng, cập nhật `updated` và `INDEX.md`. File bị gộp mất chỉ bị xóa khi bạn đồng ý. Không commit.
+
+Nên chạy sau mỗi đợt refactor lớn, mỗi sprint một lần, hoặc khi agent báo tri thức mâu thuẫn với code.
+
 ### F3. Guard: chặn cứng những việc không được làm
 
 Guard là **hook** của Claude Code: nó từ chối lệnh sửa file **trước khi** lệnh chạy, kể cả khi lệnh đó đến từ agent con. Guard mặc định tắt, bật trong `project.yaml`:
@@ -410,6 +433,103 @@ enable:
 Ngoài việc chặn, mỗi guard còn thêm một dòng vào mục "Project rules" trong prompt của mọi agent, để agent tránh từ đầu chứ không đợi tới lúc bị chặn. Hook và quyền do build tự đăng ký trong `settings.local.json`.
 
 > Guard chỉ bắt các công cụ sửa file. Lệnh shell (`sed -i`, `echo >`) không đi qua guard.
+
+### F4. Memory bank với `/ai-memory-init` và `/ai-memory-update`
+
+Memory bank là 6 file cố định giúp phiên làm việc sau biết ngay dự án là gì và đang ở đâu:
+
+| File | Chứa | Cập nhật |
+|---|---|---|
+| `projectbrief.md` | Dự án là gì, cho ai, phạm vi được/không được sửa, mục tiêu, thuật ngữ | hiếm |
+| `activeContext.md` | Ngày cập nhật, branch, đang làm gì, thay đổi gần đây, bước tiếp, cạm bẫy | mỗi lần |
+| `systemPatterns.md` | Cấu trúc repo, layer, pattern phải theo, vùng cấm | khi cấu trúc đổi |
+| `techContext.md` | Stack, phiên bản, lệnh build/test/codegen, biến môi trường (chỉ tên) | khi stack đổi |
+| `decisions.md` | Mỗi quyết định: ngày, bối cảnh, quyết định, phương án đã loại, bằng chứng, trạng thái | khi có quyết định kiến trúc |
+| `progress.md` | Đã xong (có ngày), đang làm, còn lại (kể cả TODO trong code), nợ kỹ thuật | mỗi lần |
+
+Khai một lần trong `project.yaml`, rồi chạy `build`:
+
+```yaml
+memory_bank: memory-bank
+```
+
+Từ đó **mọi agent** được dặn đọc `projectbrief.md` và `activeContext.md` trước, các file còn lại khi task chạm tới.
+
+**Dự án mới** (chưa có code): mô tả dự án ngay trong lệnh. `ai-archivist` viết `projectbrief.md` từ mô tả, ghi stack và cấu trúc dự kiến vào mục `Planned` (đánh dấu `[?]`), các lựa chọn đã chốt vào `decisions.md`, và hỏi lại những gì còn thiếu (mục đích, người dùng, stack):
+
+```
+/ai-memory-init App đặt lịch cắt tóc cho chuỗi salon nhỏ. Khách đặt qua app Flutter, chủ tiệm quản lý trên web Next.js, backend Supabase. Mục tiêu: ra MVP trong 6 tuần.
+```
+
+**Dự án có sẵn:** gọi không cần tham số, hoặc nêu vùng bạn phụ trách. Archivist khảo sát (chỉ đọc) README, CLAUDE.md, tài liệu, rule của công cụ AI khác, manifest, CI, cây thư mục, vài file tiêu biểu mỗi layer, `git log`, TODO trong code, rồi viết đủ 6 file, mỗi điều kèm nguồn; điều suy ra từ commit message mà chưa ai xác nhận thì đánh dấu `[?]`:
+
+```
+/ai-memory-init
+/ai-memory-init chỉ tập trung vào lib/features/cloud_storage và lib/module_bridge, phần còn lại thuộc team khác
+```
+
+Nếu memory bank đã có, `memory-init` không ghi đè mà chuyển sang cập nhật. Cuối flow, nếu `CLAUDE.md` chưa nạp memory bank, bạn được đề nghị thêm khối `# Memory Bank` (dùng `@memory-bank/projectbrief.md`, `@memory-bank/activeContext.md`) để cả phiên thường, không qua agent `ai-*`, cũng đọc nó; và được hỏi memory bank dùng chung (commit) hay cá nhân (`.git/info/exclude`).
+
+**Sau mỗi việc đáng kể:**
+
+```
+/ai-memory-update
+/ai-memory-update .ai-runs/20261021-1520-feature-money-receipt
+/ai-memory-update quyết định: không thêm gói DAY, chỉ MONTH và YEAR
+```
+
+Archivist đọc git từ ngày cập nhật trước, làm mới `activeContext.md` và `progress.md`, chỉ thêm vào `decisions.md` khi có lựa chọn kiến trúc, chỉ đụng tới 3 file còn lại khi cấu trúc hay stack thực sự đổi, rồi cho bạn xem diff. Không bao giờ commit.
+
+Quy tắc chung: tiếng Anh (dành cho agent; đổi bằng `context`), mỗi file dưới 150 dòng, không ghi điều code đã nói rõ, không ghi giá trị secret.
+
+**Memory bank hay knowledge?** Knowledge (F2) là tri thức lâu dài theo chủ đề, mỗi chủ đề một file. Memory bank là ảnh chụp toàn dự án với cấu trúc cố định, gồm cả trạng thái hiện tại. Dùng cả hai được: điều đáng giữ lâu trong `activeContext.md` thì đưa sang knowledge bằng `/ai-learn`.
+
+### F5. Code map với `/ai-map-init` và `/ai-map-update`
+
+Code map giúp agent (và người) đi thẳng tới đúng file thay vì tìm khắp repo. Có hai loại, mỗi loại một file index và một file cho mỗi module:
+
+| | Project map | Repo map |
+|---|---|---|
+| Trả lời | "Tính năng X nằm đâu, ai gọi nó?" | "Đổi X thì vỡ gì?" |
+| Index | `PROJECT_MAP.md`: mỗi module một mục với từ khóa (tiếng Việt + tiếng Anh), cộng mục "Not mapped" | `REPO_MAP.md`: mỗi module một mục với entry point và số lời gọi từ module khác |
+| Theo module | `<module>.MAP.md`: theo tính năng: UI, state, repository, API, DB, text, **được gọi từ**, **phụ thuộc**, bẫy; bảng public API; bảng triệu chứng → chỗ xem | `<module>.REPO.MAP.md`: tổng quan và quy ước, luồng `Page → State → UseCase → Repository` kèm symbol, bảng **INBOUND / OUTBOUND** có cột rủi ro (⛔ = import vượt ranh giới), DI/router/vòng đời, file generated và lệnh sinh |
+| Đường dẫn | ngắn, tính từ module | đầy đủ, tính từ gốc repo |
+
+Khai một lần trong `project.yaml`, rồi chạy `build`:
+
+```yaml
+maps: maps
+```
+
+Từ đó **mọi agent** được dặn đọc `maps/PROJECT_MAP.md` trước khi tìm code, đọc repo map của module trước khi đổi signature hay thứ module khác gọi tới, và báo khi thay đổi của nó cần làm mới map.
+
+**Dự án mới** (chưa có code): mô tả các module dự kiến ngay trong lệnh. `ai-cartographer` chỉ tạo hai file index, ghi module dự kiến vào mục `Planned` (đánh dấu `[?]`) cùng quy ước đặt tên, chưa tạo map chi tiết:
+
+```
+/ai-map-init App đặt lịch salon: module booking (lib/features/booking), salon (lib/features/salon), payment (lib/features/payment), auth dùng chung ở lib/core/auth
+```
+
+**Dự án có sẵn:** nêu module muốn map trước, hoặc để trống (khi đó map vùng `scope`; repo nhỏ thì map hết; repo lớn mà không có scope thì cartographer hỏi nên map module nào trước). Hai file index luôn liệt kê **mọi** module, module chưa map nằm ở "Not mapped":
+
+```
+/ai-map-init lib/features/cloud_storage
+/ai-map-init
+```
+
+**Mở rộng dần từng module và giữ map đúng với code:**
+
+```
+/ai-map-update lib/features/im          # map thêm một module (rút khỏi "Not mapped")
+/ai-map-update cloud_storage            # map lại toàn bộ một module
+/ai-map-update                          # làm mới mọi map từ git diff kể từ commit ghi ở đầu map
+/ai-map-update .ai-runs/20261021-1520-feature-money-receipt
+```
+
+Cách cartographer làm: mọi đường dẫn đều được kiểm tra là có thật; "được gọi từ", số lời gọi và bảng INBOUND lấy từ tìm kiếm toàn repo, không đoán; ⛔ chỉ đánh khi rule của dự án cấm; điều chưa xác nhận đánh `[?]`; ngày và commit lấy từ shell. Map lớn quá ~400 dòng thì tách theo vùng (`<module>.<vùng>.MAP.md`). Ngôn ngữ nhãn giữ theo map đang có, map mới theo `context` của dự án; từ khóa luôn có cả hai thứ tiếng. Cuối `map-init`, nếu `CLAUDE.md` chưa nhắc tới maps, bạn được đề nghị thêm khối `# Code maps` (dùng `@maps/PROJECT_MAP.md`) để phiên thường cũng đọc map, và được hỏi map dùng chung (commit, nên chọn) hay cá nhân.
+
+**Map, memory bank hay knowledge?** Map trả lời *ở đâu* và *đụng tới gì* trong code. Memory bank trả lời *dự án đang ở đâu*. Knowledge trả lời *vì sao* và *cạm bẫy* theo chủ đề. Ba thứ bổ sung cho nhau.
+
+Hướng dẫn đầy đủ (thiết lập, dùng hằng ngày, khi nào cập nhật, sửa tay, lỗi thường gặp): [MAPS.md](MAPS.md).
 
 ---
 
