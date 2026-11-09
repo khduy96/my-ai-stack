@@ -426,7 +426,7 @@ Từ đó **mọi agent** được dặn đọc `docs/knowledge/INDEX.md` trư�
 - Mỗi chủ đề một file. Cập nhật file cũ thay vì tạo file trùng, và giữ `INDEX.md` luôn khớp.
 - Chỉ sửa trong thư mục tri thức.
 
-Sau báo cáo, `/ai-feature`, `/ai-bugfix` và `/ai-explain` mở một hộp chọn hỏi có ghi tri thức không, kèm tối đa 3 điều đề xuất. Chọn ghi, hoặc gõ ghi chú của bạn, thì flow tự chạy `/ai-learn` với thư mục run đó; chọn bỏ qua thì không ghi gì. Hộp chọn không hiện khi run thất bại hoặc dự án chưa khai `knowledge:`. Chạy headless thì flow chỉ in ra lệnh `/ai-learn`.
+Sau báo cáo, `/ai-feature`, `/ai-bugfix` và `/ai-explain` mở một hộp chọn hỏi có ghi tri thức không, kèm tối đa 3 điều đề xuất (chỉ khi dự án khai `knowledge:`). Riêng `/ai-feature` và `/ai-bugfix` hỏi thêm, trong cùng hộp chọn, có cập nhật memory bank không (chỉ khi dự án khai `memory_bank:`); `/ai-explain` không hỏi vì không đổi code. Chọn ghi, hoặc gõ ghi chú của bạn, thì flow tự chạy `/ai-learn` với thư mục run đó; chọn cập nhật thì flow chạy tiếp `/ai-memory-update` với thư mục run đó; chọn bỏ qua thì không ghi gì. Hộp chọn không hiện khi run thất bại. Chạy headless thì flow chỉ in ra các lệnh tương ứng.
 
 **Tra cứu xếp hạng (`retriever: index`).** Khi thư mục tri thức lớn dần, khai:
 

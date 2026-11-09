@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Flows `feature` 0.1.4, `bugfix` 0.1.5: the end-of-run offer now also asks whether to update the memory bank, in the same AskUserQuestion call as the knowledge question (each question only when its directory is declared). "update" is recommended when the run changed files (`feature`) or applied a fix (`bugfix`). Choosing it, or answering with a note, runs `memory-update` on the run directory after `learn`; headless runs print both commands. `explain` does not ask: it changes no code, so there is nothing new in git for the memory bank, and what it teaches belongs in knowledge.
 - Flows `feature` 0.1.3, `bugfix` 0.1.4, `explain` 0.1.2: after the report, the orchestrator asks once with AskUserQuestion whether to record what the run taught (up to three candidate facts; "record" is recommended only for a lasting decision, convention or pitfall, and for `bugfix` only when the root cause was confirmed). Choosing "record", or answering with a note, runs the `learn` flow on the run directory; nothing is written to knowledge otherwise. No offer when the run failed or the project declares no `knowledge:`; headless runs print the learn command instead.
 
 ## 1.3.0 — 2026-11-06 (đo trên dự án thật)

@@ -150,7 +150,7 @@ Memory bank chỉ có ích khi `activeContext.md` còn mới. Bản cũ một tu
 | Khi nào | Làm gì |
 |---|---|
 | Xong một task, một bugfix, hoặc cuối ngày làm việc | `/ai-memory-update` |
-| Sau một flow `/ai-feature` hay `/ai-bugfix` | `/ai-memory-update <thư mục run>` |
+| Sau một flow `/ai-feature` hay `/ai-bugfix` | Chọn "update" trong hộp chọn cuối flow, flow tự chạy `/ai-memory-update <thư mục run>`. Lỡ bỏ qua thì gõ tay lệnh đó |
 | Vừa chốt một quyết định (với PM, backend, team khác) | `/ai-memory-update quyết định: …` |
 | Đổi branch, chuyển sang việc khác | `/ai-memory-update đang chuyển sang …` |
 | Thêm dependency, đổi lệnh build, đổi cấu trúc | `/ai-memory-update`. Archivist tự cập nhật `techContext` và `systemPatterns` |

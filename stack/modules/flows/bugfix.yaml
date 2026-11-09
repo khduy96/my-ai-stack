@@ -1,6 +1,6 @@
 id: bugfix
 kind: flow
-version: 0.1.4
+version: 0.1.5
 kernel: ^1
 tags: [core]
 description: >-
@@ -65,17 +65,29 @@ report: >-
   critical or major findings still open, and the run directory. If no root cause was
   confirmed, say so and list the hypotheses still open instead.
 
-  After saving the report, offer to record what the run taught as project knowledge.
-  Skip the offer when the run failed, and when .claude/project.yaml declares no
-  `knowledge:` (say so in one line instead). Otherwise call the AskUserQuestion tool
-  once, in the user's language: the question lists at most three candidate facts, one
-  line each, and the two options are "record" and "skip". Recommend "record" (add
-  "(Recommended)" to its label) only when the root cause was confirmed and is a
-  pitfall others could hit again; when no root cause was confirmed, recommend "skip"
-  and say that unconfirmed hypotheses would be recorded as fact. When the user picks
-  "record" or answers with a note of their own, invoke the learn flow through the
-  Skill tool (this skill's name with `learn` in place of `bugfix`), with this run
-  directory followed by the user's note as its arguments, and wait for its report.
-  Write nothing to the knowledge directory yourself. When the AskUserQuestion tool is
-  not available (a headless run), print the learn command with this run directory
-  instead.
+  After saving the report, offer to keep what the run taught and changed, with one
+  AskUserQuestion call in the user's language holding up to two questions. Ask none
+  when the run failed.
+
+  Knowledge question, only when .claude/project.yaml declares `knowledge:`: it lists
+  at most three candidate facts, one line each, and the two options are "record" and
+  "skip". Recommend "record" (add "(Recommended)" to its label) only when the root
+  cause was confirmed and is a pitfall others could hit again; when no root cause was
+  confirmed, recommend "skip" and say that unconfirmed hypotheses would be recorded as
+  fact.
+
+  Memory question, only when .claude/project.yaml declares `memory_bank:`: whether to
+  update the memory bank with this run, with the options "update" and "skip".
+  Recommend "update" (add "(Recommended)" to its label) when a fix was applied;
+  otherwise recommend "skip".
+
+  When the project declares neither, say so in one line instead. When the user picks
+  "record" or answers the knowledge question with a note, invoke the learn flow
+  through the Skill tool (this skill's name with `learn` in place of `bugfix`), with
+  this run directory followed by the user's note as its arguments, and wait for its
+  report. Then, when the user picks "update" or answers the memory question with a
+  note, invoke the memory-update flow the same way (`memory-update` in place of
+  `bugfix`) and wait for its report. Write nothing to the knowledge or memory bank
+  directories yourself. When the AskUserQuestion tool is not available (a headless
+  run), print the learn and memory-update commands with this run directory instead,
+  each only when its directory is declared.
