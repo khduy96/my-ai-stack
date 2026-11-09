@@ -1,6 +1,6 @@
 id: explain
 kind: flow
-version: 0.1.1
+version: 0.1.2
 kernel: ^1
 tags: [core, knowledge]
 description: >-
@@ -21,5 +21,18 @@ steps:
 
 report: >-
   Give the answer, then the walkthrough as a numbered list with path:line for each
-  step, then the gotchas and anything left unverified. Offer to record the answer as
-  project knowledge with the learn command when it is worth keeping.
+  step, then the gotchas and anything left unverified.
+
+  After saving the report, offer to record the answer as project knowledge. Skip the
+  offer when the run failed, and when .claude/project.yaml declares no `knowledge:`
+  (say so in one line instead). Otherwise call the AskUserQuestion tool once, in the
+  user's language: the question lists at most three candidate facts, one line each,
+  and the two options are "record" and "skip". Recommend "record" (add
+  "(Recommended)" to its label) only when the answer explains a mechanism, a reason
+  or a pitfall that reading the code does not make obvious; otherwise recommend
+  "skip". When the user picks "record" or answers with a note of their own, invoke
+  the learn flow through the Skill tool (this skill's name with `learn` in place of
+  `explain`), with this run directory followed by the user's note as its arguments,
+  and wait for its report. Write nothing to the knowledge directory yourself. When
+  the AskUserQuestion tool is not available (a headless run), print the learn
+  command with this run directory instead.

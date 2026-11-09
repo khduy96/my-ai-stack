@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Flows `feature` 0.1.3, `bugfix` 0.1.4, `explain` 0.1.2: after the report, the orchestrator asks once with AskUserQuestion whether to record what the run taught (up to three candidate facts; "record" is recommended only for a lasting decision, convention or pitfall, and for `bugfix` only when the root cause was confirmed). Choosing "record", or answering with a note, runs the `learn` flow on the run directory; nothing is written to knowledge otherwise. No offer when the run failed or the project declares no `knowledge:`; headless runs print the learn command instead.
+
 ## 1.3.0 — 2026-11-06 (đo trên dự án thật)
 
 - `stack stats [projects...] [--since <date>] [--json] [--transcripts <dir|none>] [--no-git]`: read-only measurement of flow runs on real projects. Per flow: runs, done / waiting / failed, median agent minutes, subagents, output tokens per run. Findings before and after the adversarial pass (only runs whose last findings come from a review step). Whether the files the agents changed were committed, are still uncommitted or were discarded, asked per repository so submodules count. Users' feedback. Subagent tokens per agent type from Claude Code transcripts, joined to runs through the run directory named in each task, split into "in runs" and "direct" calls (the orchestrating session is not counted). Waiting runs with their age, note and `--resume` command.

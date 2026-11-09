@@ -71,7 +71,7 @@ Nội dung viết bằng tiếng Anh (dành cho agent). Bạn không cần tự 
 
 ## 3. Ghi tri thức với `/ai-learn`
 
-**Từ một lần chạy vừa xong:** sau `/ai-feature`, `/ai-bugfix` hay `/ai-explain` mà bạn học được điều gì đó. Báo cáo của các flow này thường tự gợi ý.
+**Từ một lần chạy vừa xong:** sau `/ai-feature`, `/ai-bugfix` hay `/ai-explain` mà bạn học được điều gì đó. Sau báo cáo, các flow này mở hộp chọn "ghi / bỏ qua" kèm các điều đề xuất; chọn ghi là flow tự gọi `/ai-learn` với thư mục run. Bỏ qua rồi muốn ghi sau thì gõ tay:
 
 ```
 /ai-learn .ai-runs/20261106-1430-bugfix-upload-stuck
