@@ -65,6 +65,7 @@ Chạy `doctor` mà không có `--project` (và thư mục hiện tại không c
 | `/ai-review [target]` | Review thay đổi chưa commit, một branch, một PR hoặc một thư mục |
 | `/ai-feature <yêu cầu>` | Làm tính năng từ đầu đến cuối: spec → plan (bạn duyệt) → code → review |
 | `/ai-bugfix <triệu chứng>` | Tìm nguyên nhân, sửa và kiểm chứng một lỗi |
+| `/ai-fix <run> [F2 F3]` | Sửa nốt vài finding còn mở sau một run, không mở run `feature` mới |
 | `/ai-explain <câu hỏi>` | Hiểu một đoạn code hoạt động thế nào |
 | `/ai-memory-init [mô tả dự án mới]` | Tạo memory bank: dự án mới (từ mô tả) hoặc dự án có sẵn (khảo sát repo và git) |
 | `/ai-memory-update [run \| ghi chú]` | Cập nhật memory bank sau một thay đổi đáng kể |
@@ -108,6 +109,7 @@ Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigat
 | `review` | `/ai-review [target]` | 3 verifier song song (correctness · security · conventions), sau đó adversarial lọc false positive |
 | `feature` | `/ai-feature <yêu cầu>` | spec → plan (bạn duyệt) → builder theo từng unit, chia đợt → review ×3 → confirm → tối đa 2 vòng sửa |
 | `bugfix` | `/ai-bugfix <triệu chứng>` | investigate (hỏi khi chưa chắc) → fix → verifier-correctness → tối đa 1 vòng sửa |
+| `fix` | `/ai-fix <run> [F2 F3 | major | all]` | builder sửa các finding được chọn của một run (mặc định: critical, major, minor đã xác nhận) → verifier-correctness |
 | `explain` | `/ai-explain <câu hỏi>` | explainer trả lời, kèm đường đi trong code |
 | `memory-init` | `/ai-memory-init [mô tả]` | archivist tạo 6 file memory bank: dự án mới từ mô tả, dự án có sẵn từ khảo sát repo và git |
 | `memory-update` | `/ai-memory-update [run \| ghi chú]` | archivist làm mới activeContext, progress (và decisions khi có quyết định kiến trúc) từ git |
@@ -130,7 +132,7 @@ Cũng có thể gọi riêng từng agent, ví dụ *"Dùng agent `ai-investigat
 |---|---|---|
 | `zentao` | `zentao` | analyst, architect, investigator, researcher, explainer **đọc** được ticket (cho phép sẵn); nhóm **ghi** (comment, đổi trạng thái) chỉ có khi dự án tự cấp, và luôn phải có người duyệt |
 
-Build mặc định sinh ra 16 agent và 9 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
+Build mặc định sinh ra 16 agent và 11 skill `/ai-*`, đồng thời thêm các quyền mà flow cần vào `settings.local.json`. Build chỉ quản lý những mục nó tự thêm.
 
 ## Cấu trúc
 
@@ -169,6 +171,7 @@ stack/
 | Pack (modules + override + defaults), pack `flutter` | ✔ kernel 0.6 |
 | Integration (MCP: grants, allow, rule), `zentao`; role `researcher`; flow gọi agent viết tay (`external`) | ✔ kernel 0.6 |
 | Engine Workflow (`--workflow`), `stack run` cho CI, `isolation: worktree`, retriever `index` (`stack search`) | ✔ kernel 1.1 |
+| `stack stats` (đo trên dự án thật), `report.md` + `feedback.yaml` cho mỗi run, flow `fix` | ✔ kernel 1.3 |
 | Loại module `skill`, retriever vector có sẵn | chưa làm |
 
 ## Lộ trình
@@ -194,6 +197,7 @@ node stack.mjs versions --update  # sau khi tăng version của module đã sử
 node stack.mjs eval               # chạy flow thật trên repo mẫu và chấm điểm (tốn chi phí model)
 node stack.mjs run review --project <dự án> --fail-on major   # chạy flow không cần người (CI)
 node stack.mjs search "<từ khóa>" --project <dự án>           # tra tri thức dự án (retriever index)
+node stack.mjs stats <dự án>... [--since <ngày>] [--json]      # đo flow trên dự án thật (chỉ đọc)
 ```
 
 Quy tắc phiên bản: [kernel/conventions.md](kernel/conventions.md), mục 8. Eval: [evals/README.md](evals/README.md).

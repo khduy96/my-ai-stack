@@ -282,7 +282,7 @@ export async function renderFlow(flow, agents, ws, diags, stackRoot) {
           '- `status: waiting`: show the user the step, its `questions`, or the step to approve. To continue, call Workflow again with the same name, `resumeFromRunId` of the previous run, and `args` extended with `approved: [<step id>]` or `answers: { <step id>: "<answer>" }`. Finished agents are reused.',
           '- `status: failed`: report the failed step and its handoff.',
           '',
-          'The workflow passes inputs in memory and validates every handoff itself, so it writes no run directory.',
+          'The workflow passes inputs in memory and validates every handoff itself, so it writes no handoff files. Still create `<run>` as described under Run state, with `input.md` and a `run.yaml` holding `flow`, `engine: workflow`, `started`, `finished`, `status` and the workflow run id (`workflow_run:`), and save the report and the feedback described at the end of this skill there, so `stack stats` counts the run.',
         ].join('\n')
       : '',
     'engine.cli': ctx.cli,

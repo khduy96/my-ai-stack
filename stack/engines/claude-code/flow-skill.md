@@ -72,6 +72,12 @@ In a fan-out or for-each step, wait for every agent before acting; the step's st
 
 A `skipped` step has no handoff: treat it as having no findings and no questions. When an input refers to handoffs that do not exist (a skipped step, or an earlier iteration that did not run), leave that input out of the task.
 
+## Waiting
+
+Whenever the run stops for the user (a gate, questions, a `partial` or `blocked` agent), set the step and the run to `waiting` and give the step a one-line `note:` saying what it waits for. Then tell the user they can answer here, or continue later from a new session with `/{{flow.name}} --resume <run>`. A waiting run without a note cannot be told apart from an abandoned one.
+
+If the Agent tool reports that an agent type does not exist, the agents were built after this session started. Do not do the agent's work yourself: set the step to `waiting` with the note `agents not loaded in this session`, and tell the user to start a new Claude Code session and run `/{{flow.name}} --resume <run>`.
+
 ## Steps
 
 {{flow.steps}}
@@ -82,4 +88,20 @@ After the last step, set the run's status to `done` and report to the user:
 
 {{flow.report}}
 
-Write the report in the user's language. Keep raw handoff YAML out of it and point to the run directory instead.
+Write the report in the user's language. Keep raw handoff YAML out of it and point to the run directory instead. Number the findings you list `F1`, `F2`… in the order shown, so the user and later commands can refer to them.
+
+Save the report, exactly as shown, to `<run>/report.md`.
+
+## Feedback
+
+End the report with one line asking the user to rate the run, in their language: `useful`, `partial` or `not-useful`, optionally followed by the findings that were wrong and a note (for example `partial, wrong F2 F5: F5 is intended`).
+
+If the user's next message answers it, write `<run>/feedback.yaml`, check it with `{{engine.cli}} check <run>/feedback.yaml`, and confirm in one line. Do not ask again, and write nothing if the user moves on to something else.
+
+```yaml
+feedback:
+  verdict: partial          # useful | partial | not-useful
+  wrong: [F2, F5]           # findings judged wrong or not worth acting on; omit when none
+  note: <the user's words>  # omit when none
+  at: <ISO timestamp from the shell>
+```

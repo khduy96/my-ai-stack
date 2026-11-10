@@ -1,10 +1,10 @@
 # Hướng dẫn sử dụng theo tình huống
 
-Áp dụng cho stack 1.2. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
+Áp dụng cho stack 1.3. Dự án phải đã được tích hợp (xem [INTEGRATE.md](INTEGRATE.md)).
 
 Hiện có:
-- **8 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-explain`, `/ai-learn`, `/ai-knowledge-audit`, `/ai-memory-init`, `/ai-memory-update`.
-- **15 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-archivist`, `ai-researcher`, `ai-verifier` và 5 `ai-verifier-*`. Pack có thể thêm, ví dụ `ai-verifier-flutter`.
+- **11 flow chạy tự động:** `/ai-review`, `/ai-feature`, `/ai-bugfix`, `/ai-fix`, `/ai-explain`, `/ai-learn`, `/ai-knowledge-audit`, `/ai-memory-init`, `/ai-memory-update`, `/ai-map-init`, `/ai-map-update`.
+- **16 agent gọi riêng lẻ:** `ai-analyst`, `ai-architect`, `ai-builder`, `ai-builder-tests`, `ai-investigator`, `ai-explainer`, `ai-scribe`, `ai-archivist`, `ai-cartographer`, `ai-researcher`, `ai-verifier` và 5 `ai-verifier-*`. Pack có thể thêm, ví dụ `ai-verifier-flutter`.
 - **3 guard tùy chọn:** `scope`, `protect-generated`, `no-secrets`.
 
 ## Tra nhanh
@@ -23,6 +23,7 @@ Hiện có:
 | Sửa một lỗi có kiểm chứng | `/ai-bugfix <triệu chứng>` | D1 |
 | Chỉ tìm nguyên nhân lỗi, chưa sửa | `ai-investigator` | D2 |
 | Chỉ viết test, không sửa code chính | `ai-builder-tests` | D3 |
+| Sửa nốt vài finding còn mở sau một run | `/ai-fix <thư mục run> [F2 F3]` | D4 |
 | Hiểu một đoạn code hoạt động thế nào | `/ai-explain <câu hỏi>` | F1 |
 | Ghi lại tri thức dự án sau một lần chạy | `/ai-learn <thư mục run>` | F2 |
 | Rà tri thức dự án với code hiện tại | `/ai-knowledge-audit [vùng]` | F2 |
@@ -37,6 +38,7 @@ Hiện có:
 | Chạy tiếp một lần review bị dừng | `/ai-review --resume …` | E1 |
 | Chạy review không cần người (script, CI) | `stack run review …` | E3 |
 | Chạy tất định, không hỏi giữa chừng | `/ai-<flow> --workflow` | E5 |
+| Đo stack trên dự án thật: dùng gì, tốn bao nhiêu, có ích không | `stack stats` | E6 |
 
 ## Cách gọi chung
 
@@ -280,6 +282,24 @@ roles:
 
 ---
 
+### D4. Sửa nốt finding còn mở với `/ai-fix`
+
+Sau `/ai-feature`, `/ai-bugfix` hay `/ai-review`, báo cáo đánh số các finding `F1`, `F2`… (lưu ở `<run>/report.md`). Muốn sửa luôn vài cái mà không mở một run `feature` mới:
+
+```
+/ai-fix .ai-runs/20261024-1759-feature-deadline-done-action            # mọi finding critical, major, minor đã xác nhận
+/ai-fix .ai-runs/20261024-1759-feature-deadline-done-action F2 F5      # chỉ F2 và F5
+/ai-fix .ai-runs/20261024-1759-feature-deadline-done-action major      # chỉ critical và major
+/ai-fix giờ hệ thống lùi thì nút "Đồng bộ ngay" khoá quá 30 giây, sync_controller.dart:197
+```
+
+| Bước | Agent | Làm gì |
+|---|---|---|
+| 1. `fix` | `ai-builder` | Đọc finding (evidence, detail) từ run, sửa từng cái bằng thay đổi nhỏ nhất, thêm test nếu dự án có sẵn bộ test |
+| 2. `verify` | `ai-verifier-correctness` | Kiểm từng finding đã hết chưa và thay đổi có làm hỏng gì khác không |
+
+Finding `Rejected:` hoặc `Pre-existing:` chỉ được sửa khi bạn gọi tên.
+
 ## E. Vận hành
 
 ### E1. Chạy tiếp một flow bị dừng
@@ -345,7 +365,33 @@ Trên tình huống `review-planted`, engine Workflow tìm đủ lỗi với chi
 
 ### E4. Dọn run cũ
 
-`.ai-runs/` không vào git và có thể xóa bất cứ lúc nào. Chỉ giữ lại những run bạn còn muốn đối chiếu.
+`.ai-runs/` không vào git và có thể xóa bất cứ lúc nào. Chỉ giữ lại những run bạn còn muốn đối chiếu. Run đã xóa thì `stack stats` (E6) không đếm được nữa, nên muốn đo lâu dài thì đừng xóa.
+
+### E6. Đo stack trên dự án thật với `stack stats`
+
+```bash
+node <stack>/kernel/cli/stack.mjs stats                                   # dự án ở thư mục hiện tại
+node <stack>/kernel/cli/stack.mjs stats D:/du-an-a D:/du-an-b --since 2026-11-01
+node <stack>/kernel/cli/stack.mjs stats D:/du-an-a --json > stats.json    # từng run, để tự phân tích
+```
+
+Chỉ đọc, không gọi model, không sửa gì. Lấy dữ liệu từ ba nguồn:
+
+| Nguồn | Cho biết |
+|---|---|
+| `.ai-runs/*/` (`run.yaml`, handoff, `report.md`, `feedback.yaml`) | Flow nào chạy, xong hay đang chờ (kèm lý do và lệnh `--resume`), thời gian agent, finding trước và sau bước adversarial, số câu hỏi |
+| git của dự án (cả submodule) | File agent sửa đã được commit, vẫn chưa commit, hay bị bỏ |
+| Transcript của Claude Code (`~/.claude/projects/`) | Token của từng subagent theo loại agent, gọi trong flow hay gọi thẳng; phiên điều phối không được tính |
+
+**Chấm kết quả.** Cuối mỗi báo cáo, flow hỏi một dòng; trả lời ngay trong phiên là đủ, flow ghi vào `<run>/feedback.yaml`:
+
+```
+useful
+partial, wrong F2 F5: F5 là hành vi cố ý
+not-useful: plan chia sai tầng
+```
+
+Bỏ qua câu hỏi thì không có gì được ghi. `stack stats` cộng các câu trả lời lại: bao nhiêu run dùng được, bao nhiêu finding sai. Đây là số liệu duy nhất cho biết stack **có ích thật**, nên trả lời càng đều càng tốt.
 
 ---
 
@@ -380,7 +426,7 @@ Từ đó **mọi agent** được dặn đọc `docs/knowledge/INDEX.md` trư�
 - Mỗi chủ đề một file. Cập nhật file cũ thay vì tạo file trùng, và giữ `INDEX.md` luôn khớp.
 - Chỉ sửa trong thư mục tri thức.
 
-Báo cáo của `/ai-feature`, `/ai-bugfix` và `/ai-explain` sẽ gợi ý `/ai-learn` khi có điều đáng ghi lại.
+Sau báo cáo, `/ai-feature`, `/ai-bugfix` và `/ai-explain` mở một hộp chọn hỏi có ghi tri thức không, kèm tối đa 3 điều đề xuất (chỉ khi dự án khai `knowledge:`). Riêng `/ai-feature` và `/ai-bugfix` hỏi thêm, trong cùng hộp chọn, có cập nhật memory bank không (chỉ khi dự án khai `memory_bank:`); `/ai-explain` không hỏi vì không đổi code. Chọn ghi, hoặc gõ ghi chú của bạn, thì flow tự chạy `/ai-learn` với thư mục run đó; chọn cập nhật thì flow chạy tiếp `/ai-memory-update` với thư mục run đó; chọn bỏ qua thì không ghi gì. Hộp chọn không hiện khi run thất bại. Chạy headless thì flow chỉ in ra các lệnh tương ứng.
 
 **Tra cứu xếp hạng (`retriever: index`).** Khi thư mục tri thức lớn dần, khai:
 

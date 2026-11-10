@@ -8,6 +8,7 @@ import { cleanup, compareResults, EVALS_DIR, loadCases, prepareCase, runClaude, 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { runFlow } from './lib/run.mjs';
 import { search } from './lib/search.mjs';
+import { collectStats, DEFAULT_TRANSCRIPTS, formatStats, summarize } from './lib/stats.mjs';
 import { loadWorkspace } from './lib/load.mjs';
 import { createDiagnostics } from './lib/diag.mjs';
 import { readFileSync } from 'node:fs';
@@ -25,7 +26,9 @@ Commands:
   run <flow> [input...]  Run a flow without a person (CI): exit 0 ok, 1 findings at --fail-on or above,
                   2 run failed, 3 waiting for a human
   search <query>  Rank the project's knowledge files for a query (knowledge retriever: index)
-  help            Show this message
+  stats [projects...]  Measure flow runs on real projects: usage, findings, git outcome, feedback,
+                  subagent tokens, waiting runs (read-only; default: the current project)
+  help           Show this message
 
 Options:
   --project <path>       Project root (default: current directory)
@@ -40,6 +43,10 @@ Options:
   --fail-on <level>      run: critical | major (default) | minor | none
   --summary <file>       run: append a Markdown summary (e.g. $GITHUB_STEP_SUMMARY)
   --permission-mode <m>  run: Claude Code permission mode (default: default, i.e. the project's settings)
+  --since <date>         stats: only runs started on or after this date (YYYY-MM-DD)
+  --transcripts <dir>    stats: Claude Code transcripts (default: ~/.claude/projects); 'none' to skip
+  --no-git               stats: do not look up the agents' changes in git
+  --json                 stats: print the summary and every run as JSON
 `;
 
 function printOps(ops, dryRun, label) {
@@ -81,6 +88,10 @@ async function main() {
         summary: { type: 'string' },
         'permission-mode': { type: 'string', default: 'default' },
         top: { type: 'string', default: '8' },
+        since: { type: 'string' },
+        transcripts: { type: 'string' },
+        'no-git': { type: 'boolean', default: false },
+        json: { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
       },
     });
@@ -158,6 +169,24 @@ async function main() {
       console.log(`${h.score.toFixed(2).padStart(6)}  ${h.file}  ${h.title}`);
       for (const l of h.lines) console.log(`        ${l.n}: ${l.text.slice(0, 160)}`);
     }
+    return 0;
+  }
+
+  if (command === 'stats') {
+    const projects = positionals.length > 1 ? positionals.slice(1) : [values.project ?? process.cwd()];
+    if (values.since && Number.isNaN(Date.parse(values.since))) {
+      console.error('--since must be a date, e.g. 2026-11-01');
+      return 2;
+    }
+    const data = await collectStats({
+      projects: projects.map((p) => path.resolve(p)),
+      transcripts: values.transcripts === 'none' ? null : path.resolve(values.transcripts ?? DEFAULT_TRANSCRIPTS),
+      since: values.since ?? null,
+      git: !values['no-git'],
+    });
+    const summary = summarize(data);
+    if (values.json) console.log(JSON.stringify({ summary: { ...summary, waiting: summary.waiting.map((r) => r.run) }, runs: data.runs }, null, 2));
+    else process.stdout.write(formatStats(summary));
     return 0;
   }
 

@@ -1,0 +1,51 @@
+id: fix
+kind: flow
+version: 0.1.0
+kernel: ^1
+tags: [core]
+description: >-
+  Fixes findings left open by an earlier run (by default its confirmed critical, major
+  and minor findings, or the ones you name such as F2 F3) or findings you describe,
+  with one builder, then checks the fixes with the correctness verifier. Use when a
+  few findings remain after a feature, bugfix or review run, instead of a new feature
+  run.
+argument_hint: "<run directory> [F1 F3 | major | minor | all] | <findings in your words>"
+
+input:
+  description: >-
+    A run directory (for example .ai-runs/20261024-1759-feature-x), optionally followed
+    by which of its findings to fix: numbers from its report.md (F2 F3), a severity
+    (`major` = critical and major, `minor` = critical, major and minor), or `all`.
+    Without a selection, fix the run's confirmed critical, major and minor findings.
+    Findings titled Rejected or Pre-existing are fixed only when named. The input can
+    also be findings in the user's words, with path:line when known.
+
+steps:
+  - id: fix
+    agent: builder
+    goal: >-
+      Resolve the findings the input selects. For a run directory, read its report.md
+      (finding numbers F1, F2…) and the handoffs of its last review step (fix-confirm,
+      confirm, retry-verify, verify or review) for each finding's evidence and detail.
+      Fix each one with the smallest change, staying within the files the findings
+      name unless one requires otherwise, and add or update a test when the project
+      already has a test setup. In your summary, state for every selected finding
+      whether it was fixed, and why not when it was not.
+    in:
+      findings: $input
+    gate: on-questions
+
+  - id: verify
+    agent: verifier-correctness
+    goal: >-
+      Check that each selected finding is resolved by the change and that the change
+      breaks nothing else.
+    in:
+      findings: $input
+      changes: $fix.artifacts
+
+report: >-
+  List each selected finding, with its number from the source run when it had one, as
+  fixed or not fixed, with the files changed and the checks that ran. Then list the
+  critical and major findings of the verification that are still open, and the run
+  directory.
